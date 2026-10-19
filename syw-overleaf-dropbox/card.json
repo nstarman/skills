@@ -1,0 +1,4 @@
+{
+  "name": "syw-overleaf-dropbox",
+  "description": "Guides writing a paper with showyourwork and Overleaf, using the Dropbox copy of the Overleaf project as the local text mirror: where to edit text versus code, how a build pushes figures and numbers, and the stalls and silent non-builds to expect."
+}
