@@ -1,0 +1,35 @@
+name: check-cards
+
+# Fails if a skill folder's card.json is missing or malformed (see AGENTS.md),
+# so the website's weekly refresh-skills run does not.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - shell: python
+        run: |
+          import json, pathlib, sys
+          bad = []
+          for skill in sorted(p.parent for p in pathlib.Path().glob("*/SKILL.md")):
+              try:
+                  card = json.loads((skill / "card.json").read_text(encoding="utf-8"))
+              except FileNotFoundError:
+                  bad.append(f"{skill}: no card.json")
+                  continue
+              except ValueError as e:
+                  bad.append(f"{skill}: card.json is not valid JSON ({e})")
+                  continue
+              if not isinstance(card, dict) or set(card) != {"name", "description"}:
+                  bad.append(f"{skill}: card.json must be an object with exactly the keys name, description")
+              elif not all(isinstance(v, str) and v.strip() for v in card.values()):
+                  bad.append(f"{skill}: name and description must be non-empty strings")
+              elif card["name"] != skill.name:
+                  bad.append(f"{skill}: name {card['name']!r} must equal the folder name")
+          print("\n".join(bad) or "All cards OK")
+          sys.exit(bool(bad))
