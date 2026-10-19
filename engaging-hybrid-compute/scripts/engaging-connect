@@ -14,6 +14,7 @@ HOST=orcd-login                         # <-- your ~/.ssh/config alias (with Con
 LOG="$HOME/.ssh/engaging-connect.log"
 FAIL="$HOME/.ssh/engaging-connect.lastfail"
 MODE="${1:-normal}"
+command -v timeout >/dev/null || { echo "engaging-connect needs timeout (macOS: brew install coreutils)" >&2; exit 3; }
 notify() { command -v osascript >/dev/null && osascript -e "display notification \"$2\" with title \"$1\"" >/dev/null 2>&1 || true; }
 mtime() { stat -f %m "$1" 2>/dev/null || stat -c %Y "$1"; }   # macOS / Linux
 askpass_env=(SSH_ASKPASS="$HOME/.local/bin/duo-askpass" SSH_ASKPASS_REQUIRE=force DISPLAY="${DISPLAY:-:0}")

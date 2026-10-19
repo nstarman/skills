@@ -61,7 +61,7 @@ Steps marked **(you)** need your password, Duo or a browser. Claude can't do the
                              "Bash(~/.local/bin/engaging-connect)", "Bash(~/.local/bin/engaging-connect *)"] } }
   ```
   The rule matches the command as typed, so a wrapper (`bash -c …`) slips past it. `SKILL.md` tells Claude to call the helper only by its bare name.
-- Needs `timeout`, which macOS doesn't ship: `brew install coreutils`.
+- Needs `timeout`, which macOS doesn't ship: `brew install coreutils`. Without it the helper exits (code 3) before any attempt.
 - The helper refuses to retry for 10 minutes after a failure, and the askpass answers only the Duo menu, never a password prompt.
 - `duo-askpass` matches the Duo menu prompt text, and that text may change; check the log if the push never arrives.
 - If the key is refused instantly with a message about the web portal, log in to OnDemand first.
