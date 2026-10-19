@@ -18,6 +18,8 @@ pull --rebase, plot  ◀───────────────          �
 - **Big things** (raw simulation snapshots, caches, `.venv`, Slurm logs) never go in git. Move them with `rsync` only when needed.
 - **Heavy compute only on the cluster.** Locally: editing, plotting, reading results, checks that take seconds.
 
+**Assumes 1Password** on the local machine: its SSH agent holds the cluster key and signs commits, so a locked 1Password shows up as SSH or commit failures. Other agents work, but `setup.md` is written for 1Password.
+
 Read `setup.md` (next to this file) for the one-time setup. The rest of this file is the daily workflow and the rules.
 
 ## Connecting (SSH key + Duo + ControlMaster)
@@ -45,7 +47,7 @@ Never:
   - deleting anything on the cluster;
   - changing pinned dependencies.
 - **Keep the repo private.** Never commit secrets, keys or tokens.
-- **Commit signing:** if a commit fails because the signing agent is locked (e.g. a password manager's SSH agent), ask the user to unlock it. Never bypass signing (`--no-gpg-sign`, changing config).
+- **Commit signing:** if a commit fails because the signing agent is locked (1Password's SSH agent), ask the user to unlock 1Password. Never bypass signing (`--no-gpg-sign`, changing config).
 - **If something breaks, stop and report.** Don't quietly fall back to running locally or to a different dependency source.
 
 ## The daily loop

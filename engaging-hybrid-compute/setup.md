@@ -28,19 +28,20 @@ Steps marked **(you)** need your password, Duo or a browser. Claude can't do the
 
 ## 2. SSH key and ControlMaster (local machine)
 
-1. Make a dedicated Ed25519 key, ideally inside a password manager's SSH agent so the private key never sits on disk. Otherwise use `ssh-keygen -t ed25519 -f ~/.ssh/engaging`.
+1. Make a dedicated Ed25519 key in 1Password (New Item → SSH Key) and enable its SSH agent (Settings → Developer), so the private key never sits on disk. Save the public key as `~/.ssh/engaging.pub`. Without 1Password, use `ssh-keygen -t ed25519 -f ~/.ssh/engaging` then drop the `IdentityAgent` line below and point `IdentityFile` at `~/.ssh/engaging` (the private key).
 2. `~/.ssh/config`:
    ```
    Host orcd-login
      HostName orcd-login.mit.edu
      User <kerb>
-     IdentityFile ~/.ssh/engaging          # or the .pub that selects the agent key
+     IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"   # macOS; Linux: ~/.1password/agent.sock
+     IdentityFile ~/.ssh/engaging.pub      # the .pub selects the key in the agent
      IdentitiesOnly yes
      ControlMaster auto
      ControlPath ~/.ssh/cm-%r@%h:%p
      ControlPersist 8h
    ```
-3. **(you)** Install the public key: `ssh-copy-id -i ~/.ssh/engaging.pub orcd-login` (password + Duo).
+3. **(you)** Unlock 1Password whenever you connect or commit. Install the public key: `ssh-copy-id -i ~/.ssh/engaging.pub orcd-login` (password + Duo).
 4. **(you)** Each working day: `ssh orcd-login` in a terminal, then approve Duo. For the next 8 h, `ssh -o BatchMode=yes orcd-login '...'` works without prompts, for you and for Claude. Check with `ssh -O check orcd-login`.
 5. Optional, for VS Code Remote-SSH: `remote.SSH.connectTimeout: 60`, `remote.SSH.maxReconnectionAttempts: 1`, `remote.SSH.showLoginTerminal: true` (avoids a storm of Duo prompts).
 
