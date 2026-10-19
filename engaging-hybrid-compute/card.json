@@ -1,0 +1,4 @@
+{
+  "name": "engaging-hybrid-compute",
+  "description": "Splits a research project between a laptop and MIT's Engaging cluster: edit locally, run Slurm jobs on the cluster, and sync code and results through a private git repo."
+}
