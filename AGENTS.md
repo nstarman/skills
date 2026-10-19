@@ -50,6 +50,9 @@ reads this repo; nothing here pushes to it.
 The collector stops, and no PR opens, if a folder with a `SKILL.md` has no
 `card.json` or the card is malformed. A skill's card appears only after it is
 merged here, so the link never points at a missing folder.
+`.github/workflows/check-cards.yml` here runs the same card checks (plus
+`name` equals the folder name) on every PR, so a bad card fails the PR
+instead of the site refresh.
 
 ## Adding a skill
 
