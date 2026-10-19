@@ -1,0 +1,11 @@
+#!/bin/bash
+# SSH_ASKPASS helper for engaging-connect: answers ONLY the Duo menu prompt with "push".
+# Refuses every other prompt (passwords, passphrases, host-key questions), so it can never
+# supply a credential. You still approve the push on your phone.
+# Logs the prompt text (never an answer) for debugging. If Duo's prompt wording changes,
+# check the log and adjust the pattern.
+printf '%s  prompt: %s\n' "$(date '+%F %T')" "$1" >> "$HOME/.ssh/engaging-connect.log"
+case "$1" in
+  *[Pp]asscode*|*[Dd]uo*|*"option ("*) echo push ;;
+  *) exit 1 ;;
+esac

@@ -7,6 +7,7 @@ agent loads when a task calls for them. Each folder is one skill, with its
 | Skill | For |
 | --- | --- |
 | [`diataxis`](diataxis/) | Auditing and restructuring documentation into the [Diátaxis](https://diataxis.fr) modes — tutorials, how-to guides, reference and explanation — without breaking links. Covers Sphinx/MyST and Zensical. |
+| [`engaging-hybrid-compute`](engaging-hybrid-compute/) | Splitting a research project between a local machine and MIT's Engaging (ORCD) Slurm cluster, synced through a private git repo: SSH/Duo ControlMaster, job submission and monitoring, pushing results back. |
 
 ## Using one
 
@@ -21,7 +22,7 @@ For one project only, copy it into that project's `.claude/skills/` instead.
 
 **claude.ai** — zip the skill's folder and upload it under Settings → Capabilities → Skills.
 
-The bundled scripts are standard-library Python 3.
+The bundled scripts are standard-library Python 3 or Bash.
 
 ## Credits
 
