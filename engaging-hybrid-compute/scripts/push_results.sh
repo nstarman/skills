@@ -3,6 +3,7 @@
 #   slurm/push_results.sh "results: seeds 0-4 of the frame test (jobs 123-127)"
 # Adds figures / small arrays / result tables under the numbered experiment folders only.
 # Logs and caches stay git-ignored. Rebases onto local pushes first.
+# Every .json in an experiment folder gets committed: keep credentials out of those folders.
 set -euo pipefail
 cd ~/orcd/pool/PROJECT                   # <-- your cluster clone
 msg=${1:?commit message required}

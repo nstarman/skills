@@ -15,5 +15,5 @@ export PYTHONUNBUFFERED=1
 cd "$REPO_DIR" || exit 1
 SCRIPT=$1; shift; MODES=("$@"); MODE=${MODES[$SLURM_ARRAY_TASK_ID]}
 echo "task $SLURM_ARRAY_TASK_ID: $SCRIPT $MODE on $(hostname) at $(git rev-parse --short HEAD)"
-env | grep -E '^(SEED|MOCK|MODE|CONFIG)' | sort    # <-- log the switches your code reads
+for v in SEED MOCK MODE CONFIG; do echo "$v=${!v-}"; done   # <-- list exactly the switches your code reads (never secrets)
 ~/.local/bin/uv run --frozen python "$SCRIPT" "$MODE"

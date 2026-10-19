@@ -43,7 +43,13 @@ Steps marked **(you)** need your password, Duo or a browser. Claude can't do the
    ```
 3. **(you)** Unlock 1Password whenever you connect or commit. Install the public key: `ssh-copy-id -i ~/.ssh/engaging.pub orcd-login` (password + Duo).
 4. **(you)** Each working day: `ssh orcd-login` in a terminal, then approve Duo. For the next 8 h, `ssh -o BatchMode=yes orcd-login '...'` works without prompts, for you and for Claude. Check with `ssh -O check orcd-login`.
-5. Optional, for VS Code Remote-SSH: `remote.SSH.connectTimeout: 60`, `remote.SSH.maxReconnectionAttempts: 1`, `remote.SSH.showLoginTerminal: true` (avoids a storm of Duo prompts).
+5. **Gate cluster commands.** While the socket is open, anything running as your local user, Claude included, gets a full shell on the cluster with no further prompt. The rules in `SKILL.md` are only instructions. To be asked before each one, add to `~/.claude/settings.json`:
+   ```json
+   { "permissions": { "ask": ["Bash(ssh orcd-login *)", "Bash(ssh -o BatchMode=yes orcd-login *)",
+                              "Bash(scp *)", "Bash(rsync *)"] } }
+   ```
+   Commands run inside a script (e.g. `watch_jobs.sh`) are not matched; approving the script approves what it runs.
+6. Optional, for VS Code Remote-SSH: `remote.SSH.connectTimeout: 60`, `remote.SSH.maxReconnectionAttempts: 1`, `remote.SSH.showLoginTerminal: true` (avoids a storm of Duo prompts).
 
 ### Optional: a gated reconnect helper
 
@@ -51,8 +57,11 @@ Steps marked **(you)** need your password, Duo or a browser. Claude can't do the
 - Put both in `~/.local/bin`, `chmod +x`, and set `HOST=` in `engaging-connect` to your alias.
 - In `~/.claude/settings.json`, add an **ask** rule so Claude Code prompts you every time:
   ```json
-  { "permissions": { "ask": ["Bash(engaging-connect)", "Bash(engaging-connect *)"] } }
+  { "permissions": { "ask": ["Bash(engaging-connect)", "Bash(engaging-connect *)",
+                             "Bash(~/.local/bin/engaging-connect)", "Bash(~/.local/bin/engaging-connect *)"] } }
   ```
+  The rule matches the command as typed, so a wrapper (`bash -c …`) slips past it. `SKILL.md` tells Claude to call the helper only by its bare name.
+- Needs `timeout`, which macOS doesn't ship: `brew install coreutils`.
 - The helper refuses to retry for 10 minutes after a failure, and the askpass answers only the Duo menu, never a password prompt.
 - `duo-askpass` matches the Duo menu prompt text, and that text may change; check the log if the push never arrives.
 - If the key is refused instantly with a message about the web portal, log in to OnDemand first.
@@ -60,8 +69,9 @@ Steps marked **(you)** need your password, Duo or a browser. Claude can't do the
 ## 3. Python environment on the cluster
 
 ```bash
-ssh -o BatchMode=yes orcd-login 'curl -LsSf https://astral.sh/uv/install.sh | sh'   # installs ~/.local/bin/uv
+ssh -o BatchMode=yes orcd-login 'curl -LsSf https://astral.sh/uv/<version>/install.sh | sh'   # installs ~/.local/bin/uv
 ```
+- `<version>` is the uv you use locally (`uv --version`). Pinning it means the installer can't change under you.
 - Pin the Python version in the repo (`.python-version`) and commit `uv.lock`, so the cluster resolves exactly what you have locally.
 - Pin git dependencies to exact commits.
 - Job scripts call `~/.local/bin/uv run --frozen python ...`, because `~/.local/bin` isn't on the batch `PATH`.
@@ -76,6 +86,9 @@ ssh-keygen -t ed25519 -f ~/.ssh/<project>_deploy -N "" -C "engaging <project>"
 cat ~/.ssh/<project>_deploy.pub
 ```
 1. **(you)** GitHub → repo → Settings → Deploy keys → Add. Paste the key, **tick "Allow write access"** (needed for `push_results.sh`).
+   The key has no passphrase (jobs push unattended) and sits on a shared cluster, so anyone who gets into your cluster account can push to the repo. Limit the damage:
+   - **(you)** Settings → Rules → Rulesets → new branch ruleset on `main`: block force pushes and deletions, so history can't be rewritten.
+   - Review what the cluster pushed before running it locally (see the daily loop in `SKILL.md`).
 2. On the cluster, in `~/.ssh/config`:
    ```
    Host github-<project>

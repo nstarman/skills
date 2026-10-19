@@ -28,9 +28,11 @@ An SSH key replaces the password but **does not skip Duo**. The way around it is
 
 1. Check: `ssh -O check <alias>`, where `<alias>` is the `~/.ssh/config` host, e.g. `orcd-login`.
 2. If "Master running": run everything as `ssh -o BatchMode=yes <alias> '<cmd>'`. `BatchMode` makes it fail fast instead of hanging on a Duo prompt.
-3. If not, the user has to reconnect. Either they run `ssh <alias>` in their own terminal and approve Duo, or they have the gated helper from `setup.md` (`engaging-connect`).
+3. If not, the user has to reconnect. Either they run `ssh <alias>` in their own terminal and approve Duo, or they have the gated helper from `setup.md`. Call it only as `engaging-connect`, never by path or through a wrapper, so its permission rule fires.
    - **At most one reconnect attempt per need. Never loop.** Repeated failed attempts can trigger a Duo lockout.
    - If key auth is refused instantly with a message about logging in to the web portal, the user must first log in to OnDemand (https://orcd-ood.mit.edu) in a browser. Key auth appears to need a recent OnDemand login (about a day). Ask them; don't retry.
+
+The open socket is a full shell on the user's account. Treat every command as if the user typed it, and keep to the rules below even when nothing prompts.
 
 Never:
 - run `ssh -O exit <alias>`, which kills the user's shared socket;
@@ -46,7 +48,7 @@ Never:
   - GPU jobs, unless agreed;
   - deleting anything on the cluster;
   - changing pinned dependencies.
-- **Keep the repo private.** Never commit secrets, keys or tokens.
+- **Keep the repo private.** Never commit secrets, keys or tokens. `push_results.sh` commits every `.json` in an experiment folder, so no credentials go in those folders, and job logs print only named switches, never the whole environment.
 - **Commit signing:** if a commit fails because the signing agent is locked (1Password's SSH agent), ask the user to unlock 1Password. Never bypass signing (`--no-gpg-sign`, changing config).
 - **If something breaks, stop and report.** Don't quietly fall back to running locally or to a different dependency source.
 
@@ -62,7 +64,11 @@ Never:
 3. **Submit** with `sbatch`, usually the generic array script `scripts/run_modes.sh` (one mode per task). Give jobs **descriptive names**: they're how you watch them.
 4. **Watch** by job name, not by a list of IDs (see Monitoring).
 5. **Collect:** on the login node, `scripts/push_results.sh "<what these results are>"` commits figures and small arrays from the experiment folders and pushes.
-6. **Local:** `git pull --rebase`, then plot, analyse and write notes.
+6. **Local:** check what the cluster pushed, then pull:
+   ```bash
+   git fetch -q && git log --stat HEAD..@{u}
+   ```
+   Cluster commits should touch only result files in experiment folders. If one changes code, scripts or config, stop and tell the user before pulling: the deploy key may be misused. Then `git pull --rebase`, plot, analyse and write notes.
 
 ## Submitting jobs well
 
