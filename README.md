@@ -8,6 +8,7 @@ agent loads when a task calls for them. Each folder is one skill, with its
 | --- | --- |
 | [`diataxis`](diataxis/) | Auditing and restructuring documentation into the [Diátaxis](https://diataxis.fr) modes — tutorials, how-to guides, reference and explanation — without breaking links. Covers Sphinx/MyST and Zensical. |
 | [`engaging-hybrid-compute`](engaging-hybrid-compute/) | Splitting a research project between a local machine and MIT's Engaging (ORCD) Slurm cluster, synced through a private git repo: SSH/Duo ControlMaster, job submission and monitoring, pushing results back. |
+| [`syw-overleaf-dropbox`](syw-overleaf-dropbox/) | Writing a paper with [showyourwork](https://github.com/showyourwork/showyourwork) and Overleaf, using the Dropbox copy of the Overleaf project as the local text mirror: where to edit text versus code, building and pushing, `\variable{}` numbers, and the stalls, flags and silent non-builds to expect. |
 
 ## Using one
 
