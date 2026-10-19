@@ -1,0 +1,48 @@
+#!/bin/bash
+# Reopen the shared SSH connection (ControlMaster) to Engaging with ONE Duo push.
+# Meant to be gated: add an "ask" permission rule in ~/.claude/settings.json so Claude Code asks
+# you before every run; you then approve the Duo push on your phone.
+#
+#   engaging-connect          # no-op if the ControlMaster is up; else one attempt (Duo push)
+#   engaging-connect --force  # ignore the 10-minute cool-down after a failed attempt
+#   engaging-connect --test   # one throwaway login (separate from the master) to test the flow
+#
+# Never loops: one attempt per call, and after a failure it refuses new attempts for 10 min,
+# because repeated failures can trigger a Duo lockout. macOS notifications via osascript (optional).
+set -u
+HOST=orcd-login                         # <-- your ~/.ssh/config alias (with ControlMaster/ControlPersist)
+LOG="$HOME/.ssh/engaging-connect.log"
+FAIL="$HOME/.ssh/engaging-connect.lastfail"
+MODE="${1:-normal}"
+command -v timeout >/dev/null || { echo "engaging-connect needs timeout (macOS: brew install coreutils)" >&2; exit 3; }
+notify() { command -v osascript >/dev/null && osascript -e "display notification \"$2\" with title \"$1\"" >/dev/null 2>&1 || true; }
+mtime() { stat -f %m "$1" 2>/dev/null || stat -c %Y "$1"; }   # macOS / Linux
+askpass_env=(SSH_ASKPASS="$HOME/.local/bin/duo-askpass" SSH_ASKPASS_REQUIRE=force DISPLAY="${DISPLAY:-:0}")
+ssh_opts=(-o BatchMode=no -o ConnectTimeout=20 -o NumberOfPasswordPrompts=1)
+
+if [ "$MODE" != "--test" ] && ssh -O check "$HOST" 2>/dev/null; then
+  echo "connection already up"; exit 0
+fi
+if [ "$MODE" != "--force" ] && [ -f "$FAIL" ] && [ $(( $(date +%s) - $(mtime "$FAIL") )) -lt 600 ]; then
+  echo "last attempt failed <10 min ago; not retrying (use --force)"; exit 2
+fi
+
+echo "$(date '+%F %T')  attempt ($MODE)" >> "$LOG"
+notify "Engaging" "Approve the Duo push on your phone"
+echo "sending one Duo push; approve it on your phone (waits up to 2 min)..."
+if [ "$MODE" = "--test" ]; then
+  env "${askpass_env[@]}" timeout 120 ssh "${ssh_opts[@]}" -o ControlMaster=no -o ControlPath=none "$HOST" true </dev/null
+  rc=$?
+else
+  env "${askpass_env[@]}" timeout 120 ssh "${ssh_opts[@]}" -fN "$HOST" </dev/null
+  sleep 1; ssh -O check "$HOST" 2>/dev/null; rc=$?
+fi
+
+if [ $rc -eq 0 ]; then
+  rm -f "$FAIL"; echo "$(date '+%F %T')  ok" >> "$LOG"; notify "Engaging" "Connected"; echo "connected"
+else
+  touch "$FAIL"; echo "$(date '+%F %T')  FAILED rc=$rc" >> "$LOG"
+  notify "Engaging" "Connection failed (rc=$rc). Fallback: ssh $HOST in a terminal"
+  echo "failed (rc=$rc); see $LOG. If the key was refused with a portal message, log in to https://orcd-ood.mit.edu first."
+  exit 1
+fi
