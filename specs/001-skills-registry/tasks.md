@@ -34,8 +34,8 @@ before the implementation that makes them pass.
 
 ## Phase 1: Setup
 
-- [ ] T001 Create folders `registry/`, `scripts/`, `tests/`, and `tests/__init__.py` (empty); add `__pycache__/` to `.gitignore`
-- [ ] T002 [P] Add README markers around the skill table and an install section in `README.md`: `<!-- skills:table:start -->` … `<!-- skills:table:end -->` and `<!-- skills:install:start -->` … `<!-- skills:install:end -->` (contents filled by the generator later)
+- [X] T001 Create folders `registry/`, `scripts/`, `tests/`, and `tests/__init__.py` (empty); add `__pycache__/` to `.gitignore`
+- [X] T002 [P] Add README markers around the skill table and an install section in `README.md`: `<!-- skills:table:start -->` … `<!-- skills:table:end -->` and `<!-- skills:install:start -->` … `<!-- skills:install:end -->` (contents filled by the generator later)
 
 ---
 
@@ -45,13 +45,13 @@ before the implementation that makes them pass.
 
 ### Tests (write first, must fail)
 
-- [ ] T003 [P] Write `tests/test_frontmatter.py` for `skillreg.parse_frontmatter(text)`: plain `key: value`; single- and double-quoted values; folded `>` and literal `|` block scalars with `-`/`+` chomping and indentation (use unxt's real description shape: `description: >` then an indented paragraph); missing opening/closing `---` raises; unsupported constructs for `name`/`description` raise `SkillError` naming the file
-- [ ] T004 [P] Write `tests/test_skillreg.py` with temporary repos: `discover_local(root)` finds only top-level folders containing `SKILL.md` and ignores `.claude/`, `.specify/`, `.github/`, `registry/`, `scripts/`, `specs/`, `tests/`; `load_registry(root)` reads `registry/*.json`; `validate_offline(skills)` reports: card/entry keys not exactly as in contracts/registry-entry.md, empty strings, `name` not matching `^[a-z0-9-]{1,64}$`, file stem ≠ name, folder ≠ name, local `SKILL.md` name ≠ folder name, local `SKILL.md` description empty or "at most 1024 characters" exceeded, duplicate names across local and registry, `source.path` with a leading `/` or `..`; `SKILL.md` over 500 lines is a warning, not an error; every message names the skill or file
+- [X] T003 [P] Write `tests/test_frontmatter.py` for `skillreg.parse_frontmatter(text)`: plain `key: value`; single- and double-quoted values; folded `>` and literal `|` block scalars with `-`/`+` chomping and indentation (use unxt's real description shape: `description: >` then an indented paragraph); missing opening/closing `---` raises; unsupported constructs for `name`/`description` raise `SkillError` naming the file
+- [X] T004 [P] Write `tests/test_skillreg.py` with temporary repos: `discover_local(root)` finds only top-level folders containing `SKILL.md` and ignores `.claude/`, `.specify/`, `.github/`, `registry/`, `scripts/`, `specs/`, `tests/`; `load_registry(root)` reads `registry/*.json`; `validate_offline(skills)` reports: card/entry keys not exactly as in contracts/registry-entry.md, empty strings, `name` not matching `^[a-z0-9-]{1,64}$`, file stem ≠ name, folder ≠ name, local `SKILL.md` name ≠ folder name, local `SKILL.md` description empty or "at most 1024 characters" exceeded, duplicate names across local and registry, `source.path` with a leading `/` or `..`; `SKILL.md` over 500 lines is a warning, not an error; every message names the skill or file
 
 ### Implementation
 
-- [ ] T005 Implement `scripts/skillreg.py` (stdlib only): `SkillError`; dataclass `Skill(name, description, origin, repo, path, ref)` with properties `href`, `install` (`<name>@nstarman-skills`), `zip` (`https://github.com/nstarman/skills/releases/latest/download/<name>.zip`) per data-model.md; `parse_frontmatter`; `discover_local`; `load_registry`; `validate_offline(root) -> (errors, warnings)`; make T003 and T004 pass
-- [ ] T006 Add `fetch_skill_md(repo, path, ref, token=os.environ.get("GITHUB_TOKEN"))` to `scripts/skillreg.py`: GitHub contents API via `urllib` with `Accept: application/vnd.github.raw+json`, raising `SkillError("<name>: <repo>/<path>/SKILL.md not found at <ref>")` on 404 (research R4)
+- [X] T005 Implement `scripts/skillreg.py` (stdlib only): `SkillError`; dataclass `Skill(name, description, origin, repo, path, ref)` with properties `href`, `install` (`<name>@nstarman-skills`), `zip` (`https://github.com/nstarman/skills/releases/latest/download/<name>.zip`) per data-model.md; `parse_frontmatter`; `discover_local`; `load_registry`; `validate_offline(root) -> (errors, warnings)`; make T003 and T004 pass
+- [X] T006 Add `fetch_skill_md(repo, path, ref, token=os.environ.get("GITHUB_TOKEN"))` to `scripts/skillreg.py`: GitHub contents API via `urllib` with `Accept: application/vnd.github.raw+json`, raising `SkillError("<name>: <repo>/<path>/SKILL.md not found at <ref>")` on 404 (research R4)
 
 **Checkpoint**: `python -m unittest discover tests` passes
 
