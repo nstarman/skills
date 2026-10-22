@@ -55,13 +55,18 @@ hand: change the skill or the registry entry and run `python scripts/build_index
 
 ## Releases and zips
 
+Versions are dates, as in figkit and syw-site: a release is `vYYYY.MM.DD`; a second release on the
+same day is `vYYYY.MM.DD.2`, and so on. Every release is a complete snapshot of all skills, so
+nothing is backported here.
+
 `release.yml` builds one zip per skill (the skill's folder, without `card.json`; external skills at
 their ref) on every push to `main`, weekly and by hand, and publishes a release tagged
 `vYYYY.MM.DD` only when a zip changed. `https://github.com/nstarman/skills/releases/latest/download/<name>.zip`
 is the stable link (it 404s until the first release exists).
 
 `bump-refs.yml` runs weekly: for tag-pinned entries it opens (or updates) one pull request moving
-them to their repository's latest release. Pull requests opened by `GITHUB_TOKEN` do not trigger
+them to their repository's latest release (date tags sort after older semver tags, e.g. figkit's
+`v2026.10.30` after `v0.2.0`). Pull requests opened by `GITHUB_TOKEN` do not trigger
 CI; the job validates and puts the output in the pull request — re-run checks before merging.
 
 ## How it reaches the website
