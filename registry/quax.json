@@ -1,0 +1,9 @@
+{
+  "name": "quax",
+  "description": "Writes, reviews and debugs JAX code that uses quax: custom array-like types such as physical units, sparse and low-rank arrays, quaxify, and the dispatch rules that make them work.",
+  "source": {
+    "repo": "nstarman/quax",
+    "path": "skills/quax",
+    "ref": "main"
+  }
+}

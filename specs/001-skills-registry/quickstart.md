@@ -63,3 +63,12 @@ SKILLS_REF=main node scripts/collect-skills.mjs
 
 Expected: `config/skills.json` lists 7 skills; `from` is set exactly for the 4 external ones;
 /tools/ shows them.
+
+## Results (2026-10-22, macOS, Python 3.14, Claude Code 2.1.259)
+
+- Step 1: 28 unit tests pass; `index.json` lists 7 skills, 4 external; `--check` passes.
+- Step 2: `--check --remote` passes against GitHub. Each break in a scratch copy exits 1 naming
+  the entry: bad path and bad ref (`unxt: …/SKILL.md not found at <ref>`), wrong name, extra key,
+  hand-edited `index.json` (`stale … index.json`), registry name equal to a local folder.
+- Step 3: `claude plugin validate .` passes with no warnings; from a temporary config, `diataxis`
+  (local), `unxt` (branch) and `figkit` (tag v0.2.0) install with one skill each.
