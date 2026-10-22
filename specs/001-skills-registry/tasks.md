@@ -114,10 +114,10 @@ before the implementation that makes them pass.
 
 **Independent Test**: quickstart.md step 5.
 
-- [ ] T022 [P] [US5] Write `tests/test_bump_refs.py` with `git ls-remote --tags` and the releases API patched: a tag-pinned entry behind the latest release is rewritten (`name: old -> new` printed); `--dry-run` writes nothing; branch-tracking entries (ref not a tag) are untouched; a current entry prints nothing; an API error for one entry is reported without touching others
-- [ ] T023 [US5] Implement `scripts/bump_refs.py` per contracts/scripts.md (research R6); make T022 pass
-- [ ] T024 [US5] Add `.github/workflows/bump-refs.yml` (weekly + workflow_dispatch; `permissions: contents: write, pull-requests: write`): run `bump_refs.py`; if any file changed, run `build_index.py` and `build_index.py --check --remote` and the unit tests, then commit to branch `bump-refs` and open or update one pull request with `gh pr create`/`gh pr edit`, its body listing the bumps and noting that checks must be re-run before merging (pull requests opened with `GITHUB_TOKEN` don't trigger CI — research R6)
-- [ ] T025 [US5] Run quickstart.md step 5 (`registry/figkit.json` at `v0.1.0`, `bump_refs.py --dry-run` proposes the latest tag); restore the file
+- [X] T022 [P] [US5] Write `tests/test_bump_refs.py` with `git ls-remote --tags` and the releases API patched: a tag-pinned entry behind the latest release is rewritten (`name: old -> new` printed); `--dry-run` writes nothing; branch-tracking entries (ref not a tag) are untouched; a current entry prints nothing; an API error for one entry is reported without touching others
+- [X] T023 [US5] Implement `scripts/bump_refs.py` per contracts/scripts.md (research R6); make T022 pass
+- [X] T024 [US5] Add `.github/workflows/bump-refs.yml` (weekly + workflow_dispatch; `permissions: contents: write, pull-requests: write`): run `bump_refs.py`; if any file changed, run `build_index.py` and `build_index.py --check --remote` and the unit tests, then commit to branch `bump-refs` and open or update one pull request with `gh pr create`/`gh pr edit`, its body listing the bumps and noting that checks must be re-run before merging (pull requests opened with `GITHUB_TOKEN` don't trigger CI — research R6)
+- [X] T025 [US5] Run quickstart.md step 5 (`registry/figkit.json` at `v0.1.0`, `bump_refs.py --dry-run` proposes the latest tag); restore the file
 
 ---
 
