@@ -76,4 +76,9 @@ Expected: `config/skills.json` lists 7 skills; `from` is set exactly for the 4 e
   files; a second build (real sparse clones) prints `unchanged` — deterministic.
 - Step 5: with `registry/figkit.json` at `v0.1.0`, `bump_refs.py --dry-run` prints
   `figkit: v0.1.0 -> v0.2.0`; at the real pin it prints nothing; quax/unxt (branches) untouched.
-- Step 6 (website) and the first real release run after merge (T021, T026–T028).
+- After merge (2026-10-22): `release.yml` published **v2026.10.22** with 7 zips and `hashes.json`;
+  `https://github.com/nstarman/skills/releases/latest/download/unxt.zip` downloads a valid zip.
+  Uploading a zip to claude.ai is left to the author (needs their account).
+- Step 6: nstarman/nstarman.github.io#409 (merged, deployed) — `collect-skills.mjs` reads
+  `index.json`; `config/skills.json` lists 7 skills with `from` on exactly the 4 external ones;
+  https://nstarkman.space/tools/ shows them, external ones "from <owner/repo>".
