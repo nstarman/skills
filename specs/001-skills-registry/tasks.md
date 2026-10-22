@@ -104,7 +104,7 @@ before the implementation that makes them pass.
 - [X] T018 [P] [US4] Write `tests/test_release_zips.py`: for local skills in a temporary repo, each zip has a single top-level `<name>/` folder with `SKILL.md` and resource folders and no `card.json`; building twice gives byte-identical zips (sorted entries, timestamps 1980-01-01, fixed permissions — research R5); `hashes.json` maps name → sha256; with `--previous` the last line is `unchanged` for identical inputs and `changed` (names listed before it) after editing a file, adding or removing a skill; external fetching is patched
 - [X] T019 [US4] Implement `scripts/release_zips.py` per contracts/scripts.md: local skills zipped from their folder without `card.json`; external skills via `git clone --depth 1 --branch <ref> --filter=blob:none --sparse https://github.com/<repo>` + `git sparse-checkout set <path>` in a temporary directory (research R4); deterministic zips; `hashes.json`; `--previous` comparison; make T018 pass
 - [X] T020 [US4] Add `.github/workflows/release.yml` (on push to main with paths `*/SKILL.md`, `*/**`, `registry/**`, `scripts/**`; weekly schedule; workflow_dispatch; `permissions: contents: write`): download the latest release's `hashes.json` if any (`gh release download --pattern hashes.json`), run `release_zips.py dist --previous …`, and on `changed` create release `vYYYY.MM.DD` (or `vYYYY.MM.DD.N` if that tag exists) with every `dist/*` asset via `gh release create`
-- [ ] T021 [US4] Run quickstart.md step 4 locally (`release_zips.py` twice, `unzip -l`), then trigger `release.yml` by hand after merge and check `https://github.com/nstarman/skills/releases/latest/download/unxt.zip` downloads a valid zip; upload one zip to claude.ai by hand (author)
+- [X] T021 [US4] Run quickstart.md step 4 locally (`release_zips.py` twice, `unzip -l`), then trigger `release.yml` by hand after merge and check `https://github.com/nstarman/skills/releases/latest/download/unxt.zip` downloads a valid zip; upload one zip to claude.ai by hand (author)
 
 ---
 
@@ -127,9 +127,9 @@ before the implementation that makes them pass.
 
 **Independent Test**: quickstart.md step 6.
 
-- [ ] T026 [US2] In `nstarman/nstarman.github.io`, change `scripts/collect-skills.mjs` to fetch `index.json` (contents API at `SKILLS_REF`, default `main`), require `schema === 1` and a non-empty `skills` array whose items have non-empty string `name`, `description`, `href` and `origin` ∈ {`local`, `external`}, and write `config/skills.json` as `{name, description, href}` plus `from` (= `source.repo`) only for external skills; throw and write nothing on any problem (contracts/index-json.md "Website mapping"); update the header comment
-- [ ] T027 [US2] In `nstarman/nstarman.github.io`, show "from <repo>" on external skill cards in `src/pages/tools/index.astro` and one line under the Agent Skills heading linking to the install section of `https://github.com/nstarman/skills#readme`; follow that repo's AGENTS.md (tests, card styles, `npm test`)
-- [ ] T028 [US2] In `nstarman/nstarman.github.io`, run `SKILLS_REF=main node scripts/collect-skills.mjs`, check 7 skills with `from` on exactly the 4 external ones, run its test suite, and open the pull request (its CI posts a Cloudflare preview of /tools/)
+- [X] T026 [US2] In `nstarman/nstarman.github.io`, change `scripts/collect-skills.mjs` to fetch `index.json` (contents API at `SKILLS_REF`, default `main`), require `schema === 1` and a non-empty `skills` array whose items have non-empty string `name`, `description`, `href` and `origin` ∈ {`local`, `external`}, and write `config/skills.json` as `{name, description, href}` plus `from` (= `source.repo`) only for external skills; throw and write nothing on any problem (contracts/index-json.md "Website mapping"); update the header comment
+- [X] T027 [US2] In `nstarman/nstarman.github.io`, show "from <repo>" on external skill cards in `src/pages/tools/index.astro` and one line under the Agent Skills heading linking to the install section of `https://github.com/nstarman/skills#readme`; follow that repo's AGENTS.md (tests, card styles, `npm test`)
+- [X] T028 [US2] In `nstarman/nstarman.github.io`, run `SKILLS_REF=main node scripts/collect-skills.mjs`, check 7 skills with `from` on exactly the 4 external ones, run its test suite, and open the pull request (its CI posts a Cloudflare preview of /tools/)
 
 ---
 
@@ -137,8 +137,8 @@ before the implementation that makes them pass.
 
 - [X] T029 [P] Rewrite `AGENTS.md`: layout (local skills, `registry/`, generated files, scripts, Spec Kit), adding a local skill, registering an external one, regenerating, the checks, releases and zips, the weekly bump PR, and "How it reaches the website" around `index.json` schema 1 and its compatibility rule (constitution Principle V)
 - [X] T030 [P] Update `README.md` prose around the generated sections: what the repository is (the registry and clearinghouse), the three ways to install, and where external skills live
-- [ ] T031 Run all of quickstart.md; record results in `specs/001-skills-registry/quickstart.md`
-- [ ] T032 Open the pull request for `001-skills-registry` into `main` (squash), get CI green, merge; then trigger `release.yml` by hand (T021) and start Phase 7 on the website
+- [X] T031 Run all of quickstart.md; record results in `specs/001-skills-registry/quickstart.md`
+- [X] T032 Open the pull request for `001-skills-registry` into `main` (squash), get CI green, merge; then trigger `release.yml` by hand (T021) and start Phase 7 on the website
 
 ---
 
