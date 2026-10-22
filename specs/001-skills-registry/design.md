@@ -21,7 +21,7 @@ Agreed with the author on 2026-10-21/22, section by section.
 registry/<name>.json             one per external skill
 index.json                       generated
 .claude-plugin/marketplace.json  generated
-scripts/build_index.py           generator + validator (stdlib Python)
+scripts/build_index.py           generator + validator (stdlib Python); release_zips.py, bump_refs.py and the shared skillreg.py beside it (plan)
 README.md                        skill table + install section generated between markers
 ```
 
@@ -53,11 +53,10 @@ are not registered.
 Sorted by name; local `href` = this repo's folder at `main`, local `source` = this repo, `ref` main.
 
 `.claude-plugin/marketplace.json`: name `nstarman-skills`, owner Nathaniel Starkman; one plugin per
-skill, plugin name = skill name (skills appear as `/<name>:<name>`); local skills sourced from this
-repo, external via `git-subdir` (`url` = repo, `path`, `ref`); the entry is the manifest (no
-plugin.json needed). **Spike first**: which form makes a single skill folder a plugin —
-`"skills": ["./"]` on the folder itself, or the parent folder with `"skills": ["./<name>"]` —
-verified with `claude plugin validate` and a real install of one local and one external skill.
+skill, plugin name = skill name (skills appear as `/<name>:<name>`); source = the skill folder
+itself with `"skills": ["./"]` — `./<name>` for local skills, `git-subdir` (`url` = repo, `path`,
+`ref`) for external ones; the entry is the manifest (no plugin.json). Settled by research R1
+(validated and installed for local and external skills).
 
 README: table (name, description, from) and install section regenerated between marker comments.
 
