@@ -1,0 +1,45 @@
+name: release
+
+# One zip per skill for claude.ai, published as a dated release only when any zip changed.
+# Runs on every push to main (unchanged content means no release), weekly (skills that track a
+# branch upstream may have changed) and by hand. Stable links:
+#   https://github.com/nstarman/skills/releases/latest/download/<name>.zip
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Hashes of the latest release
+        run: gh release download --pattern hashes.json --dir previous || echo "no previous release"
+      - name: Build zips
+        id: build
+        run: |
+          python scripts/release_zips.py dist --previous previous/hashes.json | tee build.log
+          echo "result=$(tail -n 1 build.log)" >> "$GITHUB_OUTPUT"
+      - name: Publish a dated release
+        if: steps.build.outputs.result == 'changed'
+        run: |
+          tag="v$(date -u +%Y.%m.%d)"
+          n=2; base="$tag"
+          while gh release view "$tag" >/dev/null 2>&1; do tag="$base.$n"; n=$((n + 1)); done
+          gh release create "$tag" dist/*.zip dist/hashes.json --title "Skills $tag" \
+            --notes "One zip per skill for claude.ai (Customize → Skills → upload). $(grep '^differs:' build.log || true)"
