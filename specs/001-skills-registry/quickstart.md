@@ -72,3 +72,8 @@ Expected: `config/skills.json` lists 7 skills; `from` is set exactly for the 4 e
   hand-edited `index.json` (`stale … index.json`), registry name equal to a local folder.
 - Step 3: `claude plugin validate .` passes with no warnings; from a temporary config, `diataxis`
   (local), `unxt` (branch) and `figkit` (tag v0.2.0) install with one skill each.
+- Step 4: 7 zips, one top-level `<name>/` folder each, no `card.json`; figkit's zip carries its 11
+  files; a second build (real sparse clones) prints `unchanged` — deterministic.
+- Step 5: with `registry/figkit.json` at `v0.1.0`, `bump_refs.py --dry-run` prints
+  `figkit: v0.1.0 -> v0.2.0`; at the real pin it prints nothing; quax/unxt (branches) untouched.
+- Step 6 (website) and the first real release run after merge (T021, T026–T028).

@@ -135,8 +135,8 @@ before the implementation that makes them pass.
 
 ## Phase 8: Polish & Cross-Cutting Concerns
 
-- [ ] T029 [P] Rewrite `AGENTS.md`: layout (local skills, `registry/`, generated files, scripts, Spec Kit), adding a local skill, registering an external one, regenerating, the checks, releases and zips, the weekly bump PR, and "How it reaches the website" around `index.json` schema 1 and its compatibility rule (constitution Principle V)
-- [ ] T030 [P] Update `README.md` prose around the generated sections: what the repository is (the registry and clearinghouse), the three ways to install, and where external skills live
+- [X] T029 [P] Rewrite `AGENTS.md`: layout (local skills, `registry/`, generated files, scripts, Spec Kit), adding a local skill, registering an external one, regenerating, the checks, releases and zips, the weekly bump PR, and "How it reaches the website" around `index.json` schema 1 and its compatibility rule (constitution Principle V)
+- [X] T030 [P] Update `README.md` prose around the generated sections: what the repository is (the registry and clearinghouse), the three ways to install, and where external skills live
 - [ ] T031 Run all of quickstart.md; record results in `specs/001-skills-registry/quickstart.md`
 - [ ] T032 Open the pull request for `001-skills-registry` into `main` (squash), get CI green, merge; then trigger `release.yml` by hand (T021) and start Phase 7 on the website
 

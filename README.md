@@ -1,8 +1,10 @@
 # skills
 
-Agent skills I use — instructions, references and scripts that an AI coding
-agent loads when a task calls for them. Each folder is one skill, with its
-`SKILL.md` at the top.
+Agent skills I publish — instructions, references and scripts that an AI coding
+agent loads when a task calls for them. This repository is their registry: skills
+kept here are folders with a `SKILL.md` at the top, and skills that live with the
+code they describe (quax, unxt, figkit) are registered in `registry/` and listed
+alongside them, linked to their home repository.
 
 <!-- skills:table:start -->
 | Skill | For | From |
@@ -34,7 +36,8 @@ agent loads when a task calls for them. Each folder is one skill, with its
 a project's `.claude/skills/` for that project only.
 <!-- skills:install:end -->
 
-The bundled scripts are standard-library Python 3 or Bash.
+The skills' bundled scripts are standard-library Python 3 or Bash. To add or register a
+skill, see [AGENTS.md](AGENTS.md).
 
 ## Credits
 
