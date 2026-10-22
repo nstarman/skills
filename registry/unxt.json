@@ -1,0 +1,9 @@
+{
+  "name": "unxt",
+  "description": "Writes, reviews and debugs code that uses unxt quantities in JAX: units, dimensions and unit systems, conversions, and passing quantities through JAX and quax transformations.",
+  "source": {
+    "repo": "GalacticDynamics/unxt",
+    "path": "skills/unxt",
+    "ref": "main"
+  }
+}

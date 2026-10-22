@@ -1,0 +1,49 @@
+name: bump-refs
+
+# Weekly: move tag-pinned registry entries to their repository's latest release, as one pull request.
+# Pull requests opened with GITHUB_TOKEN do not trigger other workflows, so this job runs the full
+# validation itself and puts its output in the pull request; re-run checks before merging.
+on:
+  schedule:
+    - cron: "41 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Find newer tags
+        run: python scripts/bump_refs.py | tee bumps.txt
+      - name: Regenerate and validate
+        if: hashFiles('bumps.txt') != '' && success()
+        id: validate
+        run: |
+          if [ ! -s bumps.txt ]; then echo "none=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          python scripts/build_index.py
+          { python -m unittest discover tests 2>&1 | tail -n 3; python scripts/build_index.py --check --remote 2>&1; } | tee validation.txt
+      - name: Open or update the pull request
+        if: steps.validate.outputs.none != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C bump-refs
+          git add registry index.json .claude-plugin/marketplace.json README.md
+          git commit -m "Bump pinned skill versions" -m "$(cat bumps.txt)"
+          git push --force-with-lease origin bump-refs
+          body=$(printf 'Newer releases of tag-pinned skills:\n\n```\n%s\n```\n\nValidation run by this job (CI does not run on pull requests opened by GITHUB_TOKEN; re-run checks before merging):\n\n```\n%s\n```\n' "$(cat bumps.txt)" "$(cat validation.txt)")
+          if gh pr view bump-refs >/dev/null 2>&1; then
+            gh pr edit bump-refs --body "$body"
+          else
+            gh pr create --head bump-refs --base main --title "Bump pinned skill versions" --body "$body"
+          fi

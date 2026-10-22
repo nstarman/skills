@@ -1,0 +1,34 @@
+name: check
+
+# Validates every skill where its files live and keeps the generated files fresh
+# (index.json, .claude-plugin/marketplace.json, README sections). See AGENTS.md.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Unit tests
+        run: python -m unittest discover tests
+      - name: Skills valid at their sources, generated files up to date
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python scripts/build_index.py --check --remote
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Marketplace valid for Claude Code
+        run: |
+          npm install --global @anthropic-ai/claude-code@2.1.259
+          claude plugin validate .

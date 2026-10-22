@@ -1,29 +1,43 @@
 # skills
 
-Agent skills I use — instructions, references and scripts that an AI coding
-agent loads when a task calls for them. Each folder is one skill, with its
-`SKILL.md` at the top.
+Agent skills I publish — instructions, references and scripts that an AI coding
+agent loads when a task calls for them. This repository is their registry: skills
+kept here are folders with a `SKILL.md` at the top, and skills that live with the
+code they describe (quax, unxt, figkit) are registered in `registry/` and listed
+alongside them, linked to their home repository.
 
-| Skill | For |
-| --- | --- |
-| [`diataxis`](diataxis/) | Auditing and restructuring documentation into the [Diátaxis](https://diataxis.fr) modes — tutorials, how-to guides, reference and explanation — without breaking links. Covers Sphinx/MyST and Zensical. |
-| [`engaging-hybrid-compute`](engaging-hybrid-compute/) | Splitting a research project between a local machine and MIT's Engaging (ORCD) Slurm cluster, synced through a private git repo: SSH/Duo ControlMaster, job submission and monitoring, pushing results back. |
-| [`syw-overleaf-dropbox`](syw-overleaf-dropbox/) | Writing a paper with [showyourwork](https://github.com/showyourwork/showyourwork) and Overleaf, using the Dropbox copy of the Overleaf project as the local text mirror: where to edit text versus code, building and pushing, `\variable{}` numbers, and the stalls, flags and silent non-builds to expect. |
+<!-- skills:table:start -->
+| Skill | For | From |
+| --- | --- | --- |
+| [`diataxis`](diataxis/) | Audits and restructures documentation into the Diátaxis modes — tutorials, how-to guides, reference and explanation — without breaking links. |  |
+| [`engaging-hybrid-compute`](engaging-hybrid-compute/) | Splits a research project between a laptop and MIT's Engaging cluster: edit locally, run Slurm jobs on the cluster, and sync code and results through a private git repo. |  |
+| [`figkit`](https://github.com/nstarman/figkit/tree/v0.2.0/skills/figkit) | Builds an interactive webapp for a scientific paper with figkit: exports the paper's arrays, ports the per-interaction science to tested JavaScript, composes linked views, and publishes a static site plus a single archivable HTML file that also runs in notebooks. | [nstarman/figkit](https://github.com/nstarman/figkit) |
+| [`figkit-upgrade`](https://github.com/nstarman/figkit/tree/v0.2.0/skills/figkit-upgrade) | Moves a figkit webapp to a newer figkit version by applying the changelog's migration notes in order, then rebuilds and re-checks that the app still reproduces the paper's numbers. | [nstarman/figkit](https://github.com/nstarman/figkit) |
+| [`quax`](https://github.com/nstarman/quax/tree/main/skills/quax) | Writes, reviews and debugs JAX code that uses quax: custom array-like types such as physical units, sparse and low-rank arrays, quaxify, and the dispatch rules that make them work. | [nstarman/quax](https://github.com/nstarman/quax) |
+| [`syw-overleaf-dropbox`](syw-overleaf-dropbox/) | Guides writing a paper with showyourwork and Overleaf, using the Dropbox copy of the Overleaf project as the local text mirror: where to edit text versus code, how a build pushes figures and numbers, and the stalls and silent non-builds to expect. |  |
+| [`unxt`](https://github.com/GalacticDynamics/unxt/tree/main/skills/unxt) | Writes, reviews and debugs code that uses unxt quantities in JAX: units, dimensions and unit systems, conversions, and passing quantities through JAX and quax transformations. | [GalacticDynamics/unxt](https://github.com/GalacticDynamics/unxt) |
+<!-- skills:table:end -->
 
-## Using one
+## Installing
 
-**Claude Code** — copy the skill's folder into your skills directory:
+<!-- skills:install:start -->
+**Claude Code** — add this repository as a plugin marketplace once, then install any skill by name
+(skills in other repositories install from there, at the version listed):
 
-```bash
-git clone https://github.com/nstarman/skills
-cp -R skills/diataxis ~/.claude/skills/
+```text
+/plugin marketplace add nstarman/skills
+/plugin install <name>@nstarman-skills
 ```
 
-For one project only, copy it into that project's `.claude/skills/` instead.
+**claude.ai** — download `<name>.zip` from the
+[latest release](https://github.com/nstarman/skills/releases/latest) and upload it under Customize → Skills.
 
-**claude.ai** — zip the skill's folder and upload it under Settings → Capabilities → Skills.
+**By hand** — copy the skill's folder (its link in the table above) into `~/.claude/skills/`, or into
+a project's `.claude/skills/` for that project only.
+<!-- skills:install:end -->
 
-The bundled scripts are standard-library Python 3 or Bash.
+The skills' bundled scripts are standard-library Python 3 or Bash. To add or register a
+skill, see [AGENTS.md](AGENTS.md).
 
 ## Credits
 
