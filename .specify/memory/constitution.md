@@ -54,6 +54,9 @@ skill's files live.
 
 ## Repository Rules
 
+- Releases are dated: `vYYYY.MM.DD`, and `vYYYY.MM.DD.N` (N = 2, 3, …) for another release the
+  same day — in practice a fix to that day's zips. Each release is a full snapshot, so there are no
+  backport branches here; the skills' own repositories (e.g. figkit) handle backports of their code.
 - Squash merges only. Each local skill also has a `card.json` (name, description) — the card
   format the registry entries share.
 - Agent guidance lives in `AGENTS.md`; this constitution overrides it where they differ.
@@ -65,4 +68,4 @@ skill's files live.
 - Amendments are made by pull request with a version bump: MAJOR for removing or redefining a
   principle, MINOR for adding or materially expanding one, PATCH for wording.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-22 | **Last Amended**: 2026-10-22
+**Version**: 1.1.0 | **Ratified**: 2026-10-22 | **Last Amended**: 2026-10-22
