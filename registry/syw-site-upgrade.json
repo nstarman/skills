@@ -1,0 +1,9 @@
+{
+  "name": "syw-site-upgrade",
+  "description": "Moves a paper's docs site to a newer syw-site release by applying the changelog's migration notes in order, refreshing the scaffold, rebuilding and checking that the site still shows the paper's numbers.",
+  "source": {
+    "repo": "nstarman/syw-site",
+    "path": "skills/syw-site-upgrade",
+    "ref": "v2026.10.22"
+  }
+}

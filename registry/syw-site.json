@@ -1,0 +1,9 @@
+{
+  "name": "syw-site",
+  "description": "Adds a docs site to a showyourwork paper: its numbers, figures and interactive figkit webapps, built by the paper's own pipeline and published at nstarkman.space with the website's layout, kept private until arXiv.",
+  "source": {
+    "repo": "nstarman/syw-site",
+    "path": "skills/syw-site",
+    "ref": "v2026.10.22"
+  }
+}
