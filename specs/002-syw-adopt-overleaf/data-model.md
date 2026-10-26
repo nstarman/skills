@@ -26,11 +26,15 @@ comments allowed:
 1	ms.tex	src/tex/ms.tex (renamed from main.tex)
 2	figures/GD1/track.pdf	built by src/scripts/plot_gd1.py
 3	aastex701.cls	src/tex/aastex701.cls
-4	notes/referee.md	stays out of git; pruned in phase 7
+4	uv.lock	moves to the repository root
+4	notes/referee.md	private: stays out of git; pruned in phase 7
 ```
 
 - Class: `1` authored text, `2` build output, `3` static support, `4` not needed (design.md
   "Mapping").
+- A class-4 note starting with `private` marks a file that must never be committed (notes,
+  referee replies); `public_check.sh` checks those. Other class-4 files (code, data, lockfiles)
+  may move into the repository.
 - Every file in the Overleaf clone appears exactly once (the runbook checks with
   `git -C overleaf ls-files` against the inventory). Paths are the **post-rename** names; the
   rename is noted in column 3.

@@ -29,11 +29,12 @@ hash_of() {  # md5 on macOS, md5sum elsewhere; prints nothing for a missing file
     md5 -q "$1" 2>/dev/null || md5sum "$1" | cut -d' ' -f1
 }
 
-found=0
-for f in src/tex/figures/*.pdf; do
-    [ -f "$f" ] || continue  # no PDFs: the pattern stays unexpanded in sh
-    found=1
-    name=$(basename "$f")
+# Figures in subfolders too (figures/GD1/a.pdf), compared by path relative to figures/.
+figs=$(find src/tex/figures -name '*.pdf' 2>/dev/null | sort)
+[ -z "$figs" ] && echo "figures: no PDFs in src/tex/figures"
+echo "$figs" | while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    name=${f#src/tex/figures/}
     a=$(hash_of "$f")
     b=$(hash_of "$MIRROR/figures/$name")
     if [ -z "$b" ]; then
@@ -44,6 +45,5 @@ for f in src/tex/figures/*.pdf; do
         echo "figure $name: DIFFERENT from mirror (Dropbox lag? wait and recheck)"
     fi
 done
-[ "$found" = 0 ] && echo "figures: no PDFs in src/tex/figures"
 
 command -v pdfinfo >/dev/null && pdfinfo ms.pdf 2>/dev/null | grep Pages

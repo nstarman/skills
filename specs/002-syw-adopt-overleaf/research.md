@@ -79,7 +79,9 @@ Read on 2026-10-26 from the showyourwork development install used for CP2
   they are not checked.
 - Also fail on: token-like strings in any commit's content (`olp_`, `ghp_`, `gho_`,
   `github_pat_`, `access_token=`, `-----BEGIN … PRIVATE KEY`), via `git grep` over `rev-list --all`;
-  and any class-4 inventory path present in any commit (`git log --all --name-only`).
+  and any class-4 inventory path marked `private` present in any commit
+  (`git log --all --name-only`, matched as a path suffix). Unmarked class-4 files (code, data,
+  lockfiles) legitimately move into the repository, so they are not checked.
 
 ## R7. Baseline PDF must not be compiled in the mirror
 

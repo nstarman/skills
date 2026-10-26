@@ -44,7 +44,7 @@ check_lists.py <overleaf block or showyourwork.yml> <inventory.tsv>
 public_check.sh <new repo> <repo.bundle> <inventory.tsv>
 ```
 
-- Research R6: shared commits, token-like strings in history, class-4 paths in history. Prints
+- Research R6: shared commits, token-like strings in history, private class-4 paths in history. Prints
   `ok <check>` or `FAIL <check>: <detail>` (a token match prints commit and path, never the match).
 - Read-only on the new repository.
 
