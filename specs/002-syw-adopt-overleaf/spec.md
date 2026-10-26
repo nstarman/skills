@@ -194,8 +194,8 @@ repository's backup, and on a clean one.
   phase, and show the exact push and the pulled text's identity to the author before that sync.
 - **FR-009**: The skill MUST classify every Overleaf file into one of four classes (authored text,
   build output, static support, not needed) and prune class 4 only from a list the author approves.
-- **FR-010**: A public-readiness check MUST fail on objects from the old history, token-like
-  strings, or committed private Overleaf-only files.
+- **FR-010**: A public-readiness check MUST fail on commits from the old history, token-like
+  strings, or committed private Overleaf-only files. (Identical file contents are not a leak.)
 - **FR-011**: `syw-overleaf-dropbox`'s build check MUST include figures in subfolders.
 - **FR-012**: The skill MUST document exact restore steps for each phase and record findings,
   decisions and approvals in `MIGRATION.md` in the backup folder.
@@ -225,8 +225,9 @@ repository's backup, and on a clean one.
 - **SC-004**: Every gated step in the migration has a recorded approval; zero irreversible or
   outward-facing steps happen without one.
 - **SC-005**: No token value appears in any file, log or output produced during the migration.
-- **SC-006**: Every acceptance scenario of stories 2, 4, 5 and 6 is covered by an automated test or
-  a scripted check that passes.
+- **SC-006**: Every acceptance scenario of stories 2, 4, 5 and 6 is covered by an automated test,
+  except story 4's third (no Overleaf contact before the first sync), which follows from the
+  configuration and is checked during the migration.
 
 ## Assumptions
 
