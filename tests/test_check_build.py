@@ -22,6 +22,22 @@ class CheckBuildTest(unittest.TestCase):
         self.assertIn("figure GD1/a.pdf: ABSENT", out)
         self.assertIn("figure b.pdf: same", out)
 
+    def test_variables_in_comments_are_ignored(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            (repo / "src/tex/output").mkdir(parents=True)
+            (repo / "src/tex/ms.tex").write_text(
+                "% `\\variable{output/x.tex}` inserts a value\n"
+                "Rate \\variable{output/rate.tex}\\% here. % \\variable{output/y.tex}\n"
+                "Gone \\variable{output/missing.tex}.\n"
+            )
+            (repo / "src/tex/output/rate.tex").write_text("3")
+            out = subprocess.run(["sh", str(SCRIPT), tmp], cwd=repo, capture_output=True, text=True).stdout
+        self.assertIn("MISSING variable file: output/missing.tex", out)
+        self.assertNotIn("output/x.tex", out)
+        self.assertNotIn("output/y.tex", out)
+        self.assertNotIn("output/rate.tex", out)
+
 
 if __name__ == "__main__":
     unittest.main()

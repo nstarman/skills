@@ -7,7 +7,11 @@ Usage:
 Fails (exit 1), naming each path, when:
   both     a path is in both lists, or a folder in one list covers a path in the other;
   authored a push entry covers a class-1 (authored) file, so a build would overwrite it;
-  private  any entry covers a class-4 file (notes, referee replies, ...).
+  private  a pull entry covers a class-4 file (notes, referee replies, ...), or a push entry
+           names one exactly; either would copy it between Overleaf and the repository.
+Lists, without failing:
+  deleted  a class-4 file under a pushed folder: the push replaces the whole Overleaf folder,
+           so the first sync deletes it there. Show these at the dry run.
 Paths are compared relative to src/tex/; an entry covers a path it equals or is a folder of.
 """
 
@@ -56,7 +60,8 @@ def covers(entry, path):
 
 
 def problems(push, pull, classes):
-    out = []
+    """(rule, path) failures, and the class-4 paths a pushed folder deletes from Overleaf."""
+    out, deleted = [], []
     for a in push:
         for b in pull:
             if covers(a, b) or covers(b, a):
@@ -64,9 +69,12 @@ def problems(push, pull, classes):
     for path, cls in sorted(classes.items()):
         if cls == "1" and any(covers(e, path) for e in push):
             out.append(("authored", path))
-        if cls == "4" and any(covers(e, path) for e in push + pull):
-            out.append(("private", path))
-    return out
+        if cls == "4":
+            if path in push or any(covers(e, path) for e in pull):
+                out.append(("private", path))
+            elif any(covers(e, path) for e in push):
+                deleted.append(path)
+    return out, deleted
 
 
 def main(argv=None):
@@ -79,11 +87,13 @@ def main(argv=None):
     except ValueError as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
-    found = problems(push, pull, read_inventory(argv[1]))
+    found, deleted = problems(push, pull, read_inventory(argv[1]))
+    for path in deleted:
+        print(f"deleted: {path}")
     for rule, path in found:
         print(f"FAIL {rule}: {path}")
     if not found:
-        print(f"ok: {len(push)} push, {len(pull)} pull entries")
+        print(f"ok: {len(push)} push, {len(pull)} pull entries; the first push deletes {len(deleted)} file(s)")
     return 1 if found else 0
 
 

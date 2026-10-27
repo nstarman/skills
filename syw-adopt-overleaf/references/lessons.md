@@ -9,10 +9,55 @@ Add one entry per surprise: what happened, why, what to do instead.
   repository held only Overleaf's own GitHub-sync snapshots (2 commits). So "the old repository"
   was two histories. Check `git -C <mirror> remote -v` and compare commits with GitHub in the
   survey; back up both (`backup.sh --github`), and run `public_check.sh` against both bundles.
-- **Overleaf's GitHub integration** was linked to the old repository; it must be unlinked in
-  Overleaf before that repository is archived.
+- **Overleaf's GitHub integration** was linked to the old repository. Overleaf has no per-project
+  unlink ("it is not possible to change the repository associated with a given project"), so the
+  link stays; retiring the repository (archived or deleted) makes the menu harmless.
 - **`\today`** in the paper shows up as a one-number difference in every `pdf_diff.py` run; expect
   it.
+- **`ms.tex` edits the first SYW build needed**, each replayed on Overleaf with `ms_edits.py`:
+  - the preamble's modules `\RequirePackage` each other by bare name, found before through
+    latexmk's `TEXINPUTS`: add `\makeatletter\providecommand\input@path{}`
+    `\g@addto@macro\input@path{{preamble/}}\makeatother` (`\providecommand`: tectonic does not
+    define `\input@path`);
+  - remove the paper's own `\variable`/`\script` shims: `showyourwork.sty` defines them;
+  - `\leavevmode` before an `\includegraphics` followed by `\\`: SYW's preprocess pass redefines
+    `\includegraphics` so it starts no line, and `\\` then has "no line here to end";
+  - add `.pdf` to extension-less `\includegraphics` paths: SYW resolves them literally.
+- **A fix to `ms.tex` that did not take effect.** SYW's preprocess stage copies `src/tex` only
+  when its inputs change; delete `.showyourwork/preprocess` before rebuilding.
+- **FontAwesome `\faRepeat` undefined.** The template's `showyourwork.sty` was older; CP2's fixed
+  copy worked.
+- **The engine difference swamped `pdf_diff.py`** (841 numbers, 1632 text lines): SYW builds with
+  tectonic, the baseline and Overleaf with pdflatex. Comparing figures, number files and a
+  pdflatex compile of the migrated sources separately found no difference at all; the
+  side-by-side showed every float on its old page.
+- **Pytest hung for 9 hours.** `testpaths = ["tests", "src"]` with `--doctest-modules` now
+  reached `src/scripts/`, and importing the step_1 script started its 21-hour run (it wrote two
+  checkpoints). Point doctests at the package only.
+- **A reduced-grid check script still wrote to the real data folder** after paths moved to a
+  shared `paths` module; patch output paths in the staged copies too.
+- **The first CI build ran the 21-hour cached rule.** `zenodo.yml` had no Sandbox DOI yet, so SYW
+  did not treat the rule as cached and `run_cache_rules_on_ci: false` never applied. Seed the
+  draft before pushing `main` (phase 5).
+- **The first sync pushed nothing.** The preceding failed attempt (empty token: `op read` had
+  timed out) had already built everything, and Snakemake skips `onsuccess`, where SYW pushes,
+  when there is nothing to do. Deleting `ms.pdf` forced a job.
+- **CI crashed in `showyourwork cache restore`** (`FileNotFoundError` on
+  `src/tex/figures/graphic/graphic.pdf`). A cached rule's output is a symlink into
+  `.showyourwork/cache`; the Actions article cache saves `src/tex/figures` without the target,
+  and `os.utime` follows the dangling link. Cached rules write under `src/data/`; a plain `cp`
+  rule puts the real file in `src/tex/figures/`; bump `article-cache-number` to drop the bad
+  cache. Upstream SYW has the same code.
+- **CI pushed two figures 3.7% wider to Overleaf.** The script measured text in pixels while
+  laying out; on a Retina Mac matplotlib's `macosx` backend draws at 200 dpi, CI's Agg at 100,
+  and the tight bounding box followed. `matplotlib.use("agg")` plus `dpi=200` on the figure
+  reproduced the original on every backend.
+- **Two files existed only in Overleaf's `figures/`** (a notebook, an older data array): the
+  dry run's deletion list caught them; the notebook went into the repository, the array into
+  `.local_cache/`.
+- **Pre-migration files only on GitHub.** Overleaf's import snapshot held 9 files deleted the next
+  day, before the local history recorded them; the blob lookup in phase 8 found them in
+  `github.bundle` only.
 
 ## CP2 (spatial correlations of stream convexities), 2026
 

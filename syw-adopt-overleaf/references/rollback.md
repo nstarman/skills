@@ -17,11 +17,14 @@ Restoring Overleaf is itself an outward-facing step: ⛔ ask the author first.
 | 0–1 | nothing outside the backup folder | delete `$B` if unwanted |
 | 2 | co-authors asked to pause | the author tells them to continue |
 | 3–4 | new local folder `paper-<slug>/` | delete the folder |
+| 5 | Zenodo Sandbox draft | `showyourwork cache delete` (token inline); the draft is private |
 | 5 | new private GitHub repository | `gh repo delete <owner>/paper-<slug> --yes` (needs the `delete_repo` scope; the author's call) |
-| 6.1 | mirror renamed | rename back in the mirror (`ms.tex`→`main.tex`, `bib.bib`→`main.bib`, `\bibliography{main}`); the author resets the main document |
+| 6.1 | Overleaf renamed, `ms.tex` edited, `showyourwork.sty` added | `git revert` that commit in a fresh Overleaf clone and push; the author resets the main document |
 | 6.5 | Overleaf received SYW's push | restore Overleaf to the frozen state (below) |
-| 7 | class-4 files deleted in Overleaf | restore them from Overleaf's history (Menu → History) or from `$B/mirror.tar.gz` into the mirror |
+| 7 | class-4 files deleted in Overleaf | `git revert` the deletion commit in a fresh Overleaf clone and push, or restore from Overleaf's history (Menu → History) |
+| 7 | old checkout deleted from the mirror | extract from `$B/mirror.tar.gz` (or Dropbox's deleted files) |
 | 8 | old repository archived | `gh repo unarchive <owner>/<old> --yes` |
+| 8 | old repository deleted | create it again (private) and push the refs of `$B/github.bundle` (`git clone --mirror` it, then `git push --mirror`); issues and Actions history are gone |
 
 ## Restore Overleaf to the frozen state
 
