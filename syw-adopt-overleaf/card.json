@@ -1,0 +1,4 @@
+{
+  "name": "syw-adopt-overleaf",
+  "description": "Moves an existing paper, with a live Overleaf project and a private git repository, into a fresh showyourwork repository: backup first, regenerated figures and numbers compared against the old PDF, every irreversible step approved by the author, and the old history kept private."
+}

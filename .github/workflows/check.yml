@@ -19,6 +19,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Poppler, for the PDF tests
+        run: sudo apt-get update -q && sudo apt-get install -y -q poppler-utils
       - name: Unit tests
         run: python -m unittest discover tests
       - name: Skills valid at their sources, generated files up to date
