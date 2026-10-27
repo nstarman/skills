@@ -112,7 +112,7 @@ access, nothing else changed).
 
 - [X] T019 Run `python scripts/build_index.py` and commit `index.json`, `.claude-plugin/marketplace.json`, `README.md`
 - [X] T020 Run `python -m unittest discover tests` and `python scripts/build_index.py --check`; both pass
-- [ ] T021 Mark this file's tasks done; open the pull request (squash merge)
+- [X] T021 Mark this file's tasks done; open the pull request (squash merge)
 
 ---
 
