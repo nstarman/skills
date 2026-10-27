@@ -29,14 +29,16 @@ Overleaf's history keeps everything, so first try Overleaf → History → resto
 author, in the UI). From the backup instead — a new commit that makes the project equal to the
 frozen one, keeping later history:
 
+Every command names the temporary clone with `-C`, so a failed clone stops here instead of
+wiping whatever folder the shell happens to be in:
+
 ```sh
-tmp=$(mktemp -d)
-ol clone -q "https://git@git.overleaf.com/$ID" "$tmp/now"
-cd "$tmp/now"
-git rm -rq . && git clean -fdq
-git -C "$B/overleaf" archive HEAD | tar -x -C .   # read-only on the backup
-git add -A && git commit -qm "restore pre-migration state"
-ol push origin HEAD
+tmp=$(mktemp -d) && ol clone -q "https://git@git.overleaf.com/$ID" "$tmp/now" || exit 1
+git -C "$tmp/now" rm -rq . && git -C "$tmp/now" clean -fdq
+git -C "$B/overleaf" archive HEAD | tar -x -C "$tmp/now"   # read-only on the backup
+git -C "$tmp/now" add -A && git -C "$tmp/now" commit -qm "restore pre-migration state"
+git -C "$tmp/now" diff --stat HEAD~1   # ⛔ show the author before pushing
+ol -C "$tmp/now" push origin HEAD
 ```
 
 ## Restore the old repository

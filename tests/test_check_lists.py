@@ -74,6 +74,10 @@ class CheckListsTest(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("notes/referee.md", out)
 
+    def test_inline_list_refused(self):
+        code, out = self.run_check(CLEAN.replace("  push:\n", "  push: [src/tex]\n  old_push:\n"))
+        self.assertEqual(code, 2, out)
+
     def test_full_showyourwork_yml(self):
         yml = "cache_on_zenodo: true\ndag:\n  render: false\n" + CLEAN + "ms_name: ms\nscripts:\n  py: python {script}\n"
         code, out = self.run_check(yml)

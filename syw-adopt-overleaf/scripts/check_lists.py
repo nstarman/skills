@@ -28,9 +28,12 @@ def read_lists(text):
             continue
         if not in_overleaf:
             continue
-        m = re.match(r"\s*(push|pull)\s*:\s*$", line)
+        m = re.match(r"\s*(push|pull)\s*:\s*(#.*)?$", line)
         if m:
             key = m.group(1)
+        elif re.match(r"\s*(push|pull)\s*:", line):
+            # an inline list (`push: [a, b]`) would otherwise be skipped and the check pass
+            raise ValueError(f"write the list as one '- path' line per entry: {line.strip()}")
         elif re.match(r"\s*-\s", line) and key:
             item = line.split("-", 1)[1].split(" #")[0].strip().strip("'\"")
             lists[key].append(("/" + item.rstrip("/")).removeprefix("/src/tex").lstrip("/"))
@@ -71,7 +74,11 @@ def main(argv=None):
     if len(argv) != 2:
         print(__doc__, file=sys.stderr)
         return 2
-    push, pull = read_lists(Path(argv[0]).read_text(encoding="utf-8"))
+    try:
+        push, pull = read_lists(Path(argv[0]).read_text(encoding="utf-8"))
+    except ValueError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 2
     found = problems(push, pull, read_inventory(argv[1]))
     for rule, path in found:
         print(f"FAIL {rule}: {path}")

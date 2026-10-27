@@ -79,6 +79,22 @@ class PublicCheckTest(unittest.TestCase):
         self.assertIn("config.txt", out)
         self.assertNotIn(FAKE_TOKEN, out)
 
+    def test_token_in_commit_message(self):
+        (self.new / "x.txt").write_text("x\n")
+        git(self.new, "add", "-A")
+        git(self.new, "commit", "-q", "-m", f"use {FAKE_TOKEN}")
+        code, out = self.check(self.new)
+        self.assertEqual(code, 1)
+        self.assertIn("(commit message)", out)
+        self.assertNotIn(FAKE_TOKEN, out)
+
+    def test_non_ascii_private_path(self):
+        self.inventory.write_text("4\tnotes/réponse.tex\tprivate\n")
+        commit(self.new, "src/tex/notes/réponse.tex", "reply\n")
+        code, out = self.check(self.new)
+        self.assertEqual(code, 1)
+        self.assertIn("réponse.tex", out)
+
     def test_class_4_in_history(self):
         commit(self.new, "src/tex/notes/referee.md", "reply\n")
         git(self.new, "rm", "-q", "src/tex/notes/referee.md")

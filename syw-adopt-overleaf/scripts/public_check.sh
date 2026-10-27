@@ -30,7 +30,13 @@ else
     status=1
 fi
 
-hits=$(git -C "$NEW" rev-list --all | xargs git -C "$NEW" grep -I -l -E "$TOKENS" 2>/dev/null || true)
+# File contents in every commit (no commits: nothing to grep, and a bare `git grep` would search
+# only the working tree), then commit messages.
+hits=""
+[ -s "$tmp/new" ] && hits=$(xargs git -C "$NEW" grep -I -l -E "$TOKENS" <"$tmp/new" 2>/dev/null || true)
+msgs=$(git -C "$NEW" log --all --format='%H %B' | grep -E "$TOKENS" | cut -c1-40 || true)
+[ -n "$msgs" ] && hits="${hits:+$hits
+}$(echo "$msgs" | sed 's/$/ (commit message)/')"
 if [ -z "$hits" ]; then
     echo "ok tokens"
 else
@@ -38,7 +44,7 @@ else
     status=1
 fi
 
-git -C "$NEW" log --all --name-only --format= | sort -u >"$tmp/paths"
+git -C "$NEW" -c core.quotePath=false log --all --name-only --format= | sort -u >"$tmp/paths"
 # Only class-4 rows whose note starts with "private": code, data and lockfiles are class 4 in
 # Overleaf too, but legitimately move into the repository.
 private=$(awk -F'\t' 'NR==FNR { if ($1 == "4" && $3 ~ /^private/) p[$2] = 1; next }
