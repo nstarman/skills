@@ -2,6 +2,18 @@
 
 Add one entry per surprise: what happened, why, what to do instead.
 
+## CP1 (stream straights and convexities), 2026
+
+- **The Dropbox mirror was the working repository.** Its `.git` (196 commits, no remote), a
+  20,000-file `.venv` and a `preamble` submodule lived inside the Overleaf folder; the GitHub
+  repository held only Overleaf's own GitHub-sync snapshots (2 commits). So "the old repository"
+  was two histories. Check `git -C <mirror> remote -v` and compare commits with GitHub in the
+  survey; back up both (`backup.sh --github`), and run `public_check.sh` against both bundles.
+- **Overleaf's GitHub integration** was linked to the old repository; it must be unlinked in
+  Overleaf before that repository is archived.
+- **`\today`** in the paper shows up as a one-number difference in every `pdf_diff.py` run; expect
+  it.
+
 ## CP2 (spatial correlations of stream convexities), 2026
 
 Migrated by hand before this skill existed; its history shows what a migration needs after the

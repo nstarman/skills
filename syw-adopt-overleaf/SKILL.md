@@ -60,8 +60,12 @@ slug from the title (short, lowercase, hyphens) and get the author's confirmatio
 
 ```sh
 scripts/backup.sh --repo <old clone> --mirror "<mirror>" --overleaf-id <id> \
-    --op-ref 'op://<vault>/<item>/credential' --baseline baseline.pdf
+    --op-ref 'op://<vault>/<item>/credential' --baseline baseline.pdf [--github <owner/name>]
 ```
+
+`--github` is needed when the old repository has no `origin` (for example when it *is* the
+Dropbox mirror folder); if GitHub holds a different history (Overleaf's own GitHub sync), it is
+bundled too, as `github.bundle`.
 
 Writes `~/Documents Local/backups/<old-repo>-<YYYY-MM-DD>/` (refuses Dropbox/iCloud and an
 existing folder) with `repo.bundle`, `mirror.tar.gz`, `overleaf/` (clone with Overleaf's
@@ -72,7 +76,9 @@ history), `baseline.pdf`, `secrets.txt` (names only) and a `MIGRATION.md` from
 ### 2. Freeze Overleaf
 
 Draft a short message asking co-authors not to edit until the migration is done (expected
-duration, who to contact). The author sends it. Record Overleaf's HEAD (from the backup clone) in
+duration, who to contact). The author sends it. If the Overleaf project is linked to a GitHub
+repository through Overleaf's own GitHub integration (Menu → GitHub), note it: the author unlinks
+it in phase 8, before that repository is archived. Record Overleaf's HEAD (from the backup clone) in
 `MIGRATION.md` → Freeze.
 
 ### 3. Build the SYW layout locally
@@ -141,7 +147,8 @@ tells co-authors the freeze is over.
 
 1. `sh <syw-overleaf-dropbox>/scripts/check_build.sh "<mirror>" build.log` in the new repository:
    push found, no missing variables, every figure (subfolders too) same as the mirror.
-2. ⛔ Archive the old repository: `gh repo archive <owner>/<old> --yes`. Deleting it is the
+2. If Overleaf's GitHub integration is linked to the old repository, the author unlinks it in
+   Overleaf first. ⛔ Archive the old repository: `gh repo archive <owner>/<old> --yes`. Deleting it is the
    author's call, not part of this runbook.
 3. Point the author to `syw-overleaf-dropbox` for daily work and `syw-site init` for a paper site.
 4. New gotchas go into `references/lessons.md`.
@@ -154,7 +161,8 @@ The author decides when (typically at arXiv). First run:
 scripts/public_check.sh <new repo> <backup>/repo.bundle <backup>/inventory.tsv
 ```
 
-It fails on any commit shared with the old repository, a token-like string anywhere in history,
+Run it once per bundle (`repo.bundle`, and `github.bundle` if there is one). It fails on any
+commit shared with the old repository, a token-like string anywhere in history,
 or a class-4 file marked `private` ever committed. Identical file contents are fine.
 
 ## If something goes wrong
