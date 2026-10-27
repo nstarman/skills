@@ -69,10 +69,21 @@ class CheckListsTest(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("figures/GD1/track.pdf", out)
 
-    def test_class_4_listed(self):
+    def test_class_4_pulled(self):
         code, out = self.run_check(CLEAN + "    - src/tex/notes\n")
         self.assertEqual(code, 1)
-        self.assertIn("notes/referee.md", out)
+        self.assertIn("FAIL private: notes/referee.md", out)
+
+    def test_class_4_pushed_by_name(self):
+        code, out = self.run_check(CLEAN.replace("  pull:\n", "    - src/tex/notes/referee.md\n  pull:\n"))
+        self.assertEqual(code, 1)
+        self.assertIn("FAIL private: notes/referee.md", out)
+
+    def test_class_4_under_pushed_folder_is_deleted_not_failed(self):
+        code, out = self.run_check(CLEAN.replace("  pull:\n", "    - src/tex/notes\n  pull:\n"))
+        self.assertEqual(code, 0, out)
+        self.assertIn("deleted: notes/referee.md", out)
+        self.assertIn("deletes 1 file(s)", out)
 
     def test_inline_list_refused(self):
         code, out = self.run_check(CLEAN.replace("  push:\n", "  push: [src/tex]\n  old_push:\n"))

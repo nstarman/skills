@@ -19,7 +19,8 @@ if [ -n "$LOG" ]; then
 fi
 
 missing=0
-for p in $(grep -o '\\variable{[^}]*}' src/tex/ms.tex | sed 's/\\variable{//;s/}//' | sort -u); do
+# Comments stripped first (a `%` not preceded by `\`): an example in a comment is not a citation.
+for p in $(sed -e 's/^%.*//' -e 's/\([^\\]\)%.*/\1/' src/tex/ms.tex | grep -o '\\variable{[^}]*}' | sed 's/\\variable{//;s/}//' | sort -u); do
     [ -f "src/tex/$p" ] || { echo "MISSING variable file: $p"; missing=1; }
 done
 [ "$missing" = 0 ] && echo "variables: none missing"
@@ -42,7 +43,7 @@ echo "$figs" | while IFS= read -r f; do
     elif [ "$a" = "$b" ]; then
         echo "figure $name: same as mirror"
     else
-        echo "figure $name: DIFFERENT from mirror (Dropbox lag? wait and recheck)"
+        echo "figure $name: DIFFERENT from mirror (Dropbox lag, or CI pushed its own build: recheck, then compare content)"
     fi
 done
 

@@ -34,7 +34,7 @@ Private: this file lives in the backup folder, never in a repository.
 | 6.2 main document | | | |
 | 6.4 dry run | | | |
 | 7 prune list | | | |
-| 8 archive | | | |
+| 8 archive or delete | | | |
 
 ## 5. Freeze
 
