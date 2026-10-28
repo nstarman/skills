@@ -1,6 +1,6 @@
 ---
 name: engaging-hybrid-compute
-description: Split a research project between a local machine and MIT's Engaging (ORCD) cluster, with code and results kept in sync through a private git repo. Light work (editing, plotting, quick checks) stays local; heavy compute runs as Slurm jobs. Use when the user mentions Engaging, ORCD, orcd-login, sbatch/squeue on the MIT cluster, moving runs to the cluster, syncing results back, or a project that already has this setup (a cluster clone, a deploy key, slurm/ scripts).
+description: Split a research project between a local machine and MIT's Engaging (ORCD) cluster, with code and results kept in sync through a private git repo. Light work (editing, plotting, quick checks) stays local; heavy compute runs as Slurm jobs. Use when the user mentions Engaging, ORCD, orcd-login, sbatch/squeue on the MIT cluster, queue priority or fair share, moving runs to the cluster, syncing results back, or a project that already has this setup (a cluster clone, a deploy key, slurm/ scripts).
 ---
 
 # Local ↔ Engaging hybrid compute, synced through a private git repo
@@ -83,6 +83,34 @@ Never:
 - **Thread counts:** inside a job, `os.cpu_count()` reports the whole node, not your allocation. Pin threads (`OMP_NUM_THREADS`, `XLA_FLAGS`, etc.) to `$SLURM_CPUS_PER_TASK` if oversubscription shows up.
 - **Tools installed in `~/.local/bin` (e.g. `uv`) aren't on the non-interactive `PATH`.** Call them by full path in job scripts.
 
+## Fair share: fewer, more targeted jobs
+
+Queue priority on Engaging is mostly **fair share**: how much of your share of the cluster you have used lately. Every CPU-hour you run lowers the priority of your next job. A day of broad sweeps can leave the user near the bottom of the queue for a week or more. So treat CPU-hours as a budget, not as free.
+
+**How it works** (check the live values; sites retune them):
+- `scontrol show config | grep ^Priority` gives the weights. Within one partition the partition term is the same for everyone, so fair share is the main factor that differs between users. Job size and age add only a little.
+- Usage decays with `PriorityDecayHalfLife` (7 days at the time of writing), so last week's runs still count.
+- Billing is per allocated CPU × elapsed time (`scontrol show partition <p> | grep TRES`). Requested CPUs are charged **even when idle**. Memory is not billed, but it still limits how many of your jobs run at once.
+- `sshare -l -u $USER` shows `LevelFS = share / usage`; below 1 means over your share. `FairShare` is your **rank** among all users from 0 to 1, not a ratio: 0.03 means about the bottom 3%.
+- `sprio -j <jobid>` breaks one pending job's priority into these factors.
+
+**Before submitting, ask what question the batch answers**, and run the smallest set of jobs that answers it:
+- **Screen, then expand.** Run one seed and one configuration first, or a short pilot on `mit_quicktest`. Add seeds or arms only for the variants that look informative. Don't launch the full grid "to have it".
+- **Don't run what's already decided.** Drop arms that earlier results have already ruled out, and skip any job whose output file already exists.
+- **Gate dependency chains on usefulness, not only exit code.** `afterok` fires on a fit that converged to the wrong solution. Have the upstream step exit non-zero if its result is unusable, so the downstream jobs never start.
+- **Cancel jobs as soon as they stop being informative.** Ask first if the user started them.
+- **Pack small runs that share setup into one job.** For example, loop over modes in one process. Imports, environment start-up and JIT compilation (JAX etc.) are then paid once instead of per task. This saves real CPU-hours, unlike splitting the same work differently.
+
+**Right-size every request:**
+- `-c`: only what the code actually uses. Check `sacct -j <id> -o Elapsed,TotalCPU,AllocCPUS`: if TotalCPU ≪ Elapsed × AllocCPUS, most of the allocated CPUs sat idle and were still billed.
+- `-t`: a realistic limit from past runs plus a margin, not the partition maximum. Charging uses elapsed time, so this doesn't change cost. It does change wait: the backfill scheduler slots jobs with **short, accurate limits** into idle gaps ahead of higher-priority jobs. That is how jobs with low priority still start while CPUs sit idle.
+- `--mem`: from `MaxRSS` history. It isn't billed, but too much memory stops jobs from packing onto nodes.
+
+**When priority is already low:**
+- Submit the most informative job first. Hold the rest (`scontrol hold <id>` / `scontrol release <id>`) instead of queueing everything at once, so the job that matters runs first. Holding doesn't restore priority; only not running does.
+- Prefer `mit_quicktest` (15 min) for anything that fits. Tiny jobs on any partition backfill easily.
+- Tell the user roughly how long recovery takes: LevelFS reaches 1 after usage decays by a factor of 1/LevelFS, which takes about `half-life × log2(1/LevelFS)` with no new runs.
+
 ## Monitoring
 
 Use `scripts/watch_jobs.sh <name-regex>` (or the same loop inline) as a background task:
@@ -102,7 +130,7 @@ scontrol show res | grep -E "ReservationName|StartTime"   # maintenance windows
 - `ReqNodeNotAvail, Reserved for maintenance`: a reservation (e.g. monthly maintenance) is coming and your job's time limit would overlap it. If the job really needs less time, lower its limit so it fits before the window:
   `scontrol update JobId=<id>_0 TimeLimit=03:00:00` (users can lower, not raise, limits).
 - `QOSMaxCpuPerUserLimit`: you're at your per-user cap; jobs start in waves. To free slots, cancel your own jobs that have become uninformative. Ask before cancelling anything the user started.
-- `Priority`: normal queueing.
+- `Priority`: normal queueing. A long wait under `Priority` usually means low fair share (see Fair share).
 - `Dependency`: waiting on an upstream job.
 
 ## Bookkeeping
