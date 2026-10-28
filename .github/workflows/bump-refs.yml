@@ -40,7 +40,9 @@ jobs:
           git switch -C bump-refs
           git add registry index.json .claude-plugin/marketplace.json README.md
           git commit -m "Bump pinned skill versions" -m "$(cat bumps.txt)"
-          git push --force-with-lease origin bump-refs
+          # bump-refs is this job's own branch, rebuilt from main every run; the checkout has no copy
+          # of it, so --force-with-lease would refuse ('stale info') whenever a previous run left one.
+          git push --force origin bump-refs
           body=$(printf 'Newer releases of tag-pinned skills:\n\n```\n%s\n```\n\nValidation run by this job (CI does not run on pull requests opened by GITHUB_TOKEN; re-run checks before merging):\n\n```\n%s\n```\n' "$(cat bumps.txt)" "$(cat validation.txt)")
           if gh pr view bump-refs >/dev/null 2>&1; then
             gh pr edit bump-refs --body "$body"
