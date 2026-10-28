@@ -98,11 +98,11 @@
       "name": "syw-site",
       "description": "Adds a docs site to a showyourwork paper: its numbers, figures and interactive figkit webapps, built by the paper's own pipeline and published at nstarkman.space with the website's layout, kept private until arXiv.",
       "origin": "external",
-      "href": "https://github.com/nstarman/syw-site/tree/v2026.10.22/skills/syw-site",
+      "href": "https://github.com/nstarman/syw-site/tree/v2026.10.28/skills/syw-site",
       "source": {
         "repo": "nstarman/syw-site",
         "path": "skills/syw-site",
-        "ref": "v2026.10.22"
+        "ref": "v2026.10.28"
       },
       "install": "syw-site@nstarman-skills",
       "zip": "https://github.com/nstarman/skills/releases/latest/download/syw-site.zip"
@@ -111,11 +111,11 @@
       "name": "syw-site-upgrade",
       "description": "Moves a paper's docs site to a newer syw-site release by applying the changelog's migration notes in order, refreshing the scaffold, rebuilding and checking that the site still shows the paper's numbers.",
       "origin": "external",
-      "href": "https://github.com/nstarman/syw-site/tree/v2026.10.22/skills/syw-site-upgrade",
+      "href": "https://github.com/nstarman/syw-site/tree/v2026.10.28/skills/syw-site-upgrade",
       "source": {
         "repo": "nstarman/syw-site",
         "path": "skills/syw-site-upgrade",
-        "ref": "v2026.10.22"
+        "ref": "v2026.10.28"
       },
       "install": "syw-site-upgrade@nstarman-skills",
       "zip": "https://github.com/nstarman/skills/releases/latest/download/syw-site-upgrade.zip"

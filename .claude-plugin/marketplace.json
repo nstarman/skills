@@ -91,12 +91,12 @@
         "source": "git-subdir",
         "url": "nstarman/syw-site",
         "path": "skills/syw-site",
-        "ref": "v2026.10.22"
+        "ref": "v2026.10.28"
       },
       "skills": [
         "./"
       ],
-      "homepage": "https://github.com/nstarman/syw-site/tree/v2026.10.22/skills/syw-site"
+      "homepage": "https://github.com/nstarman/syw-site/tree/v2026.10.28/skills/syw-site"
     },
     {
       "name": "syw-site-upgrade",
@@ -105,12 +105,12 @@
         "source": "git-subdir",
         "url": "nstarman/syw-site",
         "path": "skills/syw-site-upgrade",
-        "ref": "v2026.10.22"
+        "ref": "v2026.10.28"
       },
       "skills": [
         "./"
       ],
-      "homepage": "https://github.com/nstarman/syw-site/tree/v2026.10.22/skills/syw-site-upgrade"
+      "homepage": "https://github.com/nstarman/syw-site/tree/v2026.10.28/skills/syw-site-upgrade"
     },
     {
       "name": "unxt",
