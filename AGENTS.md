@@ -55,7 +55,7 @@ hand: change the skill or the registry entry and run `python scripts/build_index
 
 ## Releases and zips
 
-Versions are dates, as in figkit and syw-site: a release is `vYYYY.MM.DD`; a second release on the
+Versions are dates, as in figpress-apps and syw-site: a release is `vYYYY.MM.DD`; a second release on the
 same day is `vYYYY.MM.DD.2`, and so on. Every release is a complete snapshot of all skills, so
 nothing is backported here.
 
@@ -65,7 +65,7 @@ their ref) on every push to `main`, weekly and by hand, and publishes a release 
 is the stable link (it 404s until the first release exists).
 
 `bump-refs.yml` runs weekly: for tag-pinned entries it opens (or updates) one pull request moving
-them to their repository's latest release (date tags sort after older semver tags, e.g. figkit's
+them to their repository's latest release (date tags sort after older semver tags, e.g. figpress-apps'
 `v2026.10.30` after `v0.2.0`). Pull requests opened by `GITHUB_TOKEN` do not trigger
 CI; the job validates and puts the output in the pull request — re-run checks before merging.
 

@@ -1,9 +1,0 @@
-{
-  "name": "figkit-upgrade",
-  "description": "Moves a figkit webapp to a newer figkit version by applying the changelog's migration notes in order, then rebuilds and re-checks that the app still reproduces the paper's numbers.",
-  "source": {
-    "repo": "nstarman/figkit",
-    "path": "skills/figkit-upgrade",
-    "ref": "v0.2.0"
-  }
-}

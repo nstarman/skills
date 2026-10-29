@@ -1,0 +1,9 @@
+{
+  "name": "figpress-apps",
+  "description": "Builds an interactive webapp for a scientific paper with figpress-apps: exports the paper's arrays, ports the per-interaction science to tested JavaScript, composes linked views, and publishes a static site plus a single archivable HTML file that also runs in notebooks.",
+  "source": {
+    "repo": "nstarman/figpress-apps",
+    "path": "skills/figpress-apps",
+    "ref": "v2026.10.28"
+  }
+}
