@@ -1,9 +1,0 @@
-{
-  "name": "figkit",
-  "description": "Builds an interactive webapp for a scientific paper with figkit: exports the paper's arrays, ports the per-interaction science to tested JavaScript, composes linked views, and publishes a static site plus a single archivable HTML file that also runs in notebooks.",
-  "source": {
-    "repo": "nstarman/figkit",
-    "path": "skills/figkit",
-    "ref": "v0.2.0"
-  }
-}

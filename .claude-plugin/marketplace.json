@@ -25,32 +25,32 @@
       "homepage": "https://github.com/nstarman/skills/tree/main/engaging-hybrid-compute"
     },
     {
-      "name": "figkit",
-      "description": "Builds an interactive webapp for a scientific paper with figkit: exports the paper's arrays, ports the per-interaction science to tested JavaScript, composes linked views, and publishes a static site plus a single archivable HTML file that also runs in notebooks.",
+      "name": "figpress-apps",
+      "description": "Builds an interactive webapp for a scientific paper with figpress-apps: exports the paper's arrays, ports the per-interaction science to tested JavaScript, composes linked views, and publishes a static site plus a single archivable HTML file that also runs in notebooks.",
       "source": {
         "source": "git-subdir",
-        "url": "nstarman/figkit",
-        "path": "skills/figkit",
-        "ref": "v0.2.0"
+        "url": "nstarman/figpress-apps",
+        "path": "skills/figpress-apps",
+        "ref": "v2026.10.28"
       },
       "skills": [
         "./"
       ],
-      "homepage": "https://github.com/nstarman/figkit/tree/v0.2.0/skills/figkit"
+      "homepage": "https://github.com/nstarman/figpress-apps/tree/v2026.10.28/skills/figpress-apps"
     },
     {
-      "name": "figkit-upgrade",
-      "description": "Moves a figkit webapp to a newer figkit version by applying the changelog's migration notes in order, then rebuilds and re-checks that the app still reproduces the paper's numbers.",
+      "name": "figpress-apps-upgrade",
+      "description": "Moves a figpress-apps webapp to a newer figpress-apps version by applying the changelog's migration notes in order, then rebuilds and re-checks that the app still reproduces the paper's numbers.",
       "source": {
         "source": "git-subdir",
-        "url": "nstarman/figkit",
-        "path": "skills/figkit-upgrade",
-        "ref": "v0.2.0"
+        "url": "nstarman/figpress-apps",
+        "path": "skills/figpress-apps-upgrade",
+        "ref": "v2026.10.28"
       },
       "skills": [
         "./"
       ],
-      "homepage": "https://github.com/nstarman/figkit/tree/v0.2.0/skills/figkit-upgrade"
+      "homepage": "https://github.com/nstarman/figpress-apps/tree/v2026.10.28/skills/figpress-apps-upgrade"
     },
     {
       "name": "quax",
@@ -86,7 +86,7 @@
     },
     {
       "name": "syw-site",
-      "description": "Adds a docs site to a showyourwork paper: its numbers, figures and interactive figkit webapps, built by the paper's own pipeline and published at nstarkman.space with the website's layout, kept private until arXiv.",
+      "description": "Adds a docs site to a showyourwork paper: its numbers, figures and interactive figpress-apps webapps, built by the paper's own pipeline and published at nstarkman.space with the website's layout, kept private until arXiv.",
       "source": {
         "source": "git-subdir",
         "url": "nstarman/syw-site",
