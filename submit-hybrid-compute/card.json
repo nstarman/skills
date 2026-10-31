@@ -1,0 +1,4 @@
+{
+  "name": "submit-hybrid-compute",
+  "description": "Splits a research project between a laptop and MIT's subMIT cluster: edit locally, run Slurm jobs on the submit partition, and sync code and results through a private git repo."
+}
