@@ -38,7 +38,7 @@ tests.
 **Constraints**: no token in any argv, file or log (R3); pre-arXiv content private; signing never
 bypassed; every irreversible step gated.
 
-**Scale/Scope**: one paper at a time; CP1 first, CP2-like papers next.
+**Scale/Scope**: one paper at a time; Paper A first, papers like Paper B next.
 
 ## Constitution Check
 
@@ -75,9 +75,9 @@ syw-adopt-overleaf/
 ├── SKILL.md                 the phased runbook, gates, hard rules, hand-off
 ├── card.json
 ├── references/
-│   ├── mapping.md           four classes, rules, CP1 worked example
+│   ├── mapping.md           four classes, rules, Paper A worked example
 │   ├── rollback.md          restore commands per phase
-│   ├── lessons.md           CP2 lessons (R9) and later migrations
+│   ├── lessons.md           Paper B lessons (R9) and later migrations
 │   └── migration-template.md  MIGRATION.md skeleton (data-model.md)
 └── scripts/
     ├── backup.sh  pdf_diff.py  check_lists.py  public_check.sh

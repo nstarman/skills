@@ -11,9 +11,9 @@ SCRIPT = Path(__file__).resolve().parents[1] / "syw-adopt-overleaf" / "scripts" 
 INVENTORY = """# class\tpath\tnote
 1\tms.tex\trenamed from main.tex
 1\tbib.bib\trenamed from main.bib
-2\tfigures/GD1/track.pdf\tplot_gd1.py
+2\tfigures/sub/track.pdf\tplot_sub.py
 3\taastex701.cls\t
-3\tpreamble/preamble-starkman.sty\t
+3\tpreamble/preamble-author.sty\t
 4\tnotes/referee.md\tprivate
 """
 
@@ -25,7 +25,7 @@ overleaf:
     - src/tex/figures
     - src/tex/output
     - src/tex/aastex701.cls
-    - src/tex/preamble/preamble-starkman.sty
+    - src/tex/preamble/preamble-author.sty
   pull:
     - src/tex/ms.tex
     - src/tex/bib.bib
@@ -65,9 +65,9 @@ class CheckListsTest(unittest.TestCase):
         self.assertIn("ms.tex", out)
 
     def test_push_folder_covers_pulled_file(self):
-        code, out = self.run_check(CLEAN + "    - src/tex/figures/GD1/track.pdf\n")
+        code, out = self.run_check(CLEAN + "    - src/tex/figures/sub/track.pdf\n")
         self.assertEqual(code, 1)
-        self.assertIn("figures/GD1/track.pdf", out)
+        self.assertIn("figures/sub/track.pdf", out)
 
     def test_class_4_pulled(self):
         code, out = self.run_check(CLEAN + "    - src/tex/notes\n")

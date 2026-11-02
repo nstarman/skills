@@ -31,6 +31,11 @@ class PersonalCheckTest(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("ok/references/a.md:1:", out)
 
+    def test_files_outside_skills_are_checked(self):
+        self.patterns.write_text("documents mine\n", encoding="utf-8")
+        (self.repo.root / "notes.md").write_text("see ~/Documents Mine\n", encoding="utf-8")
+        self.assertIn("notes.md:1:", run(self.repo.root, "--patterns", str(self.patterns))[1])
+
     def test_no_match_passes(self):
         self.patterns.write_text("someone-else\n", encoding="utf-8")
         self.assertEqual(run(self.repo.root, "--patterns", str(self.patterns))[0], 0)

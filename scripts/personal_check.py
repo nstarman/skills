@@ -1,4 +1,4 @@
-"""Fail if a local skill contains a personal detail (username, path, project name, ...).
+"""Fail if a file in the repository contains a personal detail (username, path, project name, ...).
 
     python scripts/personal_check.py [--patterns FILE]
 
@@ -36,15 +36,16 @@ def main(argv: list[str] | None = None, root: Path = ROOT) -> int:
     if rx is None:
         return 0
     hits = []
-    for skill in sorted(p.parent for p in root.glob("*/SKILL.md")):
-        for f in sorted(p for p in skill.rglob("*") if p.is_file()):
-            try:
-                text = f.read_text(encoding="utf-8")
-            except UnicodeDecodeError:
-                continue
-            for n, line in enumerate(text.splitlines(), 1):
-                if rx.search(line):
-                    hits.append(f"{f.relative_to(root)}:{n}: {line.strip()[:160]}")
+    # Everything is public, not only the skills; .git and .claude (worktrees, local settings) are not.
+    files = (p for p in root.rglob("*") if p.is_file() and not {".git", ".claude"} & set(p.relative_to(root).parts))
+    for f in sorted(files):
+        try:
+            text = f.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        for n, line in enumerate(text.splitlines(), 1):
+            if rx.search(line):
+                hits.append(f"{f.relative_to(root)}:{n}: {line.strip()[:160]}")
     print("\n".join(hits) if hits else "no personal details found")
     return 1 if hits else 0
 
