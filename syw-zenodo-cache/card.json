@@ -1,0 +1,4 @@
+{
+  "name": "syw-zenodo-cache",
+  "description": "Keeps a showyourwork paper's Zenodo cache usable as the repository changes: which cache entry a build reads, inputs that should not be in a cached rule's key, re-uploading an output without recomputing it, and publishing the cache with its metadata intact."
+}

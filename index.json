@@ -134,6 +134,19 @@
       "zip": "https://github.com/nstarman/skills/releases/latest/download/syw-site-upgrade.zip"
     },
     {
+      "name": "syw-zenodo-cache",
+      "description": "Keeps a showyourwork paper's Zenodo cache usable as the repository changes: which cache entry a build reads, inputs that should not be in a cached rule's key, re-uploading an output without recomputing it, and publishing the cache with its metadata intact.",
+      "origin": "local",
+      "href": "https://github.com/nstarman/skills/tree/main/syw-zenodo-cache",
+      "source": {
+        "repo": "nstarman/skills",
+        "path": "syw-zenodo-cache",
+        "ref": "main"
+      },
+      "install": "syw-zenodo-cache@nstarman-skills",
+      "zip": "https://github.com/nstarman/skills/releases/latest/download/syw-zenodo-cache.zip"
+    },
+    {
       "name": "unxt",
       "description": "Writes, reviews and debugs code that uses unxt quantities in JAX: units, dimensions and unit systems, conversions, and passing quantities through JAX and quax transformations.",
       "origin": "external",
