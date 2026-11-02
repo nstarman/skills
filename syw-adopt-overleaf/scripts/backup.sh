@@ -17,7 +17,7 @@
 # Prints "ok <part>" per verified part; on the first failure "FAILED <part>: <reason>", exit 1.
 set -uo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
-DEST="$HOME/Documents Local/backups"
+DEST="$HOME/backups"
 REPO="" MIRROR="" OVERLEAF_ID="" OP_REF="" BASELINE="" GH=""
 while [ $# -gt 0 ]; do
     case "$1" in

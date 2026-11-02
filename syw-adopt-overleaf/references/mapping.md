@@ -1,7 +1,7 @@
 # Mapping an Overleaf project onto the SYW layout
 
-SYW's `src/tex/` mirrors the Overleaf project root: `src/tex/figures/GD1/a.pdf` is
-`figures/GD1/a.pdf` in Overleaf. Every Overleaf file goes in exactly one class.
+SYW's `src/tex/` mirrors the Overleaf project root: `src/tex/figures/<group>/a.pdf` is
+`figures/<group>/a.pdf` in Overleaf. Every Overleaf file goes in exactly one class.
 
 | Class | What | Repository | `showyourwork.yml` |
 |---|---|---|---|
@@ -38,21 +38,21 @@ A class-4 note starting with `private` marks a file that must never be committed
 replies); `public_check.sh` checks those. Other class-4 files (code, data, lockfiles) may move
 into the repository.
 
-## Worked example: CP1
+## Worked example
 
-CP1 ("Stellar Stream Straights and Convexities Constrain Dark Matter Nature and Geometry") keeps
+A paper that keeps
 code, data and a Python project inside the Overleaf project. Expected shape (confirm in the
 survey; the real inventory is the one in the backup folder):
 
 ```text
 1	ms.tex	src/tex/ms.tex (renamed from main.tex)
 1	bib.bib	src/tex/bib.bib (renamed from main.bib)
-2	figures/GD1/<figure>.pdf	built by a plot_* rule
+2	figures/<group>/<figure>.pdf	built by a plot_* rule
 2	output/<group>/<name>.tex	built by a variables rule
 3	aastex701.cls	src/tex/
 3	aasjournalv7.bst	src/tex/
 3	orcid-ID.png	src/tex/
-3	preamble/preamble-starkman.sty	src/tex/preamble/ (vendored if a submodule)
+3	preamble/<author>.sty	src/tex/preamble/ (vendored if a submodule)
 4	src/<package>/...	src/scripts/ (or a package the scripts import)
 4	pyproject.toml	repository root
 4	uv.lock	repository root
@@ -60,5 +60,5 @@ survey; the real inventory is the one in the backup folder):
 4	notes/<file>	private: stays out of git
 ```
 
-Its push/pull lists then look like CP2's: push `src/tex/figures`, `src/tex/output`, the class,
+Its push/pull lists then look like: push `src/tex/figures`, `src/tex/output`, the class,
 bst, logo and preamble files; pull `src/tex/ms.tex`, `src/tex/bib.bib`.
