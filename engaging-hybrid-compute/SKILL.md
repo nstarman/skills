@@ -29,6 +29,7 @@ An SSH key replaces the password but **does not skip Duo**. The way around it is
 1. Check: `ssh -O check <alias>`, where `<alias>` is the `~/.ssh/config` host, e.g. `orcd-login`.
 2. If "Master running": run everything as `ssh -o BatchMode=yes <alias> '<cmd>'`. `BatchMode` makes it fail fast instead of hanging on a Duo prompt.
 3. If not, the user has to reconnect. Either they run `ssh <alias>` in their own terminal and approve Duo, or they have the gated helper from `setup.md`. Call it only as `engaging-connect`, never by path or through a wrapper, so its permission rule fires.
+   - Before running the helper, tell the user a permission prompt and a Duo push are coming, with a push notification if your harness has one, so they can approve from their phone when away from the machine.
    - **At most one reconnect attempt per need. Never loop.** Repeated failed attempts can trigger a Duo lockout.
    - If key auth is refused instantly with a message about logging in to the web portal, the user must first log in to OnDemand (https://orcd-ood.mit.edu) in a browser. Key auth appears to need a recent OnDemand login (about a day). Ask them; don't retry.
 
@@ -42,7 +43,7 @@ Never:
 ## Rules
 
 - **No compute on the login node.** Allowed there: `git`, `uv sync` (installs), `rsync`, `sbatch`/`squeue`/`sacct`/`scancel`, reading logs, tiny file inspection. Everything else goes in a Slurm job (`mit_quicktest` for anything short).
-- **Free tier only** unless the user explicitly asks otherwise: partitions `mit_quicktest`, `mit_normal`, `mit_normal_gpu`, `mit_preemptable`; no paid QOS, reservations or rentals. If a job only fits a paid tier, say so instead of submitting.
+- **Free tier only** unless the user explicitly asks otherwise: partitions `mit_quicktest`, `mit_normal`, `mit_normal_gpu`, `mit_preemptable`; no paid QOS, reservations or rentals. Before every `sbatch`, check the job against the free caps (wall time, CPUs, GPUs, memory per user, as the ORCD docs list them). If it only fits a paid tier, don't submit: say which limit it exceeds and what the paid option would cost (current prices in the ORCD docs), and offer free alternatives (split it, checkpoint and resubmit, a job array, or `mit_preemptable` with `--requeue`).
 - **Ask the user before:**
   - jobs beyond the project's agreed size, for example > 12 h, more than ~20 array tasks or > 32 CPUs per task (agree the thresholds per project);
   - GPU jobs, unless agreed;
