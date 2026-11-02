@@ -1,7 +1,7 @@
 # Phase 0 Research: syw-adopt-overleaf
 
-Read on 2026-10-26 from the showyourwork development install used for CP2
-(`showyourwork-main` env, 0.4.4.dev431+g44d15103f), CP2's repository (read-only) and the
+Read on 2026-10-26 from the showyourwork development install used for Paper B
+(`showyourwork-main` env, 0.4.4.dev431+g44d15103f), Paper B's repository (read-only) and the
 `syw-overleaf-dropbox` skill.
 
 ## R1. When SYW touches Overleaf, and the "dry run"
@@ -97,10 +97,10 @@ Read on 2026-10-26 from the showyourwork development install used for CP2
   filled rectangle) and skip with a message when `pdftotext` is missing; `check.yml` installs
   `poppler-utils` with apt so they run in CI. No new secrets.
 
-## R9. CP2 as the reference layout
+## R9. Paper B as the reference layout
 
-- CP2's history: `[showyourwork] first commit`, then `[showyourwork] migrate paper sources and
+- Paper B's history: `[showyourwork] first commit`, then `[showyourwork] migrate paper sources and
   generation DAG`; push list = `src/tex/figures`, `src/tex/output`, class/bst files and the four
-  `preamble/*.sty`; pull list = `ms.tex`, `bib.bib`; `.gitignore` ignores `src/tex/figures/*`. CP1
-  follows the same shape. CP2's later fixes (FontAwesome collisions, stylesheet dependency,
+  `preamble/*.sty`; pull list = `ms.tex`, `bib.bib`; `.gitignore` ignores `src/tex/figures/*`. Paper A
+  follows the same shape. Paper B's later fixes (FontAwesome collisions, stylesheet dependency,
   `local_cache` for hours-long rules, Zenodo Sandbox inputs) go into `references/lessons.md`.

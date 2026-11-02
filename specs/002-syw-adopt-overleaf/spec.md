@@ -9,7 +9,7 @@
 **Input**: User description: "A new skill, `syw-adopt-overleaf`, that migrates an existing paper —
 one with a live Overleaf project and a private git repository — into a fresh showyourwork
 repository without losing or silently changing anything, so that `syw-overleaf-dropbox` and
-`syw-site init` work on it afterwards. First case: Convexity Paper 1 (CP1)."
+`syw-site init` work on it afterwards. First case: a submitted paper (Paper A)."
 
 The agreed design (phases, mapping, scripts, layout) is in [design.md](design.md), the input to
 `/speckit-plan`.
@@ -76,7 +76,7 @@ outside the machine.
 
 **Why this priority**: it delivers the migration itself; it depends on stories 1 and 2.
 
-**Independent Test**: migrate CP1 with the skill; at the end, `syw-overleaf-dropbox`'s build check
+**Independent Test**: migrate Paper A with the skill; at the end, `syw-overleaf-dropbox`'s build check
 is clean on the new repository and mirror, and `MIGRATION.md` records every gate's approval.
 
 **Acceptance Scenarios**:
@@ -119,7 +119,7 @@ passes.
 ### User Story 5 - Figure check finds figures in subfolders (Priority: P5)
 
 `syw-overleaf-dropbox`'s build check compares every figure under the figures folder, including
-subfolders (CP1 keeps figures in folders such as `figures/GD1/`).
+subfolders (Paper A keeps figures in folders such as `figures/sub/`).
 
 **Why this priority**: without it the hand-off check passes while figures in subfolders are
 missing or stale.
@@ -216,12 +216,12 @@ repository's backup, and on a clean one.
 
 ### Measurable Outcomes
 
-- **SC-001**: CP1 is migrated with the skill; the new repository shares zero commits with the old
+- **SC-001**: Paper A is migrated with the skill; the new repository shares zero commits with the old
   one, and the Overleaf project, co-authors and history are unchanged apart from the rename and
   the pruned files.
-- **SC-002**: Every difference between CP1's baseline PDF and the migrated PDF is listed and
+- **SC-002**: Every difference between Paper A's baseline PDF and the migrated PDF is listed and
   accepted by the author, with zero unlisted differences.
-- **SC-003**: The build check from `syw-overleaf-dropbox` reports nothing on the migrated CP1.
+- **SC-003**: The build check from `syw-overleaf-dropbox` reports nothing on the migrated Paper A.
 - **SC-004**: Every gated step in the migration has a recorded approval; zero irreversible or
   outward-facing steps happen without one.
 - **SC-005**: No token value appears in any file, log or output produced during the migration.
@@ -232,8 +232,8 @@ repository's backup, and on a clean one.
 ## Assumptions
 
 - The author has Overleaf git access (token in 1Password), the GitHub CLI, poppler and the
-  showyourwork development environment used for CP2.
+  showyourwork development environment used for Paper B.
 - The new repository stays private until arXiv; the paper site is out of scope beyond pointing to
   `syw-site init`.
 - A scripted one-command migration is out of scope until 2–3 migrations show what repeats.
-- Renaming existing showyourwork repositories (e.g. CP2) to `paper-*` is out of scope.
+- Renaming existing showyourwork repositories (e.g. Paper B) to `paper-*` is out of scope.

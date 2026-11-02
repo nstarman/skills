@@ -9,9 +9,8 @@ project and a private git repository — into a fresh showyourwork (SYW) reposit
 or silently changing anything. When it finishes, the paper is in the state the
 `syw-overleaf-dropbox` skill expects, and `syw-site init` can follow.
 
-First real case: Convexity Paper 1 (`nstarman/stream_convexity_rates_paper`, submitted; Overleaf
-mirror `~/Library/CloudStorage/Dropbox/Apps/Overleaf/Stellar Stream Straights and Convexities
-Constrain Dark Matter Nature and Geometry/`). Run in a separate session after the skill ships.
+First real case: a submitted paper, Paper A (a private repository with an Overleaf mirror in
+`~/Library/CloudStorage/Dropbox/Apps/Overleaf/<Project Name>/`). Run in a separate session after the skill ships.
 
 ## Decisions
 
@@ -32,7 +31,7 @@ Constrain Dark Matter Nature and Geometry/`). Run in a separate session after th
    Inventory every Overleaf file into one of four classes (Section "Mapping"). Compile the current
    Overleaf paper as `baseline.pdf`. Start `MIGRATION.md` in the backup folder: findings, the
    inventory table, and every decision as it is made.
-1. **Backup** (`scripts/backup.sh`), to `~/Documents Local/backups/<old-repo>-<YYYY-MM-DD>/` —
+1. **Backup** (`scripts/backup.sh`), to `~/backups/<old-repo>-<YYYY-MM-DD>/` —
    outside Dropbox and iCloud:
    - `repo.bundle`: `git bundle create --all` of the old repository (all branches and tags);
    - `mirror.tar.gz`: the Dropbox mirror folder;
@@ -46,7 +45,7 @@ Constrain Dark Matter Nature and Geometry/`). Run in a separate session after th
    done; the author sends it. Record Overleaf's latest commit in `MIGRATION.md`.
 3. **Build the SYW layout locally** in a new folder `<parent>/paper-<slug>/`, a new git repository
    that never fetches from the old one:
-   - commit 1, `[showyourwork] first commit`: from the SYW template (dev version, as CP2);
+   - commit 1, `[showyourwork] first commit`: from the SYW template (dev version, as Paper B);
    - commit 2, `migrate paper sources`: files placed per "Mapping"; Snakefile rules for figures and
      numbers. Text is taken from the Overleaf backup clone, not the old repository (Overleaf is the
      text's source of truth), already under its new names (`src/tex/ms.tex`, `src/tex/bib.bib`).
@@ -93,7 +92,7 @@ files (notes, referee replies) committed.
 
 SYW's `src/tex/` mirrors the Overleaf project root. Every Overleaf file goes in exactly one class:
 
-| Class | CP1 examples | Repository | `showyourwork.yml` |
+| Class | Paper A examples | Repository | `showyourwork.yml` |
 |---|---|---|---|
 | 1. Text (authored in Overleaf) | `ms.tex`, `bib.bib` (after the rename) | `src/tex/` | `pull` |
 | 2. Build output (made by code) | `figures/**/*.pdf`, `output/**.tex` | `src/tex/figures`, `src/tex/output` — gitignored, regenerated | `push` |
@@ -131,7 +130,7 @@ Rules:
 The result uses SYW defaults (`ms.tex`, `bib.bib`, `ms.pdf`, `src/tex/figures`, `src/tex/output`),
 so the existing skill applies unchanged, with one fix that ships in the same change:
 `check_build.sh` compares only `src/tex/figures/*.pdf`; it must search `src/tex/figures`
-recursively (CP1 keeps figures in subfolders such as `figures/GD1/`).
+recursively (Paper A keeps figures in subfolders such as `figures/sub/`).
 
 ## Skill layout
 
@@ -140,9 +139,9 @@ syw-adopt-overleaf/
   SKILL.md                 the phased runbook; when to use; the ⛔ gates; hand-off
   card.json
   references/
-    mapping.md             the four classes, rules, worked CP1 example
+    mapping.md             the four classes, rules, worked Paper A example
     rollback.md            exact restore commands per phase
-    lessons.md             CP2 and later migrations: what went wrong and why
+    lessons.md             Paper B and later migrations: what went wrong and why
   scripts/
     backup.sh              phase 1; verifies what it wrote
     pdf_diff.py            phases 4 and 6
@@ -168,5 +167,5 @@ clean lists.
 ## Out of scope
 
 - A scripted `adopt` command (revisit after 2–3 migrations).
-- Renaming existing SYW repositories (e.g. CP2) to `paper-*`.
+- Renaming existing SYW repositories (e.g. Paper B) to `paper-*`.
 - The paper site itself (`syw-site`), beyond pointing to `syw-site init`.

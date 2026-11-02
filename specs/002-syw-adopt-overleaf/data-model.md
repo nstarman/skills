@@ -2,7 +2,7 @@
 
 ## Backup folder
 
-`~/Documents Local/backups/<old-repo>-<YYYY-MM-DD>/` (outside Dropbox and iCloud; `backup.sh`
+`~/backups/<old-repo>-<YYYY-MM-DD>/` (outside Dropbox and iCloud; `backup.sh`
 refuses a path under either):
 
 | File | Content | Verified by |
@@ -24,7 +24,7 @@ comments allowed:
 ```text
 <class>\t<path relative to the Overleaf root>\t<destination or note>
 1	ms.tex	src/tex/ms.tex (renamed from main.tex)
-2	figures/GD1/track.pdf	built by src/scripts/plot_gd1.py
+2	figures/sub/track.pdf	built by src/scripts/plot_sub.py
 3	aastex701.cls	src/tex/aastex701.cls
 4	uv.lock	moves to the repository root
 4	notes/referee.md	private: stays out of git; pruned in phase 7

@@ -11,7 +11,7 @@ backup.sh --repo <old repo clone> --mirror <Dropbox mirror folder> --overleaf-id
           --op-ref <op://… Overleaf token> --baseline <baseline.pdf> [--dest <backups root>]
 ```
 
-- `--dest` defaults to `~/Documents Local/backups`; the folder `<old-repo>-<YYYY-MM-DD>` is
+- `--dest` defaults to `~/backups`; the folder `<old-repo>-<YYYY-MM-DD>` is
   created and must not exist. Refuses a destination under Dropbox or iCloud
   (`~/Library/CloudStorage`, `~/Library/Mobile Documents`).
 - Writes and verifies the five parts (data-model.md), printing one `ok <part>` line each; on the
@@ -52,5 +52,5 @@ public_check.sh <new repo> <repo.bundle> <inventory.tsv>
 
 - Same usage and output lines; figures are found with `find src/tex/figures -name '*.pdf'`, and
   each is compared with the mirror file at the same relative path
-  (`src/tex/figures/GD1/a.pdf` ↔ `<mirror>/figures/GD1/a.pdf`). Output names the relative path
-  (`figure GD1/a.pdf: …`).
+  (`src/tex/figures/sub/a.pdf` ↔ `<mirror>/figures/sub/a.pdf`). Output names the relative path
+  (`figure sub/a.pdf: …`).

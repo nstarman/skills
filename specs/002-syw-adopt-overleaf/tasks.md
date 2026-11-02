@@ -12,7 +12,7 @@ description: "Task list for syw-adopt-overleaf"
 **Tests**: included for the exact parts (FR-013, SC-006). Within a phase, test tasks come first
 and must fail before the implementation that makes them pass.
 
-**Organization**: by user story (spec.md). US3 (the runbook) is validated by the CP1 migration
+**Organization**: by user story (spec.md). US3 (the runbook) is validated by the Paper A migration
 itself, which runs after this change merges.
 
 ## Format: `[ID] [P?] [Story] Description`
@@ -67,7 +67,7 @@ access, nothing else changed).
 
 **Independent Test**: `tests/test_check_lists.py`.
 
-- [X] T008 [P] [US4] Write `tests/test_check_lists.py`: clean CP2-shaped lists → 0; same path in both → 1; `src/tex` folder pushed covering `ms.tex` → 1; folder in push covering a pulled file → 1; class-4 path pulled → 1; `showyourwork.yml` with other sections parsed correctly
+- [X] T008 [P] [US4] Write `tests/test_check_lists.py`: clean Paper B-shaped lists → 0; same path in both → 1; `src/tex` folder pushed covering `ms.tex` → 1; folder in push covering a pulled file → 1; class-4 path pulled → 1; `showyourwork.yml` with other sections parsed correctly
 - [X] T009 [US4] Write `syw-adopt-overleaf/scripts/check_lists.py` per research R4 until T008 passes
 
 ---
@@ -78,7 +78,7 @@ access, nothing else changed).
 
 **Independent Test**: `tests/test_check_build.py`.
 
-- [X] T010 [P] [US5] Write `tests/test_check_build.py`: temp repo with `src/tex/figures/GD1/a.pdf` and `src/tex/figures/b.pdf`, mirror with only `figures/b.pdf` → output has `figure GD1/a.pdf: ABSENT` and `figure b.pdf: same`
+- [X] T010 [P] [US5] Write `tests/test_check_build.py`: temp repo with `src/tex/figures/sub/a.pdf` and `src/tex/figures/b.pdf`, mirror with only `figures/b.pdf` → output has `figure sub/a.pdf: ABSENT` and `figure b.pdf: same`
 - [X] T011 [US5] Change `syw-overleaf-dropbox/scripts/check_build.sh` to `find` figures recursively and compare by relative path until T010 passes
 
 ---
@@ -98,12 +98,12 @@ access, nothing else changed).
 
 **Goal**: the skill an agent follows to migrate a paper.
 
-**Independent Test**: the CP1 migration (after merge), SC-001 to SC-005.
+**Independent Test**: the Paper A migration (after merge), SC-001 to SC-005.
 
 - [X] T014 [US3] Write `syw-adopt-overleaf/SKILL.md`: frontmatter (description ≤ 1024 characters), when to use, hard rules (no `setup --overleaf`, R2; signing; tokens; private; the author's own actions), phases 0–8 with ⛔ gates and the scripts each uses, the dry run on a non-`main` branch (R1), the baseline compiled outside the mirror (R7), hand-off to `syw-overleaf-dropbox` and `syw-site init`
-- [X] T015 [P] [US3] Write `syw-adopt-overleaf/references/mapping.md`: the four classes, rules, inventory format, CP1 worked example
+- [X] T015 [P] [US3] Write `syw-adopt-overleaf/references/mapping.md`: the four classes, rules, inventory format, Paper A worked example
 - [X] T016 [P] [US3] Write `syw-adopt-overleaf/references/rollback.md`: exact restore commands per phase
-- [X] T017 [P] [US3] Write `syw-adopt-overleaf/references/lessons.md`: CP2 lessons (research R9)
+- [X] T017 [P] [US3] Write `syw-adopt-overleaf/references/lessons.md`: Paper B lessons (research R9)
 - [X] T018 [P] [US3] Write `syw-adopt-overleaf/references/migration-template.md` (data-model.md sections)
 
 ---
@@ -131,5 +131,5 @@ access, nothing else changed).
 ## Implementation strategy
 
 MVP = US1 + US2 (backup and diff are what make the migration safe). Then US4, US5, US6, then the
-runbook that ties them together. The runbook's real test is CP1, run in this session after the
+runbook that ties them together. The runbook's real test is Paper A, run in this session after the
 pull request merges.

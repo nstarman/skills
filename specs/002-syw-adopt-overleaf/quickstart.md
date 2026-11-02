@@ -18,10 +18,10 @@ Prerequisites: Python ≥ 3.11, git, poppler (`pdftotext`, `pdftoppm`, `pdfinfo`
 
 4. **backup.sh on scratch data**: a throwaway repository, a throwaway folder as mirror, a fake
    `--baseline`; with no Overleaf access the script stops at `FAILED overleaf` and nothing outside
-   the new backup folder changed. (The full run, with Overleaf, is part of the CP1 migration.)
+   the new backup folder changed. (The full run, with Overleaf, is part of the Paper A migration.)
 
 5. **public_check.sh**: on a repository cloned from a bundle it fails `shared commits`; on a fresh
    `git init` repository with one commit it passes.
 
-6. **End to end**: migrating CP1 with the skill (separate session) — success criteria SC-001 to
+6. **End to end**: migrating Paper A with the skill (separate session) — success criteria SC-001 to
    SC-005 of spec.md.
