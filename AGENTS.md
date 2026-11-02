@@ -53,6 +53,12 @@ hand: change the skill or the registry entry and run `python scripts/build_index
 (formats, unique names, every `SKILL.md` at its real location, claude.ai limits, freshness) and
 `claude plugin validate .`.
 
+Skills are public: no personal details (usernames, home paths, password-manager items, project or
+paper names, record IDs); use placeholders such as `<kerb>` or `op://<vault>/<item>`. Before a
+pull request, run `python scripts/personal_check.py`. It reads its patterns from
+`~/.config/skills/personal-strings.txt`, kept outside the repository because the list is itself
+personal, so CI skips it.
+
 ## Releases and zips
 
 Versions are dates, as in figpress-apps and syw-site: a release is `vYYYY.MM.DD`; a second release on the

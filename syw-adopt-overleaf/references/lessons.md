@@ -2,7 +2,7 @@
 
 Add one entry per surprise: what happened, why, what to do instead.
 
-## CP1 (stream straights and convexities), 2026
+## A paper whose Overleaf folder held the code, 2026
 
 - **The Dropbox mirror was the working repository.** Its `.git` (196 commits, no remote), a
   20,000-file `.venv` and a `preamble` submodule lived inside the Overleaf folder; the GitHub
@@ -25,8 +25,8 @@ Add one entry per surprise: what happened, why, what to do instead.
   - add `.pdf` to extension-less `\includegraphics` paths: SYW resolves them literally.
 - **A fix to `ms.tex` that did not take effect.** SYW's preprocess stage copies `src/tex` only
   when its inputs change; delete `.showyourwork/preprocess` before rebuilding.
-- **FontAwesome `\faRepeat` undefined.** The template's `showyourwork.sty` was older; CP2's fixed
-  copy worked.
+- **FontAwesome `\faRepeat` undefined.** The template's `showyourwork.sty` was older; a newer
+  copy from another SYW paper worked.
 - **The engine difference swamped `pdf_diff.py`** (841 numbers, 1632 text lines): SYW builds with
   tectonic, the baseline and Overleaf with pdflatex. Comparing figures, number files and a
   pdflatex compile of the migrated sources separately found no difference at all; the
@@ -59,7 +59,7 @@ Add one entry per surprise: what happened, why, what to do instead.
   day, before the local history recorded them; the blob lookup in phase 8 found them in
   `github.bundle` only.
 
-## CP2 (spatial correlations of stream convexities), 2026
+## A paper migrated by hand, 2026
 
 Migrated by hand before this skill existed; its history shows what a migration needs after the
 first two commits.
@@ -74,7 +74,7 @@ first two commits.
 - **Hours-long rules.** Three simulations took hours each. SYW's `local_cache` copies their
   committed results from `src/static/` instead of recomputing; document in the README how to
   refresh them. Decide this in phase 3, not after a CI run times out.
-- **Inputs from another paper.** Data from Paper I came from a Zenodo Sandbox record
+- **Inputs from another paper.** Data from an earlier paper came from a Zenodo Sandbox record
   (`datasets:` in `showyourwork.yml`), with checksums in `src/data/.../README.md`. Do the same
   for any input not produced by this repository's code.
 - **Cheap cached rules on CI.** `run_cache_rules_on_ci: true` lets CI recompute the minutes-long

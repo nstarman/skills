@@ -60,14 +60,14 @@ slug from the title (short, lowercase, hyphens) and get the author's confirmatio
 
 ```sh
 scripts/backup.sh --repo <old clone> --mirror "<mirror>" --overleaf-id <id> \
-    --op-ref 'op://<vault>/<item>/credential' --baseline baseline.pdf [--github <owner/name>]
+    --op-ref 'op://<vault>/<item>/credential' --baseline baseline.pdf [--github <owner/name>] [--dest <backups root>]
 ```
 
 `--github` is needed when the old repository has no `origin` (for example when it *is* the
 Dropbox mirror folder); if GitHub holds a different history (Overleaf's own GitHub sync), it is
 bundled too, as `github.bundle`.
 
-Writes `~/Documents Local/backups/<old-repo>-<YYYY-MM-DD>/` (refuses Dropbox/iCloud and an
+Writes `<dest>/<old-repo>-<YYYY-MM-DD>/` (`--dest` defaults to `~/backups`) (refuses Dropbox/iCloud and an
 existing folder) with `repo.bundle`, `mirror.tar.gz`, `overleaf/` (clone with Overleaf's
 history), `baseline.pdf`, `secrets.txt` (names only) and a `MIGRATION.md` from
 `references/migration-template.md`; every part verified. Move `inventory.tsv` there.
@@ -93,7 +93,7 @@ In a new folder `<parent>/paper-<slug>/` (a new repository; nothing from the old
    every figure and cited number. Keep every `ms.tex` change in an exact-match edit script in the
    backup folder (`ms_edits.py`): phase 6 replays it on Overleaf so the first pull is
    byte-identical. The usual edits, and the other first-build failures, are in
-   `references/lessons.md` (CP1).
+   `references/lessons.md`.
 2. Run the old tests. Point pytest's `testpaths` at the package, never at `src/scripts`:
    importing a figure script runs it. Commit 2, `[showyourwork] migrate paper sources`. The
    prefix matters: SYW's pull refuses to overwrite a file whose last commit is not a
@@ -126,8 +126,8 @@ page by page: a figure moving to another page is layout work they will want to k
 ### 5. Create the new repository ⛔
 
 **If any rule is `cache: True`, seed the Zenodo cache before `main` reaches GitHub.** With no
-Sandbox DOI in `zenodo.yml`, CI does not treat those rules as cached and runs them (CP1's 21-hour
-rule ran on a runner until cancelled). ⛔ With the author's yes, `showyourwork cache create`
+Sandbox DOI in `zenodo.yml`, CI does not treat those rules as cached and runs them (a 21-hour
+rule once ran on a runner until cancelled). ⛔ With the author's yes, `showyourwork cache create`
 (token inline) makes a private Sandbox draft and writes its DOI. To upload existing results
 instead of recomputing:
 
@@ -178,8 +178,8 @@ if a co-author edited.
    again. Compare Overleaf's new commit with the dry run (same files, same change types; pushed
    figures identical to the old ones). Push to GitHub.
 6. The first CI run on `main` syncs Overleaf with **CI's** build. Compare every figure it pushed
-   with the local one: `pdfinfo` page size, then `pdf_diff.py`. CP1 hit two CI-only failures
-   here (cached outputs in `src/tex/` crashing the cache restore; a figure whose size depended on
+   with the local one: `pdfinfo` page size, then `pdf_diff.py`. Two CI-only failures
+   have come up here (cached outputs in `src/tex/` crashing the cache restore; a figure whose size depended on
    the matplotlib backend); both are in `references/lessons.md`.
 
 ### 7. Prune ⛔
@@ -232,7 +232,7 @@ the new repository and folder can be deleted until the author has used them.
 
 ## Files
 
-- `references/mapping.md` — the four classes, rules, inventory format, CP1 example.
+- `references/mapping.md` — the four classes, rules, inventory format, a worked example.
 - `references/rollback.md` — restore commands per phase.
 - `references/lessons.md` — what went wrong in earlier migrations, and why.
 - `references/migration-template.md` — the `MIGRATION.md` skeleton.
