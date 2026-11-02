@@ -74,6 +74,9 @@ Each entry is a symptom, why it happens, and what to do.
 
 ## CI
 
+For Zenodo cache keys, re-uploading a cached output and publishing the cache, use the
+`syw-zenodo-cache` skill.
+
 - **`MissingInputException` for a values file.** Some rule lists a derived file as an input,
   but no rule produces it (derived data is usually gitignored, so a clean checkout lacks it).
   Add a rule whose output is that file.
