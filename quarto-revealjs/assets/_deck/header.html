@@ -1,0 +1,29 @@
+<!-- Load MathJax and plotly.js once, from local copies (inlined by embed-resources). -->
+<script>
+  window.MathJax = { tex: { packages: { "[+]": ["html"] } }, svg: { fontCache: "global" } };
+</script>
+<script src="_vendor/mathjax/tex-svg-full.js"></script>
+<script src="_vendor/plotly/plotly.min.js"></script>
+<style>
+  /* Live content (apps, animations) doesn't print: mark it .print-hide and give a .print-only still. */
+  .print-only { display: none; }
+  html.print-pdf .print-only { display: block; }
+  html.print-pdf .print-hide { display: none !important; }
+</style>
+<script>
+  // MathJax typesets after reveal.js has collected fragments: once it is done, drop the duplicate
+  // in MathJax's hidden screen-reader copy and let reveal.js find \class{fragment}{...} in equations.
+  window.addEventListener("load", () => MathJax.startup.promise.then(() => {
+    document.querySelectorAll("mjx-assistive-mml .fragment").forEach((e) => e.classList.remove("fragment"));
+    // slides with an equation fragment step in page order (explicit data-fragment-index there is reset)
+    document.querySelectorAll("section").forEach((s) => {
+      if (s.querySelector("mjx-container .fragment"))
+        s.querySelectorAll(".fragment").forEach((e) => e.removeAttribute("data-fragment-index"));
+    });
+    Reveal.isReady() ? Reveal.sync() : Reveal.on("ready", () => Reveal.sync());
+  }));
+  // Clicking into an embedded app (iframe) takes the keyboard; give it back so arrow keys change slides.
+  window.addEventListener("blur", () => setTimeout(() => {
+    if (document.activeElement?.tagName === "IFRAME") { document.activeElement.blur(); window.focus(); }
+  }));
+</script>
