@@ -96,6 +96,8 @@ outer [nested]{.fragment .highlight-blue fragment-index=6}
 
 [Jump to the Layout slide](#layout){.internal-link}
 
+[Same link, written reveal.js-style](#/layout){.hash-link}
+
 <a href="#" class="navigate-next">navigate-next (link)</a> <button class="navigate-next btn-next">navigate-next (button)</button>
 
 ## Layout {#layout}

@@ -44,8 +44,11 @@ skill's files live.
 
 ### VI. Small and dependency-free
 
-- Scripts are standard-library Python 3 or Bash. Workflows use only the repository's own
-  `GITHUB_TOKEN`; no new secrets.
+- Scripts in `scripts/` (and the repository's unit tests) are standard-library Python 3 or Bash.
+  Workflows use only the repository's own `GITHUB_TOKEN`; no new secrets.
+- Exception: an end-to-end test of one skill, under `tests/skills/<skill>/` with its own workflow,
+  may install the third-party tools that skill is about (e.g. Quarto, Playwright, a browser). It
+  never becomes a dependency of `scripts/`, the index or the release zips.
 
 ### VII. Published skills only
 
@@ -68,4 +71,4 @@ skill's files live.
 - Amendments are made by pull request with a version bump: MAJOR for removing or redefining a
   principle, MINOR for adding or materially expanding one, PATCH for wording.
 
-**Version**: 1.1.0 | **Ratified**: 2026-10-22 | **Last Amended**: 2026-10-22
+**Version**: 1.2.0 | **Ratified**: 2026-10-22 | **Last Amended**: 2026-11-04

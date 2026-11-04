@@ -591,7 +591,7 @@ Things to know:
 - **Theme**: the apps follow the system's dark mode unless `<html data-theme="light|dark">` is set.
   The deck cannot script into an inlined (`data:` URL) iframe, and Chrome does not pass an iframe's CSS
   `color-scheme` into the page, so pin the theme in the copy:
-  `sed -i '' 's|<html lang="en">|<html lang="en" data-theme="light">|' apps/app.html`.
+  `perl -pi -e 's|<html lang="en">|<html lang="en" data-theme="light">|' apps/app.html` (works on macOS and Linux).
 - **Keyboard**: clicking into an app gives it the keyboard; the header script hands focus back so the
   arrow keys keep changing slides. Dragging is unaffected.
 - **Print**: WebGL apps print blank; give each a `.print-only` still (a screenshot of the app).
@@ -606,7 +606,7 @@ Things to know:
    carries its own CDN MathJax. Use the section 1 setup.
 3. `show-notes` in YAML shows notes on screen; set it only when printing.
 4. `jupyter:` in `_quarto.yml` is ignored; set it per deck.
-5. Keep `_vendor/` out of the output folder, or reveal's math plugin double-loads MathJax.
+5. Put decks at the top of the deck folder: the header's `_vendor/` paths are relative to the deck.
 6. Slide links: `#id`, not `#/id`. Navigation classes on `<button>`, not `<a href="#">`.
 7. Preview links only for `http`/`www`; use `Reveal.showPreview()` for local files.
 8. `keyboard:` and `postMessageEvents` need JavaScript, not YAML.

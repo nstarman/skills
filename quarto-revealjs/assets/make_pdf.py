@@ -14,7 +14,8 @@ with sync_playwright() as p:
     ctx.route("**/*", lambda r: r.continue_() if r.request.url.startswith(("file:", "data:", "blob:")) else r.abort())
     page = ctx.new_page()
     page.goto(html.as_uri() + "?print-pdf&showNotes=separate-page")  # notes in the PDF only
-    page.wait_for_timeout(5000)  # fixed wait for MathJax/Plotly; poll a ready flag if decks get heavy
-    w, h = page.evaluate("[Reveal.getConfig().width, Reveal.getConfig().height]")
-    page.pdf(path=html.with_suffix(".pdf"), width=f"{w}px", height=f"{h}px", print_background=True)
+    page.wait_for_function("typeof Reveal !== 'undefined' && Reveal.isReady()", timeout=30000)
+    page.wait_for_timeout(3000)  # MathJax and Plotly finish after reveal.js is ready
+    # reveal.js's print view declares the page size (@page: slide size plus margin); use it as is.
+    page.pdf(path=html.with_suffix(".pdf"), prefer_css_page_size=True, print_background=True)
 print("wrote", html.with_suffix(".pdf"))

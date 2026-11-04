@@ -1,5 +1,5 @@
 project:
-  output-dir: _output            # decks land away from _vendor/, so nothing double-loads
+  output-dir: _output            # rendered, self-contained decks; sources and _vendor/ stay apart
 
 format:
   revealjs:

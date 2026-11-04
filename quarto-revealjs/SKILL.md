@@ -22,8 +22,18 @@ Template files: `assets/`.
      runtime; avoid it here.)
    - `_vendor/plotly/plotly.min.js`: copy it from the Python plotly package,
      `<site-packages>/plotly/package_data/plotly.min.js`, so the deck matches the Python version.
-3. Each deck's front matter needs only its own settings; `jupyter: python3` must be here, not in
-   `_quarto.yml` (Quarto ignores it there and picks some other installed kernel):
+
+   ```bash
+   mkdir -p _vendor/mathjax _vendor/plotly
+   curl -fsSL -o _vendor/mathjax/tex-svg-full.js https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg-full.js
+   cp "$(python -c 'import plotly, pathlib; print(pathlib.Path(plotly.__file__).parent / "package_data/plotly.min.js")')" _vendor/plotly/
+   ```
+
+   The header puts plotly.js (about 4.6 MB) into **every** deck. If no deck in the folder has
+   Plotly figures, delete its `plotly.min.js` line from `_deck/header.html` and skip the copy.
+3. Put the decks at the top of the folder: the header's `_vendor/` paths are relative to the deck.
+   Each deck's front matter needs only its own settings. Put `jupyter: python3` here, not in
+   `_quarto.yml`: there it was observed to be ignored, and Quarto picked another installed kernel.
    ````markdown
    ---
    title: "My talk"
@@ -33,8 +43,8 @@ Template files: `assets/`.
    {{< include _deck/setup.qmd >}}
    ````
    Include `_deck/setup.qmd` only in decks with Python Plotly cells.
-4. `quarto render` renders every deck in the folder to `_output/`. Keep `_vendor/` out of the output
-   folder: next to a deck, reveal.js's math plugin finds it and loads MathJax twice.
+4. `quarto render` renders every deck in the folder to `_output/`. The rendered decks are
+   self-contained; `_vendor/` and `_deck/` are needed only to render.
 
 Why each piece exists (all observed, not theoretical):
 
@@ -63,6 +73,8 @@ Why each piece exists (all observed, not theoretical):
 | Link to a slide | `[text](#id)`, **not** `#/id` (Quarto rewrites it to `#//id`) |
 | Backup slides | `{visibility="uncounted"}`; drafts `{visibility="hidden"}` |
 | JavaScript | a ```` ```{=html} ```` block with `<script>`; use `Reveal` after `window` `load` |
+
+The table escapes `|` as `\|`; in a deck write `code-line-numbers="|1|2-3"`.
 
 Everything else (themes, auto-slide, scroll view, keyboard, events, postMessage, plugins,
 chalkboard, multiplex): `references/quarto-revealjs-guide.md`.
@@ -99,13 +111,14 @@ file):
 Both scripts need `pip install playwright` and Google Chrome, and block the network while they run.
 
 ```bash
-python check_offline.py _output/*.html    # lists any request that tried to leave the machine
+python check_offline.py _output/*.html    # network requests, missing files, errors, raw TeX
 python make_pdf.py _output/my-talk.html   # -> _output/my-talk.pdf, notes on their own pages
 ```
 
-A deck passes when it makes **no** network requests, has no page errors and no raw TeX. "It
-rendered" is not evidence: on a machine with internet a broken deck looks fine.
-`check_offline.py` ignores one expected console message (the math plugin's `about:blank` load).
+A deck passes when it makes **no** network requests, misses no local file (a background video or
+background-iframe app not shipped beside it), has no page errors and no raw TeX. "It rendered" is
+not evidence: on a machine with internet a broken deck looks fine. `check_offline.py` allows the
+math plugin's `about:blank` request, which loads nothing by design.
 Then step through the deck once in the browser (S for notes, the app slides, fragments), and look at
 the PDF: fragment steps are separate pages, live content shows its still.
 

@@ -6,12 +6,12 @@ Every claim in `references/quarto-revealjs-guide.md` was observed in a browser a
 
 ## What tells you to update
 
-- **The weekly CI run fails** (`.github/workflows/test-quarto-revealjs.yml`, Mondays, latest Quarto
-  release, latest plotly). A scheduled failure opens or comments on an issue titled
-  "quarto-revealjs: weekly test failed (upstream change?)". The run's log says which step failed;
-  the rendered decks are attached as an artifact.
-- **A warning in a passing run**: Quarto or plotly is newer than `versions.json` but everything still
-  works. Bump `versions.json` (step 5) so the record stays honest.
+- **An issue titled "quarto-revealjs: weekly test needs attention (upstream change)"**. The weekly
+  run (`.github/workflows/test-quarto-revealjs.yml`, Mondays, latest Quarto release, latest plotly)
+  opens it, or comments on the open one, when the test fails *or* when it passes on versions newer
+  than `versions.json`. The comment says which. On a failure, the run's log says which step failed,
+  and the rendered decks, the PDF and the speaker-view and scroll-view screenshots are attached as
+  an artifact. On a pass with newer versions, just bump `versions.json` (step 5).
 - **A new reveal.js or Quarto release** with features you want. Run the workflow by hand with a
   specific Quarto (`workflow_dispatch`, input `quarto-version`, e.g. `v1.12.0`, prereleases too).
 
@@ -23,19 +23,26 @@ Every claim in `references/quarto-revealjs-guide.md` was observed in a browser a
                                                           # python3 with plotly jupyter playwright
    ```
    The steps: version check, set up a deck folder from `assets/` exactly as `SKILL.md` says, render
-   the fixture decks, offline check, PDF, and the feature table (`feature_check.py`).
+   the fixture decks, offline check (network, missing files, errors, raw TeX), PDF (6 pages including
+   the app's still), the feature table (`feature_check.py`, which also checks the demo deck's Plotly
+   figure and equation fragment), and the documented gotchas (`fixture/gotchas/`: KaTeX not
+   embedded, chalkboard refusing one file).
 2. **Read what changed**:
-   - `DIFFERS FROM THE GUIDE: '<check>' now passes`: a limitation went away (e.g. reveal.js 5.2's
+   - `DIFFERS FROM THE GUIDE: '<check>'` on a check listed in `EXPECTED_FAIL` that passed: a limitation went away (e.g. reveal.js 5.2's
      native lightbox once Quarto bundles it). Update the guide's table row and section, remove the
      workaround from `SKILL.md` if there was one, and drop the name from `EXPECTED_FAIL` in
      `tests/skills/quarto-revealjs/feature_check.py`.
-   - `... now fails`: a regression or a changed syntax. Find the new way in the Quarto and reveal.js
+   - The same on an expected-to-fail check that *crashed* (its log line starts `error:`): the
+     check no longer tests anything (a fixture element is gone, or the page changed); fix the check.
+   - The same on any other check: a regression or a changed syntax. Find the new way in the Quarto and reveal.js
      docs and changelogs, fix the guide (and the fixture deck if the syntax changed), or, if it is
      simply broken upstream, mark it ✗ in the guide, add it to `EXPECTED_FAIL` with a comment, and
      report it upstream.
    - Offline check fails: something now loads from the network. Usually a new CDN default in
      Quarto's templates (`share/formats/revealjs/`) or in plotly.py's notebook renderer; adjust
      `assets/` (`_quarto.yml`, `_deck/header.html`, `_deck/setup.qmd`) so it is loaded once, locally.
+   - A gotcha step fails: the documented gotcha no longer holds (KaTeX now embedded, chalkboard
+     now allowed). Update the guide, SKILL.md and the fixture.
    - Render fails: an option was renamed or removed; check Quarto's schema in
      `share/schema/document-reveal-*.yml` (the guide's option list comes from there).
 3. **New reveal.js version bundled** (the version step errors): read the reveal.js changelog from the
