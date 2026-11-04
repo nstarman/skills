@@ -9,7 +9,7 @@ Markdown table, or a plain two-column file) and emits whichever artifact the sta
 Emitters
 --------
   stubs      Fragment-preserving meta-refresh HTML at each old path. Works anywhere, including
-             stacks with no redirect support at all (Zensical). Copy into the built site, or
+             stacks with no redirect support at all. Copy into the built site, or
              point the SSG's "extra files" setting at the output directory.
   netlify    A `_redirects` file — real 301s on Netlify, Cloudflare Pages, and compatible hosts.
   nginx      `location` blocks for a server-side 301.

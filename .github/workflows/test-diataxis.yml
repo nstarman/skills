@@ -1,0 +1,64 @@
+name: test diataxis
+
+# End-to-end test of the diataxis skill against the latest releases of the doc tools its
+# references document: lays out a small Diátaxis docs tree, runs the skill's scripts on it, and
+# builds it with Sphinx + MyST and with Zensical using the references' config, checking redirects
+# and documented behaviours. Weekly, so upstream changes show up here. A scheduled run that
+# fails opens (or comments on) an issue. Versions newer than diataxis/versions.json are only
+# warned about: Zensical releases about weekly, so an issue per release would be noise. See
+# diataxis/UPDATING.md.
+on:
+  schedule:
+    - cron: "41 7 * * 3"   # Wednesdays
+  pull_request:
+    paths:
+      - "diataxis/**"
+      - "tests/skills/diataxis/**"
+      - ".github/workflows/test-diataxis.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Doc tools (latest, to catch upstream changes)
+        run: |
+          python -m pip install --quiet sphinx 'myst-parser[linkify]' sphinx-design \
+            sphinxext-rediraffe sphinx-reredirects pydata-sphinx-theme zensical
+          python -m pip list | grep -i -E 'sphinx|myst|linkify|zensical'
+      - name: Test the skill
+        id: test
+        run: tests/skills/diataxis/run.sh "$RUNNER_TEMP/diataxis"
+      - name: Keep the built sites
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: diataxis-output
+          path: |
+            ${{ runner.temp }}/diataxis/sphinx/docs/_build
+            ${{ runner.temp }}/diataxis/zensical/site
+
+  remind:
+    # Only this job can write issues; it runs no repository code.
+    needs: test
+    if: always() && github.event_name == 'schedule' && needs.test.result == 'failure'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="diataxis: weekly test needs attention (upstream change)"
+          body="The weekly test of the diataxis skill failed: $RUN_URL. Follow diataxis/UPDATING.md."
+          n=$(gh issue list --state open --search "in:title \"$title\"" --json number --jq '.[0].number')
+          if [ -n "$n" ]; then gh issue comment "$n" --body "$body"; else gh issue create --title "$title" --body "$body"; fi

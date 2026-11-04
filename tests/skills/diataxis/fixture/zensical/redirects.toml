@@ -1,0 +1,7 @@
+
+# Appended to zensical.toml by run.sh: the redirects plugin as references/zensical.md
+# ("Redirects") configures it, mapping the old pages of migration-map.md.
+[project.plugins.redirects.redirect_maps]
+"getting-started.md" = "tutorials/installation.md"
+"usage.md" = "how-to/schedule-runs.md"
+"usage.md#flags" = "reference/cli.md#flags"

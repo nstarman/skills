@@ -8,7 +8,10 @@ set -euo pipefail
 cd /work/submit/$USER/PROJECT          # <-- your cluster clone
 msg=${1:?commit message required}
 git pull --rebase --autostash -q
-git add -- '[0-9][0-9]_*/*.png' '[0-9][0-9]_*/*.npz' '[0-9][0-9]_*/*.json' '[0-9][0-9]_*/*results*.txt' 2>/dev/null || true
+# one pattern at a time: git add aborts the whole call if any single pattern matches nothing
+for g in '[0-9][0-9]_*/*.png' '[0-9][0-9]_*/*.npz' '[0-9][0-9]_*/*.json' '[0-9][0-9]_*/*results*.txt'; do
+  git add -- "$g" 2>/dev/null || true
+done
 if git diff --cached --quiet; then echo "nothing to commit"; exit 0; fi
 git diff --cached --stat
 git commit -q -m "results: $msg" -m "Committed on subMIT from Slurm outputs."

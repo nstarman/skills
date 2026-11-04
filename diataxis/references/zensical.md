@@ -1,13 +1,15 @@
 # Zensical: implementing a Diátaxis restructure
 
 Zensical is the static site generator from the Material for MkDocs team. Details below were
-verified against zensical.org, the `zensical/zensical` repository and PyPI in August 2026.
+verified against zensical.org, the `zensical/zensical` repository and PyPI in August 2026; the
+config, nav, landing pages, link validation, page titles, redirects and CLI were re-checked
+against the release in `../versions.json` by the skill's end-to-end test.
 Zensical is young — PyPI classifier `Development Status :: 3 - Alpha`, versioned `0.0.x`,
 released roughly weekly — so check anything surprising against the current docs.
 
 **Contents**
 
-- [Read this first: no redirects](#read-this-first-no-redirects)
+- [Read this first: redirects](#read-this-first-redirects)
 - [Project shape](#project-shape)
 - [Configuration](#configuration)
 - [Navigation](#navigation)
@@ -24,16 +26,29 @@ released roughly weekly — so check anything surprising against the current doc
 
 ---
 
-## Read this first: no redirects
+## Read this first: redirects
 
-**Zensical has no redirect or alias mechanism.** `mkdocs-redirects` is not supported and there
-is no built-in equivalent (tracked as backlog #23). A Diátaxis restructure changes every URL,
-so raise this before any files move. The options:
+A Diátaxis restructure changes every URL, so settle redirects before any files move. Zensical
+has a built-in `redirects` plugin (the `mkdocs-redirects` configuration, no install needed).
+Older Zensical releases had none, so check the project's pinned version first. Paths are source
+files relative to `docs_dir`, and you can map a single anchor of a page that was split:
+
+```toml
+[project.plugins.redirects.redirect_maps]
+"getting-started.md" = "tutorials/installation.md"
+"usage.md" = "how-to/schedule-runs.md"
+"usage.md#flags" = "reference/cli.md#flags"
+```
+
+Each old page becomes a meta-refresh page that keeps the URL fragment. Anchors you did not map
+go to the page-level target. No Markdown file may remain at the old path. The options:
 
 1. **Host-level redirects** — Netlify `_redirects`, Cloudflare rules, nginx/Apache config,
    CloudFront functions. Best outcome: real 301s. Requires control of hosting.
-2. **Generated meta-refresh stub pages** at the old paths. Works anywhere, including GitHub
-   Pages. Generate them from the migration map — do not hand-write them:
+2. **The `redirects` plugin** above: works anywhere, including GitHub Pages. Fill
+   `redirect_maps` from the migration map's redirect table, as source filenames, not URLs.
+3. **Generated meta-refresh stub pages** at the old paths, if the plugin cannot be used. Generate
+   them from the migration map — do not hand-write them:
 
    ```bash
    python <skill-dir>/scripts/make_redirect_stubs.py \
@@ -42,13 +57,12 @@ so raise this before any files move. The options:
 
    The stubs preserve the URL fragment and route split-page anchors to different destinations,
    which is the part that goes wrong by hand. Copy the output into `site/` after each build.
-3. **Keep URLs stable** — reorganize nav and rewrite content without moving files. This
+4. **Keep URLs stable** — reorganize nav and rewrite content without moving files. This
    preserves links completely and still delivers most of the benefit, since the mode separation
    and the rewrites are where the value is. Consider it seriously for a public doc set with
    significant inbound traffic.
 
-Whichever you choose, say so explicitly in the plan. Silently shipping a restructure on Zensical
-means silently breaking every inbound link.
+Whichever you choose, say so explicitly in the plan.
 
 ---
 
@@ -210,12 +224,10 @@ Precedence, highest first:
 3. First `# H1` in the page
 4. Base filename
 
-**A known deviation from MkDocs matters during a restructure:** if you set `nav` titles but a
-page has no `# H1`, MkDocs uses the nav title as the heading while Zensical uses the *base
-filename*. So a file named `authenticate.md` with a nav title of "How to authenticate" and no
-H1 renders an `<h1>` of "authenticate". Give every page an explicit `# H1` — which you want
-anyway, because the H1 is where the mode signal lives ("How to…"). This area is being
-redesigned under ZAP 001.
+A page with a `nav` title and no `# H1` gets the nav title as its `<h1>`, as in MkDocs.
+(Early Zensical releases used the *base filename* instead.) Still give every page an explicit
+`# H1`, because the H1 is where the mode signal lives ("How to…") and it travels with the file
+when the nav changes.
 
 ---
 
@@ -334,7 +346,7 @@ than dumping the module tree into the nav.
 
 | Need | Status |
 | --- | --- |
-| Redirects / aliases | **Not supported** — see the top of this file |
+| Redirects | Supported: the `redirects` plugin — see the top of this file |
 | Tag index/listing pages | Not supported. Tagging pages works (rendered at page bottom, filterable in search) but there are no tag landing pages yet |
 | Blog | Not supported |
 | Social cards | Not supported |
