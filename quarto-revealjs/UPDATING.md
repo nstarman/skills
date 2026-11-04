@@ -1,0 +1,59 @@
+# Keeping quarto-revealjs current
+
+This skill documents a moving target: Quarto, the reveal.js it bundles, MathJax and plotly.py.
+Every claim in `references/quarto-revealjs-guide.md` was observed in a browser against the versions in
+`versions.json`. When those move, re-verify; do not edit claims from release notes alone.
+
+## What tells you to update
+
+- **The weekly CI run fails** (`.github/workflows/test-quarto-revealjs.yml`, Mondays, latest Quarto
+  release, latest plotly). A scheduled failure opens or comments on an issue titled
+  "quarto-revealjs: weekly test failed (upstream change?)". The run's log says which step failed;
+  the rendered decks are attached as an artifact.
+- **A warning in a passing run**: Quarto or plotly is newer than `versions.json` but everything still
+  works. Bump `versions.json` (step 5) so the record stays honest.
+- **A new reveal.js or Quarto release** with features you want. Run the workflow by hand with a
+  specific Quarto (`workflow_dispatch`, input `quarto-version`, e.g. `v1.12.0`, prereleases too).
+
+## How to update
+
+1. **Reproduce locally** with the new versions:
+   ```bash
+   tests/skills/quarto-revealjs/run.sh /tmp/qr-test     # needs quarto, ffmpeg, Chrome,
+                                                          # python3 with plotly jupyter playwright
+   ```
+   The steps: version check, set up a deck folder from `assets/` exactly as `SKILL.md` says, render
+   the fixture decks, offline check, PDF, and the feature table (`feature_check.py`).
+2. **Read what changed**:
+   - `DIFFERS FROM THE GUIDE: '<check>' now passes`: a limitation went away (e.g. reveal.js 5.2's
+     native lightbox once Quarto bundles it). Update the guide's table row and section, remove the
+     workaround from `SKILL.md` if there was one, and drop the name from `EXPECTED_FAIL` in
+     `tests/skills/quarto-revealjs/feature_check.py`.
+   - `... now fails`: a regression or a changed syntax. Find the new way in the Quarto and reveal.js
+     docs and changelogs, fix the guide (and the fixture deck if the syntax changed), or, if it is
+     simply broken upstream, mark it ✗ in the guide, add it to `EXPECTED_FAIL` with a comment, and
+     report it upstream.
+   - Offline check fails: something now loads from the network. Usually a new CDN default in
+     Quarto's templates (`share/formats/revealjs/`) or in plotly.py's notebook renderer; adjust
+     `assets/` (`_quarto.yml`, `_deck/header.html`, `_deck/setup.qmd`) so it is loaded once, locally.
+   - Render fails: an option was renamed or removed; check Quarto's schema in
+     `share/schema/document-reveal-*.yml` (the guide's option list comes from there).
+3. **New reveal.js version bundled** (the version step errors): read the reveal.js changelog from the
+   old version to the new one. For each new or changed feature: add a slide to
+   `tests/skills/quarto-revealjs/fixture/reveal-features.qmd`, a check to `feature_check.py`, and a
+   row to the guide. Re-check the guide's "Gotchas" and the `SKILL.md` gotchas one by one; several
+   (preview links only for http, `#/id` rewriting, the 95% iframe cap) are version-specific.
+4. **Re-check the workarounds** in `assets/_deck/header.html` still need to exist: the `about:blank`
+   math URL, the `Reveal.sync()` after MathJax, the iframe focus hand-back. Remove any that the new
+   versions make unnecessary, and say so in the guide.
+5. **Record the versions**: update `versions.json` (`verified` date, `quarto`, `revealjs`, `mathjax`,
+   `plotly`), and the version numbers quoted in the guide's first paragraph and `SKILL.md`.
+6. Run the repository checks (`python -m unittest discover tests`,
+   `python scripts/build_index.py --check`) and open a pull request; the workflow runs on it.
+
+## MathJax
+
+The skill pins MathJax 3.2.2's `tex-svg-full.js` (`versions.json` → `mathjax`; the test downloads that
+version). Move to a newer MathJax only after checking that its SVG build is still one file with every
+TeX extension and no runtime font or component loading (MathJax 4's is not), and that
+`\class{fragment}` still works.

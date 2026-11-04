@@ -56,6 +56,19 @@
       "zip": "https://github.com/nstarman/skills/releases/latest/download/figpress-apps-upgrade.zip"
     },
     {
+      "name": "quarto-revealjs",
+      "description": "Builds Quarto reveal.js presentations that work offline for good: one self-contained HTML file plus a PDF, with math, Plotly figures, speaker notes and embedded interactive apps, and a tested guide to which reveal.js features Quarto supports and how to write them.",
+      "origin": "local",
+      "href": "https://github.com/nstarman/skills/tree/main/quarto-revealjs",
+      "source": {
+        "repo": "nstarman/skills",
+        "path": "quarto-revealjs",
+        "ref": "main"
+      },
+      "install": "quarto-revealjs@nstarman-skills",
+      "zip": "https://github.com/nstarman/skills/releases/latest/download/quarto-revealjs.zip"
+    },
+    {
       "name": "quax",
       "description": "Writes, reviews and debugs JAX code that uses quax: custom array-like types such as physical units, sparse and low-rank arrays, quaxify, and the dispatch rules that make them work.",
       "origin": "external",

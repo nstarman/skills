@@ -1,0 +1,158 @@
+---
+title: "reveal.js features under Quarto"
+format:
+  revealjs:
+    width: 1280                      # Presentation Size
+    height: 720
+    slide-number: c/t                # Slide Numbers
+    show-slide-number: all
+    navigation-mode: vertical        # Vertical Slides: level-1 headings start a column
+    controls-layout: edges
+    jump-to-slide: true              # Jump to Slide (G)
+    preview-links: true              # Links / Lightbox-style iframe previews
+    lightbox: true                   # Quarto's image lightbox (GLightbox)
+    parallax-background-image: apps/explorer.png
+    parallax-background-size: "2560px 1440px"
+    revealjs-plugins:                # Creating a Plugin: a local Quarto extension
+      - ping
+resources:
+  - media/
+  - apps/
+---
+
+# Content {#content}
+
+## Markup and raw HTML {#markup}
+
+Pandoc Markdown becomes reveal.js `<section>` markup.
+
+```{=html}
+<p class="raw-html-test" style="color:#b03a2e">This paragraph is raw HTML.</p>
+```
+
+## Background: colour {#bg-colour background-color="#0b1d3a"}
+
+## Background: iframe {#bg-iframe background-iframe="apps/explorer.html" background-interactive="true"}
+
+## Background: gradient {#bg-gradient background-gradient="linear-gradient(to bottom, #283b95, #17b2c3)"}
+
+## Background: image {#bg-image background-image="apps/explorer.png" background-size="contain" background-opacity="0.4"}
+
+## Background: video {#bg-video background-video="media/clip.mp4" background-video-loop="true" background-video-muted="true"}
+
+## Media {#media}
+
+{{< video media/clip.mp4 width="480" height="270" >}}
+
+<audio class="audio-test" controls src="media/tone.mp3"></audio>
+
+<img class="lazy-test" data-src="apps/explorer.png" width="200">
+
+## Lightbox and preview links {#lightbox}
+
+![Click to enlarge](apps/explorer.png){.lightbox width="320"}
+
+<img class="native-lightbox" src="apps/explorer.png" width="160" data-preview-image>
+
+[Open the app in an overlay](apps/explorer.html){preview-link="true" .preview-test}
+
+<a href="apps/explorer.html" class="preview-local" onclick="Reveal.showPreview(this.href); return false;">Local file preview via Reveal.showPreview</a>
+
+## Code {#code}
+
+```{.python code-line-numbers="|1|2-3"}
+import numpy as np
+t = np.linspace(0, 1, 10)
+print(t.sum())
+```
+
+## Math {#math}
+
+$$\nabla^2 \Phi = 4\pi G \rho$$
+
+## Fragments {#fragments}
+
+::: {.fragment .fade-up fragment-index=3}
+fade-up, shown third
+:::
+
+::: {.fragment .fade-left fragment-index=1}
+fade-left, shown first
+:::
+
+::: {.fragment .strike fragment-index=2}
+strike, second
+:::
+
+::: {.fragment .fade-in-then-out fragment-index=4}
+fade-in-then-out
+:::
+
+::: {.fragment fragment-index=5}
+outer [nested]{.fragment .highlight-blue fragment-index=6}
+:::
+
+## Links {#links}
+
+[Jump to the Layout slide](#layout){.internal-link}
+
+<a href="#" class="navigate-next">navigate-next (link)</a> <button class="navigate-next btn-next">navigate-next (button)</button>
+
+## Layout {#layout}
+
+::: {.r-stack}
+![](apps/explorer.png){.fragment width="400"}
+
+![](apps/explorer-full.png){.fragment width="400"}
+:::
+
+::: {.r-fit-text}
+FIT
+:::
+
+::: {.absolute top="600" left="1000" .abs-test}
+absolute
+:::
+
+## Hidden slide {#hidden visibility="hidden"}
+
+## Uncounted slide {#uncounted visibility="uncounted"}
+
+# Features {#features}
+
+## Vertical: under "Features" {#vertical}
+
+## Auto-animate A {#aa1 auto-animate="true"}
+
+::: {data-id="b" style="background:#0072B2; width:100px; height:100px;"}
+:::
+
+## Auto-animate B {#aa2 auto-animate="true"}
+
+::: {data-id="b" style="background:#E69F00; width:300px; height:150px;"}
+:::
+
+## Auto-slide {#autoslide autoslide="1500"}
+
+Advances by itself after 1.5 s.
+
+## Speaker notes {#notes}
+
+Press **S** for the speaker view.
+
+::: {.notes}
+NOTES-MARKER: these are the speaker notes.
+:::
+
+## Transition per slide {#trans transition="convex" transition-speed="slow"}
+
+## Last {#last}
+
+```{=html}
+<script>
+  // postMessage replies need this; no YAML option.
+  window.addEventListener("load", () => Reveal.configure({ postMessageEvents: true }));
+  // Keyboard: Quarto's YAML only takes keyboard: true/false, so custom keys go through the API.
+  window.addEventListener("load", () => Reveal.addKeyBinding({ keyCode: 88, key: "X", description: "Next slide" }, () => Reveal.next()));
+</script>
+```
