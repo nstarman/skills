@@ -1,0 +1,68 @@
+# The zensical.toml of diataxis/references/zensical.md ("Configuration"), with the nav listing
+# this fixture's pages and the "Link validation" settings added.
+[project]
+site_name = "Toolkit"
+site_url = "https://docs.example.com/"
+site_description = "Documentation for Toolkit"
+repo_url = "https://github.com/example/toolkit"
+edit_uri = "edit/main/docs/"
+
+nav = [
+  { "Home" = "index.md" },
+  { "Tutorials" = [
+    "tutorials/index.md",
+    { "Install and first run" = "tutorials/installation.md" },
+    { "Your first pipeline" = "tutorials/first-pipeline.md" },
+  ] },
+  { "How-to guides" = [
+    "how-to/index.md",
+    { "How to read from a private S3 bucket" = "how-to/read-from-private-s3.md" },
+    { "How to write partitioned Parquet" = "how-to/write-partitioned-parquet.md" },
+    { "How to schedule pipeline runs" = "how-to/schedule-runs.md" },
+    { "How to deploy on Kubernetes" = "how-to/deploy-on-kubernetes.md" },
+  ] },
+  { "Reference" = [
+    "reference/index.md",
+    { "CLI" = "reference/cli.md" },
+    { "Configuration" = "reference/configuration.md" },
+    { "Error messages" = "reference/errors.md" },
+  ] },
+  { "Explanation" = [
+    "explanation/index.md",
+    { "About the architecture" = "explanation/architecture.md" },
+  ] },
+  { "About" = [
+    { "Changelog" = "about/changelog.md" },
+    { "Contributing" = "about/contributing.md" },
+  ] },
+]
+
+[project.theme]
+language = "en"
+features = [
+  "navigation.indexes",     # required for section landing pages
+  "navigation.sections",
+  "navigation.tabs",        # four modes as top-level tabs
+  "navigation.path",        # breadcrumbs — helps readers know which mode they are in
+  "navigation.top",
+  "navigation.footer",
+  "content.tabs.link",      # tab choice persists site-wide
+  "content.code.copy",
+  "content.code.annotate",
+  "search.highlight",
+]
+
+[project.markdown_extensions]
+admonition = {}
+attr_list = {}
+def_list = {}
+md_in_html = {}
+toc.permalink = true
+pymdownx.details = {}
+pymdownx.superfences = {}
+pymdownx.tabbed.alternate_style = true
+pymdownx.snippets = {}
+
+[project.validation]
+invalid_links = "error"
+invalid_link_anchors = "error"

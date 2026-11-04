@@ -1,0 +1,4 @@
+# Old and new source files, one pair per line: the input make_redirect_stubs.py needs for
+# --emit rediraffe (rediraffe wants source filenames, not the URLs of migration-map.md).
+getting-started.md tutorials/installation.md
+usage.md how-to/schedule-runs.md

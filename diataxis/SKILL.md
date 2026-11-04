@@ -236,9 +236,9 @@ contaminated pages into tidier folders.
 A restructure changes every URL, and inbound links live in issue trackers, Stack Overflow and
 bookmarks you cannot edit. Three rules:
 
-1. **Confirm the stack can redirect before anything moves.** If it cannot (Zensical cannot), say
-   so and agree a mitigation — host-level rules, generated stub pages, or keeping URLs stable —
-   rather than silently shipping breakage.
+1. **Confirm the stack can redirect before anything moves.** If it cannot (older Zensical
+   releases cannot), say so and agree a mitigation — host-level rules, generated stub pages, or
+   keeping URLs stable — rather than silently shipping breakage.
 2. **Every old URL gets a redirect, fragments included**, since deep links carry anchors. Generate
    them from the map with `scripts/make_redirect_stubs.py` rather than by hand.
 3. **Make broken links fail the build**, and verify before you claim it. `scripts/check_links.py`

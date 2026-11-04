@@ -79,7 +79,7 @@ python <skill-dir>/scripts/make_redirect_stubs.py --map audit/migration-map.md -
 Mechanism: _(rediraffe / sphinx-reredirects / host rules / generated stubs)_
 Enforcement: _(what fails CI if a page moves without a redirect)_
 
-For a stack with no redirect support (Zensical), state the chosen mitigation here explicitly.
+For a stack with no redirect support, state the chosen mitigation here explicitly.
 
 ## Execution order
 

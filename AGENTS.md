@@ -59,8 +59,10 @@ A skill that documents a fast-moving tool can have a behaviour test under
 `tests/skills/<skill>/` (a `run.sh` plus fixtures) and its own workflow
 (`.github/workflows/test-<skill>.yml`) that runs it weekly against the latest upstream release and
 on pull requests touching the skill. These tests may install third-party tools (Quarto, Playwright,
-Chrome); the standard-library rule is for `scripts/`. A scheduled failure opens an issue, and the
-skill's `UPDATING.md` says how to bring it current. Today: `quarto-revealjs`.
+Chrome, Sphinx, Zensical); the standard-library rule is for `scripts/`. A scheduled failure opens an
+issue, and the skill's `UPDATING.md` says how to bring it current. Today: `quarto-revealjs`,
+`diataxis`. Every script a skill ships also has a unit test in `tests/test_*.py` (stubs on `PATH`
+stand in for ssh, Slurm and the like), so `check.yml` covers it.
 
 Everything here is public, not only the skills: no personal details (usernames, home paths, password-manager items, project or
 paper names, record IDs); use placeholders such as `<kerb>` or `op://<vault>/<item>`. Before a

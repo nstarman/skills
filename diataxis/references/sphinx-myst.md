@@ -545,8 +545,10 @@ sphinx-build -b linkcheck docs docs/_build/linkcheck
 
 Run `check_links.py` first while editing: it works on a tree that does not build yet, and it
 verifies `#fragment` targets against heading slugs and explicit anchors, which is where a
-restructure breaks links most quietly. `redirects.txt` for rediraffe can be generated from the
-migration map with `scripts/make_redirect_stubs.py --emit rediraffe`.
+restructure breaks links most quietly. `redirects.txt` for rediraffe can be generated with
+`scripts/make_redirect_stubs.py --emit rediraffe` from a two-column file of old and new *source
+filenames* (`getting-started.md tutorials/installation.md`), not from the migration map's
+redirect table: that holds URLs, and rediraffe rejects URL entries as broken redirects.
 
 `-W` turns warnings into errors, which with `nitpicky = True` means a broken cross-mode
 reference fails CI. That is what makes "link instead of duplicating" a discipline the project
