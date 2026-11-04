@@ -187,11 +187,13 @@ with sync_playwright() as p:
         return ok, "Ctrl+Shift+F shows the search box (RevealSearch)"
     check("Search plugin", search)
     def zoom():
-        go("layout"); pg.keyboard.down("Alt"); pg.mouse.click(640, 400); pg.keyboard.up("Alt"); pg.wait_for_timeout(1200)
+        # The zoom plugin's key is Ctrl on Linux, Alt elsewhere (config zoomKey overrides).
+        mod = "Control" if "Linux" in ev("navigator.platform") else "Alt"
+        go("layout"); pg.keyboard.down(mod); pg.mouse.click(640, 400); pg.keyboard.up(mod); pg.wait_for_timeout(1200)
         t = ev("document.body.style.transform || document.querySelector('.reveal').style.transform || ''")
-        pg.keyboard.down("Alt"); pg.mouse.click(640, 400); pg.keyboard.up("Alt"); pg.wait_for_timeout(800)
-        return "scale" in t, f"Alt+click body transform: {t[:50]}"
-    check("Zoom plugin (Alt+click)", zoom)
+        pg.keyboard.down(mod); pg.mouse.click(640, 400); pg.keyboard.up(mod); pg.wait_for_timeout(800)
+        return "scale" in t, f"{mod}+click body transform: {t[:50]}"
+    check("Zoom plugin (Alt/Ctrl+click)", zoom)
     def menu():
         go("content"); key("m")
         ok = ev("!!document.querySelector('.slide-menu.active, .slide-menu-wrapper.active, .slide-menu-overlay.active')")

@@ -61,7 +61,7 @@ Legend: ✓ works as documented · ◐ works with a caveat or a workaround · �
 | Events | `Reveal.on("slidechanged", …)`, `fragmentshown`, `ready`, … | ✓ | yes |
 | Presentation state | `Reveal.getState()` / `Reveal.setState()` | ✓ | yes |
 | postMessage | commands from a parent page work by default; replies need `Reveal.configure({postMessageEvents: true})` | ◐ | yes |
-| Built-in plugins | Notes, Search (**Ctrl+Shift+F**), Zoom (**Alt+click**) are loaded; Highlight and Math are replaced by Quarto | ✓ | yes |
+| Built-in plugins | Notes, Search (**Ctrl+Shift+F**), Zoom (**Alt+click**; **Ctrl+click** on Linux, or set `zoomKey`) are loaded; Highlight and Math are replaced by Quarto | ✓ | yes |
 | Creating a plugin | a Quarto extension that contributes `revealjs-plugins`; list it in YAML `revealjs-plugins:` | ✓ | yes |
 | Multiplex | YAML `multiplex: true` (also writes `deck-speaker.html`) | ◐ needs a hosted socket.io server | **no** |
 | Menu (Quarto) | on by default; **M** or the ☰ button | ✓ | yes |
@@ -512,7 +512,7 @@ Commands work by default. To get return values (`getIndices`, `isOverview`, …)
 
 ### Plugins
 
-Loaded by Quarto: Notes, Search (**Ctrl+Shift+F**), Zoom (**Alt+click**), plus Quarto's menu (**M**),
+Loaded by Quarto: Notes, Search (**Ctrl+Shift+F**), Zoom (**Alt+click**; **Ctrl+click** on Linux, or set `zoomKey`), plus Quarto's menu (**M**),
 line highlight, PDF export and support plugins. reveal.js's Highlight, Markdown and Math plugins are
 replaced by Quarto's own handling.
 
