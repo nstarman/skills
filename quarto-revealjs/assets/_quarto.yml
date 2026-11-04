@@ -1,0 +1,16 @@
+project:
+  output-dir: _output            # rendered, self-contained decks; sources and _vendor/ stay apart
+
+format:
+  revealjs:
+    embed-resources: true        # each deck is one self-contained HTML file
+    slide-number: true
+    transition: slide
+    background-transition: fade
+    html-math-method:
+      method: mathjax
+      url: "about:blank"         # reveal's math plugin loads nothing; _deck/header.html loads MathJax
+    include-in-header: _deck/header.html
+    pdf-separate-fragments: true # PDF only (make_pdf.py): one page per fragment step
+    pdf-max-pages-per-slide: 1
+

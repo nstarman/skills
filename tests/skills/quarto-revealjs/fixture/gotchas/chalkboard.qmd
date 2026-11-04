@@ -1,0 +1,9 @@
+---
+title: "Chalkboard refuses embed-resources"
+format:
+  revealjs:
+    embed-resources: true
+    chalkboard: true
+---
+
+## One

@@ -1,0 +1,15 @@
+```{python}
+#| include: false
+# Plotly figures as bare divs: plotly.js comes once from _deck/header.html, and no CDN MathJax tag.
+import plotly.io as pio
+from plotly.io.base_renderers import MimetypeRenderer
+
+class DeckRenderer(MimetypeRenderer):
+    def to_mimebundle(self, fig_dict):
+        html = pio.to_html(fig_dict, full_html=False, include_plotlyjs=False,
+                           include_mathjax=False, config={"responsive": True})
+        return {"text/html": html}
+
+pio.renderers["deck"] = DeckRenderer()
+pio.renderers.default = "deck"
+```
