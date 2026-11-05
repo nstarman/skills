@@ -466,7 +466,8 @@ for sharing after the talk. (Tested: the deck switches to scroll view and scroll
 
 reveal.js's native route: `deck.html?print-pdf` in Chrome, print to PDF, landscape, no margins,
 background graphics on. `make_pdf.py` does exactly that with the right page size and the network
-blocked. Live content prints blank (WebGL apps in iframes, `<canvas>` animations), so:
+blocked. Live content does not reliably print (a 2D-canvas app printed in an inline iframe and came
+out blank as a background iframe; WebGL untested), so give it a still:
 
 ```markdown
 ![](apps/app.png){.print-only .r-stretch}
@@ -617,7 +618,9 @@ Things to know:
   `perl -pi -e 's|<html lang="en">|<html lang="en" data-theme="light">|' apps/app.html` (works on macOS and Linux).
 - **Keyboard**: clicking into an app gives it the keyboard; the header script hands focus back so the
   arrow keys keep changing slides. Dragging is unaffected.
-- **Print**: WebGL apps print blank; give each a `.print-only` still (a screenshot of the app).
+- **Print**: a live app does not reliably reach reveal.js's print view. Tested with a 2D-canvas app:
+  inline iframe printed, background iframe printed blank; WebGL was not tested. Give each app a
+  `.print-only` still (a screenshot of the app).
 - **Browser cache**: when re-rendering while the deck is open over HTTP, reload with Shift-Cmd-R.
 
 ## 6b. Safari and WebKit

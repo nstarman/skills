@@ -122,7 +122,9 @@ file):
 - Match the deck's theme: an app that follows system dark mode must be pinned in its copy, e.g.
   `<html lang="en" data-theme="light">`. The deck cannot script into an inlined (`data:`) iframe, and
   Chrome does not pass an iframe's CSS `color-scheme` into the page.
-- WebGL and canvas content prints blank: give each app a `.print-only` still (a screenshot of it).
+- A live app does not reliably make it into the PDF: a 2D-canvas app in an inline iframe printed, the
+  same app as a background iframe printed blank (WebGL untested). Give each app a `.print-only` still
+  (a screenshot of it).
 - A click into the app takes the keyboard; the header script gives it back so arrow keys still
   change slides.
 
