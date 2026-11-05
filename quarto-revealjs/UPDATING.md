@@ -19,11 +19,15 @@ Every claim in `references/quarto-revealjs-guide.md` was observed in a browser a
 
 1. **Reproduce locally** with the new versions:
    ```bash
-   tests/skills/quarto-revealjs/run.sh /tmp/qr-test     # needs quarto, ffmpeg, Chrome,
-                                                          # python3 with plotly jupyter playwright
+   tests/skills/quarto-revealjs/run.sh /tmp/qr-test     # needs quarto, ffmpeg, python3 with
+                                                          # plotly jupyter playwright, and
+                                                          # playwright's chromium + webkit
    ```
    The steps: version check, set up a deck folder from `assets/` exactly as `SKILL.md` says, render
-   the fixture decks, offline check (network, missing files, errors, raw TeX), PDF (6 pages including
+   the fixture decks, offline check in Chromium and WebKit (network, missing files, errors, raw TeX),
+   `inline_apps.py` (the inlined `lessons.html` alone in an empty folder still runs its background
+   app; `lessons_check.py` also checks the "]" skip key and the `paper` shortcode), the share build
+   (no notes), `check_overflow.py` (only `#too-long` flagged in `lessons.html`, in both engines), PDF (6 pages including
    the app's still), the feature table (`feature_check.py`, which also checks the demo deck's Plotly
    figure and equation fragment), and the documented gotchas (`fixture/gotchas/`: KaTeX not
    embedded, chalkboard refusing one file).

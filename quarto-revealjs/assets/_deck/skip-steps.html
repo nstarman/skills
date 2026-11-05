@@ -1,0 +1,18 @@
+<script>
+  // "]" jumps to the last step of the current slide (skip a long build-up); pressed again at the
+  // last step, it moves to the next slide.
+  (function () {
+    function skip() {
+      var idx = Array.prototype.map.call(
+        Reveal.getCurrentSlide().querySelectorAll(".fragment[data-fragment-index]"),
+        function (el) { return +el.getAttribute("data-fragment-index"); });
+      var last = idx.length ? Math.max.apply(null, idx) : -1;
+      if (last < 0 || Reveal.getIndices().f === last) Reveal.next();
+      else Reveal.navigateFragment(last);
+    }
+    function bind() {
+      Reveal.addKeyBinding({ keyCode: 221, key: "]", description: "Skip to the last step of this slide" }, skip);
+    }
+    if (Reveal.isReady()) bind(); else Reveal.on("ready", bind);
+  })();
+</script>

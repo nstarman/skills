@@ -17,7 +17,7 @@ Legend: ✓ works as documented · ◐ works with a caveat or a workaround · �
 | Background gradient | `{background-gradient="linear-gradient(to bottom, #283b95, #17b2c3)"}` | ✓ | yes |
 | Background image | `{background-image="img.png" background-size="contain" background-opacity="0.4"}` | ✓ | yes (inlined) |
 | Background video | `{background-video="clip.mp4" background-video-loop="true" background-video-muted="true"}` | ✓ | **no**: stays a relative path; ship the file beside the deck |
-| Background iframe | `{background-iframe="app.html" background-interactive="true"}` | ✓ | **no**: relative path; ship the file |
+| Background iframe | `{background-iframe="app.html" background-interactive="true"}` | ✓ | after `inline_apps.py` (as a `blob:` URL); Quarto alone leaves a path |
 | Parallax background | YAML `parallax-background-image:`, `parallax-background-size:` | ✓ | **no**: relative path |
 | Media: video | `{{< video clip.mp4 width="480" height="270" >}}` (Quarto uses video.js) | ✓ | yes (inlined) |
 | Media: audio | raw `<audio controls src="tone.mp3">` | ✓ | yes (inlined) |
@@ -137,7 +137,7 @@ See `assets/_deck/setup.qmd`. It switches Plotly to a renderer that outputs bare
 title: "My talk"
 jupyter: python3
 resources:
-  - apps/          # only needed for background-iframe / background-video / parallax files
+  - media/         # only for background-video / parallax files (apps: inline_apps.py)
 ---
 
 {{< include _deck/setup.qmd >}}
@@ -192,10 +192,11 @@ Slide attributes become reveal.js `data-background-*` attributes:
 
 Parallax is deck-wide: `parallax-background-image:` and `parallax-background-size: "2560px 1440px"`.
 
-Packaging: background **images** are inlined into the HTML. Background **videos**, **iframes** and the
-**parallax** image are left as relative paths, so list their folders under `resources:` and ship them
-next to the deck. If you need a single file, use an inline `<iframe>` or `{{< video >}}` instead (both
-are inlined).
+Packaging: background **images** are inlined into the HTML. Background **videos** and the
+**parallax** image are left as relative paths: list their folders under `resources:` and ship them
+next to the deck, or use `{{< video >}}` (inlined). Background **iframes** are also left as paths by
+Quarto, but `inline_apps.py` puts them inside the deck afterwards (section 6). It does the same for
+`<object data="…">`, which pandoc never inlines.
 
 ### Media
 
@@ -282,6 +283,20 @@ All reveal.js fragment styles work (`fade-out`, `fade-up/down/left/right`, `fade
 `fade-in-then-semi-out`, `semi-fade-out`, `current-visible`, `grow`, `shrink`, `strike`,
 `highlight-red/green/blue`, `highlight-current-*`). Put `grow` on an inline span: on a full-width block
 it scales off the left edge.
+
+#### Animations that do not jump
+
+- A fragment must not change any height. Reserve its space from the start and fade it in: `fade-in`,
+  `fade-up` and friends keep the box; `display`-toggling tricks (`.r-stack` swaps of unequal size,
+  content added by script, `fade-in-then-out` on blocks of different heights) push the rest around.
+- Appearing text must not reflow its neighbours: give the container a fixed size or use
+  `.absolute` placement; put an inline highlight on a span, not a block that changes width.
+- A sequence of slides that builds up one figure keeps an **identical base-figure box** (same image
+  size, same position, same aspect ratio: export every stage on the same canvas) and only adds
+  layers; with `auto-animate` give the base the same `data-id` so it stays put.
+- A long build-up gets a skip key: the template's `_deck/skip-steps.html` binds **]** to "last
+  step of this slide" (pressed again: next slide). It is listed in the **?** help overlay.
+- Check with `check_overflow.py`, which measures every slide with all fragments shown.
 
 ### Links
 
@@ -578,7 +593,7 @@ Copy the app's single-file HTML into `apps/` and pick one of two embeddings:
 Laying the iframe out at 2× and scaling it by 0.5 gives the app enough room for its wide layout;
 `max-width/max-height: none` undoes reveal.js's 95% cap on iframes.
 
-**Full-slide background (needs `apps/` next to the deck):**
+**Full-slide background:**
 
 ```markdown
 ## {background-iframe="apps/explorer-full.html" background-interactive="true"}
@@ -586,16 +601,49 @@ Laying the iframe out at 2× and scaling it by 0.5 gives the app enough room for
 ![](apps/explorer-full.png){.print-only .r-stretch}
 ```
 
+Quarto leaves the background iframe as a path. To make the deck one file again, run
+`python inline_apps.py _output/talk.html` from the deck folder after rendering: each app goes into the
+deck as base64 in a `<script type="text/plain">`, and a small script, run before reveal.js starts,
+turns it into a `blob:` URL and points `data-background-iframe` (and any iframe `src`/`data-src`
+with that path) at it. Pointing the background at a `data:` URL instead was tried: the app stayed
+blank (a `data:` page gets an opaque origin, which many single-file apps cannot run in). The
+end-to-end test checks that the inlined deck, alone in an empty folder, shows its app.
+
 Things to know:
 
 - **Theme**: the apps follow the system's dark mode unless `<html data-theme="light|dark">` is set.
-  The deck cannot script into an inlined (`data:` URL) iframe, and Chrome does not pass an iframe's CSS
+  The deck cannot script into an inlined (`data:` URL) iframe (nor, opened from a file, into a `blob:` one in Chrome), and Chrome does not pass an iframe's CSS
   `color-scheme` into the page, so pin the theme in the copy:
   `perl -pi -e 's|<html lang="en">|<html lang="en" data-theme="light">|' apps/app.html` (works on macOS and Linux).
 - **Keyboard**: clicking into an app gives it the keyboard; the header script hands focus back so the
   arrow keys keep changing slides. Dragging is unaffected.
 - **Print**: WebGL apps print blank; give each a `.print-only` still (a screenshot of the app).
 - **Browser cache**: when re-rendering while the deck is open over HTTP, reload with Shift-Cmd-R.
+
+## 6b. Safari and WebKit
+
+Present on a Mac and you may be in Safari. What broke there, and how the check scripts cover it:
+
+- **CSS path animation**: Safari cannot animate an SVG path's shape from CSS (`d: path(…)` in a
+  transition or keyframes); the path just jumps. Keep the CSS for other browsers and add an SVG SMIL
+  fallback where it is missing:
+  ```js
+  if (!CSS.supports("d", 'path("M 0 0")')) {          // Safari
+    const a = document.createElementNS("http://www.w3.org/2000/svg", "animate");
+    a.setAttribute("attributeName", "d"); a.setAttribute("from", oldD); a.setAttribute("to", newD);
+    a.setAttribute("dur", "1.8s"); a.setAttribute("fill", "freeze");
+    path.appendChild(a); path.setAttribute("d", newD); a.beginElement();
+  }
+  ```
+  Run it from `Reveal.on("fragmentshown" / "fragmenthidden" / "slidechanged")`.
+- **CSS masks** (icons coloured with `background: currentColor` through a mask): Safari did not load a
+  mask image from a separate file in a deck opened as a local file. Embed the mask as a `data:` URI in
+  the CSS and set both `-webkit-mask` and `mask` (the `paper` shortcode's CSS does this).
+- **MathJax**: WebKit fires `load` for the math plugin's `about:blank` script, and the plugin then calls
+  MathJax 2's API: a page error. `_deck/header.html` defines a no-op `MathJax.Hub` for it.
+- **Checks**: `check_offline.py --webkit` and `check_overflow.py --webkit` run Playwright's WebKit
+  (`python -m playwright install webkit`), close to Safari but not Safari: step through the deck in
+  Safari once too. The PDF route is Chromium only.
 
 ---
 
@@ -611,6 +659,11 @@ Things to know:
 7. Preview links only for `http`/`www`; use `Reveal.showPreview()` for local files.
 8. `keyboard:` and `postMessageEvents` need JavaScript, not YAML.
 9. Chalkboard and multiplex cannot be single-file / offline.
-10. Background video/iframe and parallax images are not inlined; list them under `resources:`.
+10. Background video and parallax images are not inlined; list them under `resources:`. Background
+    iframes and `<object>` files neither, until `inline_apps.py` runs.
 11. reveal.js caps iframes at 95%; MathJax fragments need `Reveal.sync()`.
 12. Embedded apps follow system dark mode unless their `<html>` pins `data-theme`.
+13. Deck front matter overrides `_quarto.yml`, profiles and `quarto render -M`: keep options a build
+    changes (`embed-resources`, output) out of it.
+14. Safari: no CSS path animation; CSS masks from files; MathJax 2 call on `about:blank` (section 6b).
+15. Fragments that change heights make the slide jump; reserve the space (section 2, Fragments).

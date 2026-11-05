@@ -4,6 +4,11 @@
 </script>
 <script src="_vendor/mathjax/tex-svg-full.js"></script>
 <script src="_vendor/plotly/plotly.min.js"></script>
+<script>
+  // Safari/WebKit fires `load` for the math plugin's about:blank script, and the plugin then calls
+  // MathJax 2's API (a page error). A no-op stand-in; MathJax 3 and plotly.js do not use it.
+  MathJax.Hub = MathJax.Hub || { Config() {}, Queue() {} };
+</script>
 <style>
   /* Live content (apps, animations) doesn't print: mark it .print-hide and give a .print-only still. */
   .print-only { display: none; }
