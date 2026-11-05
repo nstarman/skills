@@ -55,6 +55,8 @@
 - [X] T021 `run.sh`: WebKit offline check on the inlined deck and the share build; share build checked offline (app inlined)
 - [X] T022 Guide and `SKILL.md`: mark claims the test does not exercise as observed (print of live apps, Safari path animation and masks, `data:` iframe blank, "]" in the help overlay)
 
+- [X] T023 Merge-readiness audit nits: `inline_apps.py` keeps each app's file type and takes `--root`; `bibliography.py` warns on an item with no DOI or URL; `UPDATING.md` says to copy `_deck/` with `_quarto.yml`; the guide's SMIL fallback is labelled a sketch; `style.md` applies only to the author's own talks
+
 ## Dependencies
 
 T001 → T008/T010/T012/T014/T017; T002 → T009/T012; T005 → T006; T015 → T016. US1, US5 and US6

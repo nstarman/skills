@@ -53,7 +53,7 @@ class InlineAppsTest(unittest.TestCase):
         self.assertEqual(missing, [])
         b64 = base64.b64encode(b"<p>full</p>").decode()
         self.assertIn(f'<script type="text/plain" id="inlined-app-0">{b64}</script>', out)
-        self.assertIn('"inlined-app-1": "apps/inline.html"', out)
+        self.assertIn('"inlined-app-1": ["apps/inline.html", "text/html"]', out)
         self.assertIn("URL.createObjectURL", out)
         # loader sits right before the script that calls Reveal.initialize (the last one)
         self.assertLess(out.index("createObjectURL"), out.index("<script>Reveal.initialize"))
@@ -63,6 +63,18 @@ class InlineAppsTest(unittest.TestCase):
         self.assertNotIn("inlined-app-2", out)
         self.assertIn('src="data:text/html;base64,AA=="', out)
         self.assertIn('<aside class="notes">', out)
+
+    def test_non_html_app_keeps_its_type(self):
+        (self.root / "apps/fig.svg").write_text("<svg/>")
+        out, _ = inline_apps.inline(DECK.replace("apps/full.html", "apps/fig.svg"), self.root)
+        self.assertIn('["apps/fig.svg", "image/svg+xml"]', out)
+
+    def test_root_option(self):
+        deck = self.root / "out.html"
+        deck.write_text(DECK)
+        with mock.patch("sys.stdout", io.StringIO()):
+            self.assertEqual(inline_apps.main([str(deck), "--root", str(self.root)]), 0)
+        self.assertIn("inlined-app-0", deck.read_text())
 
     def test_object_becomes_data_uri(self):
         out, _ = inline_apps.inline(DECK, self.root)
@@ -150,6 +162,11 @@ class BibliographyTest(unittest.TestCase):
         self.assertEqual(rows[0], '- {{< paper url="https://doi.org/10.1/b1" who="Bho et al." year="2021a" title="A one" >}}')
         self.assertIn('year="2021b" title="B \'two\'"', rows[1])
         self.assertIn('who="Zed" year="2020"', rows[2])
+
+    def test_warns_when_an_item_links_nowhere(self):
+        with mock.patch("sys.stderr", io.StringIO()) as err:
+            bibliography.lines([item("Nolink", 1999, "t")["data"]])
+        self.assertIn("Nolink (1999) has no DOI or URL", err.getvalue())
 
     def test_fetch_pages_and_skips_attachments(self):
         pages = [[item(f"A{i}", 2000, "t") for i in range(99)] + [item("X", 1, "", kind="attachment")],

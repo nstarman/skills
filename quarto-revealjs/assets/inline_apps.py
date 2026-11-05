@@ -3,8 +3,9 @@
     python inline_apps.py _output/talk.html                       # in place
     python inline_apps.py --strip-notes _share/talk.html          # shared copy: no speaker notes
     python inline_apps.py _output/talk.html -o talk-single.html
+    python inline_apps.py --root talks talks/_output/a.html        # apps relative to talks/
 
-Run from the deck folder: relative paths are looked up there. `embed-resources` leaves
+Relative paths are looked up in the deck (source) folder: the current folder, or `--root DIR`. `embed-resources` leaves
 `data-background-iframe="apps/x.html"` as a path, and pandoc never inlines `<object data=…>`.
 Each app goes into the deck as base64 in a `<script type="text/plain">`; a small script turns it
 into a `blob:` URL before reveal.js starts and points the slide (and any iframe `src`/`data-src`
@@ -20,6 +21,10 @@ OBJ = re.compile(r'''(<object\b[^>]*?\bdata=")([^"]+)(")''')
 LOCALPATH = re.compile(r"^(?![a-z][a-z0-9+.-]*:|//|#)")   # no scheme, not protocol-relative, not #
 NOTES = re.compile(r"""<aside\b[^>]*\bclass="(?:[^"]*\s)?notes(?:\s[^"]*)?"[^>]*>.*?</aside>""", re.S)
 DONE = 'id="inlined-app-'   # a deck this script already inlined
+
+
+def mime(f):
+    return mimetypes.guess_type(f.name)[0] or "application/octet-stream"
 
 
 def file_for(root, path):
@@ -40,8 +45,7 @@ def inline(text, root=pathlib.Path("."), strip_notes=False):
         f = file_for(root, path)
         if not f.is_file():
             missing.append(path); return m[0]
-        mime = mimetypes.guess_type(f.name)[0] or "application/octet-stream"
-        return f"{m[1]}data:{mime};base64,{base64.b64encode(f.read_bytes()).decode()}{m[3]}"
+        return f"{m[1]}data:{mime(f)};base64,{base64.b64encode(f.read_bytes()).decode()}{m[3]}"
     text = OBJ.sub(obj, text)
 
     if DONE in text:   # already inlined: running again would embed every app a second time
@@ -54,14 +58,14 @@ def inline(text, root=pathlib.Path("."), strip_notes=False):
         f = file_for(root, path)
         if not f.is_file():
             missing.append(path); continue
-        blobs.append((i, path, base64.b64encode(f.read_bytes()).decode()))
+        blobs.append((i, (path, mime(f)), base64.b64encode(f.read_bytes()).decode()))
     if blobs:
         data = "".join(f'<script type="text/plain" id="inlined-app-{i}">{b}</script>\n' for i, _, b in blobs)
         paths = {f"inlined-app-{i}": p for i, p, _ in blobs}
         loader = data + "<script>(() => {\n" + f"  const apps = {json.dumps(paths)};\n" + r"""
-  for (const [id, path] of Object.entries(apps)) {
+  for (const [id, [path, type]] of Object.entries(apps)) {
     const b = atob(document.getElementById(id).textContent);
-    const url = URL.createObjectURL(new Blob([Uint8Array.from(b, (c) => c.charCodeAt(0))], { type: "text/html" }));
+    const url = URL.createObjectURL(new Blob([Uint8Array.from(b, (c) => c.charCodeAt(0))], { type }));
     document.querySelectorAll("[data-background-iframe]").forEach((e) => {
       if (e.getAttribute("data-background-iframe") === path) e.setAttribute("data-background-iframe", url);
     });
@@ -86,10 +90,11 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("deck")
     ap.add_argument("-o", "--output", help="write here instead of in place")
+    ap.add_argument("--root", default=".", help="folder the deck's relative paths start from (default: here)")
     ap.add_argument("--strip-notes", action="store_true", help="remove speaker notes (shared copy)")
     a = ap.parse_args(argv)
     src = pathlib.Path(a.deck)
-    text, missing = inline(src.read_text(encoding="utf-8"), strip_notes=a.strip_notes)
+    text, missing = inline(src.read_text(encoding="utf-8"), pathlib.Path(a.root), strip_notes=a.strip_notes)
     out = pathlib.Path(a.output or src)
     out.write_text(text, encoding="utf-8")
     for m in missing:

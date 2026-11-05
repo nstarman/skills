@@ -1,7 +1,9 @@
 # Talk conventions of this skill's author
 
-These are the house rules of the person who maintains this skill, learned from their talks. Follow
-them for their decks; for anyone else, ask before applying the ones that are matters of taste.
+These are the house rules of the person who maintains this skill (Nathaniel Starkman), learned from
+their talks. Apply them only when the person you are working for says the deck is their own talk or
+asks for these conventions. For anyone else, use what is generally useful (checking citations,
+notes after a divider, a backup section) and leave the rest.
 
 ## Words on slides
 

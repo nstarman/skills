@@ -66,6 +66,9 @@ def lines(items):
         group = groups[(who, year)]
         if len(group) > 1:
             year += "abcdefghijklmnopqrstuvwxyz"[group.index(d)]
+        if not link(d):
+            print(f"warning: {who} ({year}) has no DOI or URL; its entry links nowhere. "
+                  "Add one in Zotero.", file=sys.stderr)
         out.append(f'- {{{{< paper url="{link(d)}" who="{clean(who)}" year="{year}" title="{clean(d.get("title", ""))}" >}}}}')
     return out
 

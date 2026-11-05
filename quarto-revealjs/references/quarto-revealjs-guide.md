@@ -632,7 +632,8 @@ reproduced by the test in WebKit.
 
 - **CSS path animation**: Safari cannot animate an SVG path's shape from CSS (`d: path(…)` in a
   transition or keyframes); the path just jumps. Keep the CSS for other browsers and add an SVG SMIL
-  fallback where it is missing:
+  fallback where it is missing. A sketch, adapted from the talk's working version but not run as
+  written here; `path`, `oldD` and `newD` are yours:
   ```js
   if (!CSS.supports("d", 'path("M 0 0")')) {          // Safari
     const a = document.createElementNS("http://www.w3.org/2000/svg", "animate");

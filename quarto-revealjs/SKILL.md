@@ -11,7 +11,7 @@ backup. A default Quarto deck does **not** meet this, even with `embed-resources
 
 All reveal.js features and their Quarto syntax, with what was tested: `references/quarto-revealjs-guide.md`.
 The author's talk conventions (words, notes, citations, backup slides): `references/style.md`;
-read it before writing slides. Template files: `assets/`.
+read it before writing slides when the deck is the author's (Nathaniel Starkman's) own talk. Template files: `assets/`.
 
 **Never open a visible browser window.** Every script here runs headless (Playwright); to look at a
 deck use an embedded browser pane or a headless script, never a Chrome window or `open`.
@@ -116,7 +116,7 @@ file):
   undoes reveal.js's 95% cap on iframes.
 - Full slide instead: `## {background-iframe="apps/explorer.html" background-interactive="true"}`.
   Quarto leaves a background iframe as a path; `python inline_apps.py _output/talk.html` (from the deck
-  folder) puts the app inside the deck as base64 and serves it from a `blob:` URL at load. A `data:`
+  folder, or `--root <folder>`) puts the app inside the deck as base64 and serves it from a `blob:` URL at load. A `data:`
   URL is not enough: in the talk this came from, a real app stayed blank there (opaque origin;
   observed, not reproduced by the test, whose stand-in app runs either way). The same step swaps
   `<object data="file">`, which pandoc never inlines, for a `data:` URI.

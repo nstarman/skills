@@ -1,5 +1,10 @@
 # Keeping quarto-revealjs current
 
+**Updating a deck folder made with an older version of the skill**: copy `_deck/` together with
+`_quarto.yml`. Since the talk-lessons update, `_quarto.yml` includes `_deck/skip-steps.html`, and a
+render without that file fails. New assets (`inline_apps.py`, `check_overflow.py`,
+`bibliography.py`, `_extensions/paper/`, `_quarto-share.yml`) are optional; copy the ones you use.
+
 This skill documents a moving target: Quarto, the reveal.js it bundles, MathJax and plotly.py.
 Every claim in `references/quarto-revealjs-guide.md` was observed in a browser against the versions in
 `versions.json`. When those move, re-verify; do not edit claims from release notes alone.
