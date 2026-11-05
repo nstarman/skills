@@ -1,6 +1,6 @@
 # Feature Specification: quarto-revealjs — lessons from a real talk
 
-**Feature Branch**: `claude/quizzical-shamir-010e53`
+**Feature Branch**: `claude/quarto-revealjs-talk-lessons`
 
 **Created**: 2026-11-04
 

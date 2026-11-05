@@ -117,13 +117,14 @@ file):
 - Full slide instead: `## {background-iframe="apps/explorer.html" background-interactive="true"}`.
   Quarto leaves a background iframe as a path; `python inline_apps.py _output/talk.html` (from the deck
   folder) puts the app inside the deck as base64 and serves it from a `blob:` URL at load. A `data:`
-  URL is not enough: the app stayed blank there (opaque origin). The same step swaps
+  URL is not enough: in the talk this came from, a real app stayed blank there (opaque origin;
+  observed, not reproduced by the test, whose stand-in app runs either way). The same step swaps
   `<object data="file">`, which pandoc never inlines, for a `data:` URI.
 - Match the deck's theme: an app that follows system dark mode must be pinned in its copy, e.g.
   `<html lang="en" data-theme="light">`. The deck cannot script into an inlined (`data:`) iframe, and
   Chrome does not pass an iframe's CSS `color-scheme` into the page.
 - A live app does not reliably make it into the PDF: a 2D-canvas app in an inline iframe printed, the
-  same app as a background iframe printed blank (WebGL untested). Give each app a `.print-only` still
+  same app as a background iframe printed blank (observed by hand with `make_pdf.py`; WebGL untested). Give each app a `.print-only` still
   (a screenshot of it).
 - A click into the app takes the keyboard; the header script gives it back so arrow keys still
   change slides.
@@ -143,8 +144,8 @@ python make_pdf.py _output/my-talk.html       # -> _output/my-talk.pdf, notes on
 
 `check_overflow.py` measures each slide with all fragments shown and names each element outside
 the slide box with its position; it ignores notes, SVG internals, MathJax internals (struts,
-assistive MathML) and content inside a clipping container. `--webkit` is Safari's engine: CSS path
-animation and file-loaded CSS masks fail there (guide, "Safari and WebKit").
+assistive MathML) and content inside a clipping container. `--webkit` is Safari's engine; CSS path
+animation and file-loaded CSS masks failed in Safari during a talk (guide, "Safari and WebKit").
 
 A deck passes when it makes **no** network requests, misses no local file (a background video or
 background-iframe app not shipped beside it), has no page errors and no raw TeX. "It rendered" is

@@ -75,6 +75,26 @@ class InlineAppsTest(unittest.TestCase):
         self.assertNotIn("<aside", out)
         self.assertNotIn("say this", out)
 
+    def test_second_run_changes_nothing(self):
+        once, _ = inline_apps.inline(DECK, self.root)
+        twice, missing = inline_apps.inline(once, self.root)
+        self.assertEqual((twice, missing), (once, []))
+        self.assertEqual(twice.count('id="inlined-app-0"'), 1)
+
+    def test_strip_notes_with_more_classes(self):
+        out, _ = inline_apps.inline('<aside class="notes x">a</aside><aside class="x notes">b</aside>'
+                                    '<aside class="notesy">keep</aside>', self.root, strip_notes=True)
+        self.assertEqual(out, '<aside class="notesy">keep</aside>')
+
+    def test_encoded_paths_and_query(self):
+        (self.root / "apps/my app.html").write_text("<p>sp</p>")
+        deck = DECK.replace('data-src="apps/inline.html"', 'data-src="apps/my%20app.html"') \
+                   .replace('data-background-iframe="apps/full.html"', 'data-background-iframe="apps/full.html?v=1#x"')
+        out, missing = inline_apps.inline(deck, self.root)
+        self.assertEqual(missing, [])
+        self.assertIn('"apps/my%20app.html"', out)
+        self.assertIn('"apps/full.html?v=1#x"', out)
+
     def test_missing_file_is_reported_and_left(self):
         (self.root / "apps/full.html").unlink()
         out, missing = inline_apps.inline(DECK, self.root)

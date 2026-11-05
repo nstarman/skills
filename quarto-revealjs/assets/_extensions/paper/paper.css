@@ -1,5 +1,6 @@
 /* paper shortcode. The icon is a CSS mask embedded as a data: URI, with both -webkit-mask and
-   mask: Safari did not load a mask from a separate file in a deck opened as a local file. */
+   mask: Safari did not load a mask from a separate file in a deck opened as a local file (observed in a
+   talk; not covered by the test). */
 .reveal .paper-ref { white-space: nowrap; }
 .reveal .paper-icon {
   display: inline-block; width: 0.8em; height: 1em; vertical-align: -0.12em;

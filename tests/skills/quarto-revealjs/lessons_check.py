@@ -3,7 +3,7 @@
     python lessons_check.py DECK.html [--webkit]
 
 The background-iframe app runs from a blob: URL (nothing beside the deck), the
-"]" key skips to a slide's last step and then on, and both citation forms render as links.
+"]" key skips to a slide's last step and then on and is listed under "?", and both citation forms render as links.
 """
 import pathlib, sys
 from playwright.sync_api import sync_playwright
@@ -38,6 +38,11 @@ with sync_playwright() as p:
     pg.keyboard.press("BracketRight"); pg.wait_for_timeout(1200)
     if pg.evaluate("Reveal.getCurrentSlide().id") == "steps":
         fails.append('"]" at the last step did not move on')
+
+    pg.evaluate("Reveal.toggleHelp(true)"); pg.wait_for_timeout(300)
+    if "Skip to the last step" not in pg.evaluate("document.body.innerText"):
+        fails.append('"]" is not listed in the ? help overlay')
+    pg.evaluate("Reveal.toggleHelp(false)")
 
     go("full-app")
     ok = None

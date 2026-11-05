@@ -1,6 +1,6 @@
 # Implementation Plan: quarto-revealjs — lessons from a real talk
 
-**Branch**: `claude/quizzical-shamir-010e53` | **Date**: 2026-11-04 | **Spec**: [spec.md](spec.md)
+**Branch**: `claude/quarto-revealjs-talk-lessons` | **Date**: 2026-11-04 | **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `/specs/004-quarto-revealjs-talk-lessons/spec.md`, folded into
 the area specification `/specs/003-quarto-revealjs/spec.md` when implemented.

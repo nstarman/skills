@@ -467,7 +467,7 @@ for sharing after the talk. (Tested: the deck switches to scroll view and scroll
 reveal.js's native route: `deck.html?print-pdf` in Chrome, print to PDF, landscape, no margins,
 background graphics on. `make_pdf.py` does exactly that with the right page size and the network
 blocked. Live content does not reliably print (a 2D-canvas app printed in an inline iframe and came
-out blank as a background iframe; WebGL untested), so give it a still:
+out blank as a background iframe, observed by hand with `make_pdf.py`; WebGL untested), so give it a still:
 
 ```markdown
 ![](apps/app.png){.print-only .r-stretch}
@@ -606,9 +606,10 @@ Quarto leaves the background iframe as a path. To make the deck one file again, 
 `python inline_apps.py _output/talk.html` from the deck folder after rendering: each app goes into the
 deck as base64 in a `<script type="text/plain">`, and a small script, run before reveal.js starts,
 turns it into a `blob:` URL and points `data-background-iframe` (and any iframe `src`/`data-src`
-with that path) at it. Pointing the background at a `data:` URL instead was tried: the app stayed
-blank (a `data:` page gets an opaque origin, which many single-file apps cannot run in). The
-end-to-end test checks that the inlined deck, alone in an empty folder, shows its app.
+with that path) at it. Pointing the background at a `data:` URL instead was tried with a real app: it
+stayed blank (a `data:` page gets an opaque origin, which many single-file apps cannot run in).
+That is observed, not tested: the test's stand-in app would run either way. What the end-to-end
+test does check: the inlined deck, alone in an empty folder, runs its app from a `blob:` URL.
 
 Things to know:
 
@@ -619,13 +620,15 @@ Things to know:
 - **Keyboard**: clicking into an app gives it the keyboard; the header script hands focus back so the
   arrow keys keep changing slides. Dragging is unaffected.
 - **Print**: a live app does not reliably reach reveal.js's print view. Tested with a 2D-canvas app:
-  inline iframe printed, background iframe printed blank; WebGL was not tested. Give each app a
+  inline iframe printed, background iframe printed blank (observed by hand); WebGL was not tested. Give each app a
   `.print-only` still (a screenshot of the app).
 - **Browser cache**: when re-rendering while the deck is open over HTTP, reload with Shift-Cmd-R.
 
 ## 6b. Safari and WebKit
 
-Present on a Mac and you may be in Safari. What broke there, and how the check scripts cover it:
+Present on a Mac and you may be in Safari. The first two items were observed in Safari while giving a
+talk and are **not** exercised by the test (re-check them in a current Safari); the MathJax item is
+reproduced by the test in WebKit.
 
 - **CSS path animation**: Safari cannot animate an SVG path's shape from CSS (`d: path(…)` in a
   transition or keyframes); the path just jumps. Keep the CSS for other browsers and add an SVG SMIL

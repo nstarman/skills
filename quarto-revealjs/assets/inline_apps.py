@@ -12,36 +12,46 @@ with that path) at it. A `data:` URL would be simpler but leaves many apps blank
 has an opaque origin. `<object>` files become `data:` URIs. Exits 1 if a referenced file is missing.
 """
 import argparse, base64, html, json, mimetypes, pathlib, re, sys
+from urllib.parse import unquote
 
 BG = re.compile(r'data-background-iframe="([^"]+)"')
 IFRAME = re.compile(r'<iframe\b[^>]*?\b(?:data-src|src)="([^"]+)"')
 OBJ = re.compile(r'''(<object\b[^>]*?\bdata=")([^"]+)(")''')
 LOCALPATH = re.compile(r"^(?![a-z][a-z0-9+.-]*:|//|#)")   # no scheme, not protocol-relative, not #
+NOTES = re.compile(r"""<aside\b[^>]*\bclass="(?:[^"]*\s)?notes(?:\s[^"]*)?"[^>]*>.*?</aside>""", re.S)
+DONE = 'id="inlined-app-'   # a deck this script already inlined
+
+
+def file_for(root, path):
+    """The file a relative URL points at: without ?query/#hash, %-decoded."""
+    return root / unquote(re.split(r"[?#]", path, maxsplit=1)[0])
 
 
 def inline(text, root=pathlib.Path("."), strip_notes=False):
     """Return (new_html, missing_paths)."""
     missing = []
     if strip_notes:
-        text = re.sub(r'<aside class="notes">.*?</aside>', "", text, flags=re.S)
+        text = NOTES.sub("", text)
 
     def obj(m):
         path = html.unescape(m[2])
-        f = root / path
         if not LOCALPATH.match(path):
             return m[0]
+        f = file_for(root, path)
         if not f.is_file():
             missing.append(path); return m[0]
         mime = mimetypes.guess_type(f.name)[0] or "application/octet-stream"
         return f"{m[1]}data:{mime};base64,{base64.b64encode(f.read_bytes()).decode()}{m[3]}"
     text = OBJ.sub(obj, text)
 
+    if DONE in text:   # already inlined: running again would embed every app a second time
+        return text, missing
     markup = re.sub(r"<script\b.*?</script>", "", text, flags=re.S)   # inlined libraries hold `<iframe src="${…}">`
     found = BG.findall(markup) + IFRAME.findall(markup)
     apps = list(dict.fromkeys(p for p in map(html.unescape, found) if LOCALPATH.match(p)))
     blobs = []
     for i, path in enumerate(apps):
-        f = root / path
+        f = file_for(root, path)
         if not f.is_file():
             missing.append(path); continue
         blobs.append((i, path, base64.b64encode(f.read_bytes()).decode()))
