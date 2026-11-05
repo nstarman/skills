@@ -1,6 +1,6 @@
 ---
 name: quarto-revealjs
-description: Use when making, editing or checking a Quarto reveal.js presentation (`format: revealjs`, `.qmd` slides) that must work offline or be archived as one self-contained HTML file plus a PDF; when a deck shows raw TeX, loads MathJax, KaTeX or plotly.js from a CDN, or breaks without internet; when adding speaker notes, fragments (including inside equations), auto-animate, backgrounds, video, Plotly figures from Python cells, or an interactive single-file HTML app (iframe) to slides; when printing a deck to PDF; or when asked which reveal.js features Quarto supports and how to write them.
+description: Use whenever someone asks to make a talk, presentation, slide deck or slides (even without naming Quarto), and when making, editing or checking a Quarto reveal.js presentation (`format: revealjs`, `.qmd` slides) that must work offline or be archived as one self-contained HTML file plus a PDF; when a deck shows raw TeX, loads MathJax, KaTeX or plotly.js from a CDN, or breaks without internet; when adding speaker notes, fragments (including inside equations), auto-animate, backgrounds, video, Plotly figures from Python cells, or an interactive single-file HTML app (iframe) to slides; when printing a deck to PDF; or when asked which reveal.js features Quarto supports and how to write them.
 ---
 
 # Offline, archivable reveal.js decks with Quarto
@@ -10,11 +10,19 @@ one self-contained HTML file (`embed-resources: true`), and a PDF printed from t
 backup. A default Quarto deck does **not** meet this, even with `embed-resources`; the setup below does.
 
 All reveal.js features and their Quarto syntax, with what was tested: `references/quarto-revealjs-guide.md`.
-Template files: `assets/`.
+The author's talk conventions (words, notes, citations, backup slides): `references/style.md`;
+read it before writing slides when the deck is the author's (Nathaniel Starkman's) own talk. Template files: `assets/`.
+
+**Never open a visible browser window.** Every script here runs headless (Playwright); to look at a
+deck use an embedded browser pane or a headless script, never a Chrome window or `open`.
 
 ## Set up a deck folder (once)
 
-1. Copy `assets/_quarto.yml`, `assets/_deck/` and the two scripts in `assets/` into the folder.
+0. `git init` the folder on day one (the template's `.gitignore` keeps out `_output/`, `_share/`,
+   `.venv/`; add any cloned data repository to it). Commit as you go; delete figures no slide uses
+   any more (one talk's folder grew to 319 MB).
+1. Copy everything in `assets/` into the folder: `_quarto.yml`, `_quarto-share.yml`, `.gitignore`,
+   `_deck/`, `_extensions/` and the scripts.
 2. Add the libraries the header loads (they are inlined into every deck at render time):
    - `_vendor/mathjax/tex-svg-full.js`: MathJax **3.2.2**, file `es5/tex-svg-full.js` from the
      `mathjax` npm package or the MathJax GitHub repository at tag `3.2.2`. The full build includes
@@ -32,7 +40,9 @@ Template files: `assets/`.
    The header puts plotly.js (about 4.6 MB) into **every** deck. If no deck in the folder has
    Plotly figures, delete its `plotly.min.js` line from `_deck/header.html` and skip the copy.
 3. Put the decks at the top of the folder: the header's `_vendor/` paths are relative to the deck.
-   Each deck's front matter needs only its own settings. Put `jupyter: python3` here, not in
+   Each deck's front matter needs only its own settings, and must not set `embed-resources` or
+   output options: front matter overrides `_quarto.yml`, profiles and `quarto render -M`, so a
+   build could no longer change them. Put `jupyter: python3` here, not in
    `_quarto.yml`: there it was observed to be ignored, and Quarto picked another installed kernel.
    ````markdown
    ---
@@ -73,8 +83,15 @@ Why each piece exists (all observed, not theoretical):
 | Link to a slide | `[text](#id)`, **not** `#/id` (Quarto rewrites it to `#//id`) |
 | Backup slides | `{visibility="uncounted"}`; drafts `{visibility="hidden"}` |
 | JavaScript | a ```` ```{=html} ```` block with `<script>`; use `Reveal` after `window` `load` |
+| Cite a paper | `{{< paper url="https://doi.org/…" who="Name et al." year="2021" title="…" >}}`; top right of a result slide: add `corner="true"` |
+| Bibliography slide | `python bibliography.py <collection-key>` → `_bibliography.qmd`; `## References {.bibliography visibility="uncounted"}` then `{{< include _bibliography.qmd >}}` |
+| Skip a build-up | press **]** (last step of the slide; again: next slide), from `_deck/skip-steps.html` |
 
 The table escapes `|` as `\|`; in a deck write `code-line-numbers="|1|2-3"`.
+
+Fragments must not change any heights: reserve the space and fade in; slides that build up one
+figure keep an identical base-figure box and only add layers (guide, "Animations that do not jump").
+`bibliography.py` reads the Zotero app's local API (enable it in Zotero's Advanced settings).
 
 Everything else (themes, auto-slide, scroll view, keyboard, events, postMessage, plugins,
 chalkboard, multiplex): `references/quarto-revealjs-guide.md`.
@@ -98,22 +115,37 @@ file):
 - 2× size scaled by 0.5 gives the app room for its wide layout; `max-width/max-height: none`
   undoes reveal.js's 95% cap on iframes.
 - Full slide instead: `## {background-iframe="apps/explorer.html" background-interactive="true"}`.
-  Background iframes are **not** inlined: list `apps/` under `resources:` and ship it beside the deck.
+  Quarto leaves a background iframe as a path; `python inline_apps.py _output/talk.html` (from the deck
+  folder, or `--root <folder>`) puts the app inside the deck as base64 and serves it from a `blob:` URL at load. A `data:`
+  URL is not enough: in the talk this came from, a real app stayed blank there (opaque origin;
+  observed, not reproduced by the test, whose stand-in app runs either way). The same step swaps
+  `<object data="file">`, which pandoc never inlines, for a `data:` URI.
 - Match the deck's theme: an app that follows system dark mode must be pinned in its copy, e.g.
   `<html lang="en" data-theme="light">`. The deck cannot script into an inlined (`data:`) iframe, and
   Chrome does not pass an iframe's CSS `color-scheme` into the page.
-- WebGL and canvas content prints blank: give each app a `.print-only` still (a screenshot of it).
+- A live app does not reliably make it into the PDF: a 2D-canvas app in an inline iframe printed, the
+  same app as a background iframe printed blank (observed by hand with `make_pdf.py`; WebGL untested). Give each app a `.print-only` still
+  (a screenshot of it).
 - A click into the app takes the keyboard; the header script gives it back so arrow keys still
   change slides.
 
 ## Check offline, then print
 
-Both scripts need `pip install playwright` and Google Chrome, and block the network while they run.
+The scripts need `pip install playwright` and Google Chrome or Playwright's own browsers
+(`python -m playwright install chromium webkit`). They run headless and block the network.
 
 ```bash
-python check_offline.py _output/*.html    # network requests, missing files, errors, raw TeX
-python make_pdf.py _output/my-talk.html   # -> _output/my-talk.pdf, notes on their own pages
+python inline_apps.py _output/my-talk.html    # background-iframe apps and <object> files inside
+python check_offline.py _output/*.html        # network requests, missing files, errors, raw TeX
+python check_overflow.py _output/*.html       # anything past the slide edge, in slide coordinates
+python check_offline.py --webkit _output/*.html && python check_overflow.py --webkit _output/*.html
+python make_pdf.py _output/my-talk.html       # -> _output/my-talk.pdf, notes on their own pages
 ```
+
+`check_overflow.py` measures each slide with all fragments shown and names each element outside
+the slide box with its position; it ignores notes, SVG internals, MathJax internals (struts,
+assistive MathML) and content inside a clipping container. `--webkit` is Safari's engine; CSS path
+animation and file-loaded CSS masks failed in Safari during a talk (guide, "Safari and WebKit").
 
 A deck passes when it makes **no** network requests, misses no local file (a background video or
 background-iframe app not shipped beside it), has no page errors and no raw TeX. "It rendered" is
@@ -126,6 +158,17 @@ the PDF: fragment steps are separate pages, live content shows its still.
 `--headless --print-to-pdf` gives a blank page. Do not set `show-notes` in YAML: it shows the notes to
 the audience. The script turns them on only for the PDF.
 
+## A shareable copy
+
+```bash
+quarto render my-talk.qmd --profile share                    # _quarto-share.yml: output in _share/
+python inline_apps.py --strip-notes _share/my-talk.html      # one file, no speaker notes
+```
+
+The archive build in `_output/` keeps the notes; the shared copy drops every `<aside class="notes">`.
+The profile works only while the deck's front matter leaves `embed-resources` and output options
+alone (front matter wins over profiles and `-M`).
+
 ## Gotchas
 
 - Quarto 1.11.9 bundles reveal.js **5.1.0**: reveal's own lightbox (5.2+) and 6.x features are absent.
@@ -136,7 +179,8 @@ the audience. The script turns them on only for the PDF.
 - YAML `keyboard:` takes only `true`/`false`: custom keys via `Reveal.addKeyBinding()`. postMessage
   replies need `Reveal.configure({postMessageEvents: true})`; no YAML option.
 - Chalkboard refuses `embed-resources` (render that deck as a folder); multiplex needs a hosted server.
-- Background video, background iframe and parallax images stay relative paths: ship them.
+- Background video and parallax images stay relative paths: ship them. Background iframes too,
+  until `inline_apps.py` runs.
 - A fragment `.grow` on a full-width block scales off the left edge; put it on a span.
 - Re-rendering while the deck is open over HTTP: reload without cache (Shift-Cmd-R) to see changes
   in background iframes.

@@ -2,15 +2,24 @@
 
     python make_pdf.py talk.html            # -> talk.pdf
 
-Needs `pip install playwright` and Google Chrome. Blocking the network doubles
+Needs `pip install playwright`, and Google Chrome or `python -m playwright install chromium`
+(Chromium only: WebKit cannot print to PDF). Runs headless (no window). Blocking the network doubles
 as a check: if a slide needs the internet, the PDF shows it.
 """
 import pathlib, sys
 from playwright.sync_api import sync_playwright
 
+
+def launch(p):
+    """Headless only: never a visible window. Google Chrome if installed, else Playwright's Chromium."""
+    try:
+        return p.chromium.launch(headless=True, channel="chrome")
+    except Exception:
+        return p.chromium.launch(headless=True)   # `python -m playwright install chromium`
+
 html = pathlib.Path(sys.argv[1]).resolve()
 with sync_playwright() as p:
-    ctx = p.chromium.launch(channel="chrome").new_context(offline=True)
+    ctx = launch(p).new_context(offline=True)
     ctx.route("**/*", lambda r: r.continue_() if r.request.url.startswith(("file:", "data:", "blob:")) else r.abort())
     page = ctx.new_page()
     page.goto(html.as_uri() + "?print-pdf&showNotes=separate-page")  # notes in the PDF only

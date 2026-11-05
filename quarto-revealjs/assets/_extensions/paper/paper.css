@@ -1,0 +1,17 @@
+/* paper shortcode. The icon is a CSS mask embedded as a data: URI, with both -webkit-mask and
+   mask: Safari did not load a mask from a separate file in a deck opened as a local file (observed in a
+   talk; not covered by the test). */
+.reveal .paper-ref { white-space: nowrap; }
+.reveal .paper-icon {
+  display: inline-block; width: 0.8em; height: 1em; vertical-align: -0.12em;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAzMCI+PHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNMiAxaDEzbDcgN3YyMUgyek0xNSAxdjdoN3pNNiAxM2gxMnYySDZ6bTAgNGgxMnYySDZ6bTAgNGg4djJINnoiLz48L3N2Zz4=") no-repeat center / contain;
+  mask: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAzMCI+PHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNMiAxaDEzbDcgN3YyMUgyek0xNSAxdjdoN3pNNiAxM2gxMnYySDZ6bTAgNGgxMnYySDZ6bTAgNGg4djJINnoiLz48L3N2Zz4=") no-repeat center / contain;
+}
+/* corner form: top right of the slide; its paragraph takes no room, so the slide lays out the same
+   with or without it */
+.reveal .slides section > p:has(> .paper-corner:only-child) { margin: 0; height: 0; }
+.reveal .paper-corner { position: absolute; top: 0; right: 0; font-size: 1.4em; }
+/* bibliography slide: {{< include _bibliography.qmd >}} inside ::: {.bibliography} */
+.reveal .bibliography ul { columns: 3; font-size: 0.5em; list-style: none; margin: 0; padding: 0; }
+.reveal .bibliography li { break-inside: avoid; }

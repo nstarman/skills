@@ -1,0 +1,5 @@
+# Profile for the shared copy: `quarto render --profile share`, then
+# `python inline_apps.py --strip-notes _share/<deck>.html`. Merged over _quarto.yml. Deck front
+# matter overrides both (and `quarto render -M`): keep embed-resources and output options out of it.
+project:
+  output-dir: _share

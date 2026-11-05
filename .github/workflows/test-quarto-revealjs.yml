@@ -43,7 +43,9 @@ jobs:
           sudo apt-get update -q && sudo apt-get install -y -q ./quarto.deb ffmpeg
           quarto --version
       - name: Python packages (latest, to catch upstream changes)
-        run: python -m pip install --quiet plotly jupyter playwright
+        run: |
+          python -m pip install --quiet plotly jupyter playwright
+          python -m playwright install --with-deps chromium webkit   # headless only
       - name: Test the skill
         id: test
         run: tests/skills/quarto-revealjs/run.sh "$RUNNER_TEMP/deck"

@@ -5,7 +5,8 @@
 #
 #   tests/skills/quarto-revealjs/run.sh [work-dir]
 #
-# Needs on PATH: quarto, python3 with plotly + jupyter + playwright (and Google Chrome), ffmpeg, curl.
+# Needs on PATH: quarto, python3 with plotly + jupyter + playwright (Google Chrome or Playwright's
+# Chromium, and Playwright's WebKit), ffmpeg, curl. Every browser runs headless.
 # MATHJAX_JS=<path to tex-svg-full.js> skips the download. Exits 1 if any step fails; all steps run.
 set -uo pipefail
 
@@ -48,6 +49,35 @@ quarto render || fail "quarto render"
 
 step "offline check (no network requests, no missing files, no page errors, no raw TeX)"
 python3 check_offline.py _output/demo.html _output/reveal-features.html || fail "offline check"
+python3 check_offline.py --webkit _output/demo.html _output/reveal-features.html || fail "offline check (WebKit)"
+
+step "inline_apps.py: the deck alone in an empty folder still has its background-iframe app"
+solo="$work-solo"; rm -rf "$solo"; mkdir -p "$solo"
+python3 inline_apps.py _output/lessons.html -o "$solo/lessons.html" || fail "inline_apps.py"
+python3 check_offline.py "$solo/lessons.html" || fail "inlined deck is not self-contained"
+python3 check_offline.py --webkit "$solo/lessons.html" || fail "inlined deck is not self-contained (WebKit)"
+cp "$solo/lessons.html" "$solo/again.html"
+python3 inline_apps.py "$solo/again.html" >/dev/null 2>&1 \
+  && cmp -s "$solo/lessons.html" "$solo/again.html" || fail "inline_apps.py changed an already-inlined deck"
+python3 "$here/lessons_check.py" "$solo/lessons.html" || fail "lessons check (Chromium)"
+python3 "$here/lessons_check.py" "$solo/lessons.html" --webkit || fail "lessons check (WebKit)"
+grep -q '<object data="data:image/svg+xml' "$solo/lessons.html" || fail "<object> not inlined"
+grep -q '<aside class="notes"' "$solo/lessons.html" || fail "archive copy lost its notes"
+
+step "share build: quarto render --profile share, then inline_apps.py --strip-notes"
+quarto render lessons.qmd --profile share >/dev/null 2>&1 || fail "share render"
+python3 inline_apps.py --strip-notes _share/lessons.html || fail "inline_apps.py --strip-notes"
+if grep -q '<aside class="notes' _share/lessons.html; then fail "shared copy has speaker notes"; else echo "shared copy has no notes"; fi
+python3 check_offline.py _share/lessons.html || fail "shared copy is not self-contained"
+python3 check_offline.py --webkit _share/lessons.html || fail "shared copy is not self-contained (WebKit)"
+
+step "overflow check: flags only #too-long in lessons.html, nothing in demo.html"
+for engine in "" --webkit; do
+  out=$(python3 check_overflow.py $engine _output/lessons.html); echo "$out"
+  n=$(grep -c '^     slide' <<<"$out"); others=$(grep '^     slide' <<<"$out" | grep -vc '#too-long')
+  [ "$n" -ge 1 ] && [ "$others" -eq 0 ] || fail "overflow check ${engine:-chromium}: expected only #too-long"
+  python3 check_overflow.py $engine _output/demo.html || fail "overflow in demo.html (${engine:-chromium})"
+done
 
 step "PDF"
 python3 make_pdf.py _output/demo.html || fail "make_pdf"

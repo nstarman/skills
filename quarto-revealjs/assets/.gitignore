@@ -1,0 +1,11 @@
+# rendered and generated
+_output/
+_share/
+.quarto/
+*_files/
+# environments and cloned data repositories: rebuild them, don't commit them
+.venv/
+venv/
+__pycache__/
+# add each cloned data repository here, e.g.  some-data-repo/
+.DS_Store

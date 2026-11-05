@@ -57,7 +57,10 @@ def frame(page, suffix, js, timeout=8000):
 
 
 with sync_playwright() as p:
-    browser = p.chromium.launch(channel="chrome")
+    try:   # headless only, never a visible window; Google Chrome, else Playwright's Chromium
+        browser = p.chromium.launch(headless=True, channel="chrome")
+    except Exception:
+        browser = p.chromium.launch(headless=True)
 
     def new_ctx(**kw):
         c = browser.new_context(offline=True, viewport={"width": 1280, "height": 800}, **kw)
