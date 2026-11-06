@@ -9,6 +9,9 @@ it does not know what a user needs. What it is genuinely good at:
   - finding pages nothing links to, and duplicate titles (the same content in two places)
   - giving you a per-heading breakdown, so you can apply the compass at section scale
 
+Pages under `about/`-style paths and under `start/` are reported but not scored: they are not in
+any of the four modes (see references/architecture.md).
+
 Usage
 -----
     python docs_inventory.py DOCS_ROOT [--format md|csv|json] [--out FILE]
@@ -148,6 +151,13 @@ NON_PRACTITIONER = _rx(
     r"licence|security|governance|roadmap|adr|rfcs?|community|support|sponsors?)\b"
 )
 
+# Orientation pages (references/architecture.md, "Before the modes") are not in any mode: they
+# route a reader who has not decided to use the software yet. Scoring them would be noise and
+# worse than noise — a `start/quickstart.md` trips tutorial signals, so counting it as a tutorial
+# would suppress the "no page scores as a tutorial" warning in a doc set that has no tutorial,
+# and `is-it-right.md` mixes tables with task pointers by design, which reads as a false seam.
+ORIENTATION = _rx(r"(^|/)start/")
+
 CODE_FENCE = re.compile(r"^(?:```|~~~)")
 FRONT_MATTER = re.compile(r"^---\s*$")
 MD_HEADING = re.compile(r"^(#{1,6})\s+(.*?)\s*#*\s*$")
@@ -205,8 +215,14 @@ class Page:
     mixed: bool
     runner_up: str
     non_practitioner: bool
+    orientation: bool = False
     sections: list = field(default_factory=list)
     linked_from: int = 0
+
+    @property
+    def unscored(self) -> bool:
+        """Pages the mode scores do not apply to: not practitioner docs, or orientation."""
+        return self.non_practitioner or self.orientation
 
     @property
     def seams(self) -> list:
@@ -362,6 +378,7 @@ def analyse(path: str, root: str) -> Page:
         mixed=mixed,
         runner_up=second,
         non_practitioner=bool(NON_PRACTITIONER.search(rel)),
+        orientation=bool(ORIENTATION.search(rel)),
         sections=[s for s in sections if s.words >= 25],
     )
 
@@ -475,13 +492,15 @@ def render_md(pages: list[Page], root: str, show_sections: bool) -> str:
 
     counts = defaultdict(int)
     for p in pages:
-        counts["non-practitioner" if p.non_practitioner else p.guess] += 1
+        key = ("non-practitioner" if p.non_practitioner
+               else "orientation" if p.orientation else p.guess)
+        counts[key] += 1
 
     out.write(f"# Documentation inventory — `{root}`\n\n")
     out.write(f"{total} pages · {sum(p.words for p in pages):,} words\n\n")
     out.write("## Mode distribution (heuristic)\n\n")
     out.write("| Mode | Pages |\n|---|---|\n")
-    for key in list(MODES) + ["non-practitioner"]:
+    for key in list(MODES) + ["orientation", "non-practitioner"]:
         out.write(f"| {MODE_LABEL.get(key, key)} | {counts.get(key, 0)} |\n")
     out.write("\n")
     if counts.get("tutorial", 0) == 0:
@@ -493,7 +512,7 @@ def render_md(pages: list[Page], root: str, show_sections: bool) -> str:
               "different mode from the rest of its page. These are the EXTRACT, DRAIN and "
               "SPLIT candidates: the seams where two pieces of documentation have been fused "
               "together. Confirm each one with the compass before acting.\n\n")
-    seam_pages = [p for p in pages if p.seams and not p.non_practitioner]
+    seam_pages = [p for p in pages if p.seams and not p.unscored]
     if not seam_pages:
         out.write("_None detected. Either the doc set is unusually clean, or its pages are too "
                   "short for section-level signals — read them anyway._\n\n")
@@ -512,12 +531,13 @@ def render_md(pages: list[Page], root: str, show_sections: bool) -> str:
               "the compass, not a verdict; it counts words and cannot know what a user needs.\n\n")
     out.write("| Page | Title | Words | Reads as | Runner-up | mix | In-links | Code | Steps | Tables |\n")
     out.write("|---|---|--:|---|---|--:|--:|--:|--:|--:|\n")
-    for p in sorted(pages, key=lambda x: (x.non_practitioner, -x.mix)):
+    for p in sorted(pages, key=lambda x: (x.unscored, -x.mix)):
         flag = " ⚠️" if p.mixed else ""
         guess = ("_n/a — not practitioner docs_" if p.non_practitioner
+                 else "_n/a — orientation_" if p.orientation
                  else MODE_LABEL.get(p.guess, "—"))
-        runner = "" if p.non_practitioner else MODE_LABEL.get(p.runner_up, "—")
-        mixcol = "" if p.non_practitioner else f"{p.mix:.2f}{flag}"
+        runner = "" if p.unscored else MODE_LABEL.get(p.runner_up, "—")
+        mixcol = "" if p.unscored else f"{p.mix:.2f}{flag}"
         out.write(f"| `{p.path}` | {p.title[:48]} | {p.words} | {guess} | {runner} | "
                   f"{mixcol} | {p.linked_from} | {p.code_blocks} | "
                   f"{p.ordered_steps} | {p.tables} |\n")
@@ -554,7 +574,7 @@ def render_md(pages: list[Page], root: str, show_sections: bool) -> str:
         out.write("\n")
 
     if show_sections:
-        candidates = [p for p in pages if not p.non_practitioner and len(p.sections) > 1]
+        candidates = [p for p in pages if not p.unscored and len(p.sections) > 1]
         if candidates:
             out.write("## Full section breakdown\n\n")
             out.write("Apply the compass heading by heading. `⟵` marks a section that disagrees "
@@ -581,12 +601,13 @@ def render_csv(pages: list[Page]) -> str:
     w = csv.writer(buf)
     w.writerow(["path", "title", "words", "guess", "runner_up", "mix", "mixed",
                 "linked_from", "code_blocks", "ordered_steps", "imperatives", "tables",
-                "links_out", "non_practitioner",
+                "links_out", "non_practitioner", "orientation",
                 *[f"score_{m}" for m in MODES]])
     for p in sorted(pages, key=lambda x: -x.mix):
         w.writerow([p.path, p.title, p.words, p.guess, p.runner_up, p.mix, p.mixed,
                     p.linked_from, p.code_blocks, p.ordered_steps, p.imperatives, p.tables,
-                    p.links_out, p.non_practitioner, *[p.scores[m] for m in MODES]])
+                    p.links_out, p.non_practitioner, p.orientation,
+                    *[p.scores[m] for m in MODES]])
     return buf.getvalue()
 
 

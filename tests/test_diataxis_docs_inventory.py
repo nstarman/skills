@@ -81,6 +81,29 @@ class DocsInventoryTest(unittest.TestCase):
         self.assertNotIn("tiny.md", paths)
         self.assertIn("start.md", paths)
 
+    def test_start_pages_are_orientation_not_scored_as_modes(self):
+        start = self.docs / "start"
+        start.mkdir()
+        (start / "quickstart.md").write_text(TUTORIAL, encoding="utf-8")
+        r = self.run_script(str(self.docs), "--format", "json")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        pages = {p["path"]: p for p in json.loads(r.stdout)}
+        self.assertTrue(pages["start/quickstart.md"]["orientation"])
+        self.assertFalse(pages["start.md"]["orientation"])
+        md = self.run_script(str(self.docs)).stdout
+        self.assertIn("| orientation | 1 |", md)
+        self.assertIn("_n/a — orientation_", md)
+
+    def test_orientation_quickstart_does_not_mask_a_missing_tutorial(self):
+        for page in self.docs.glob("*.md"):
+            page.unlink()
+        (self.docs / "cli.md").write_text(REFERENCE, encoding="utf-8")
+        start = self.docs / "start"
+        start.mkdir()
+        (start / "quickstart.md").write_text(TUTORIAL, encoding="utf-8")
+        md = self.run_script(str(self.docs)).stdout
+        self.assertIn("No page scores as a tutorial", md)
+
     def test_exit_codes_for_bad_root_and_empty_tree(self):
         self.assertEqual(self.run_script(str(self.dir / "missing")).returncode, 2)
         empty = self.dir / "empty"

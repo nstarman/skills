@@ -19,6 +19,10 @@ because a page that tries to teach *and* be looked up does neither well.
 Anything that is not documentation *for practitioners* — changelog, contributor guide,
 governance, support — lives in `[about/]` and is outside this scheme.
 
+`[start/]` is also outside it: at most three short pages for a reader who has not decided to use
+this yet (what it does, whether it suits their problem, a quickstart). They route people to the
+four sections and define nothing of their own, so no fact's canonical home is there.
+
 ### Deciding where a page goes
 
 Two questions:

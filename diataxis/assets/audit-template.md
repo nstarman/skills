@@ -13,6 +13,7 @@ review artifact and, later, as the record of why the structure is what it is.
 - Need moves only: N
 - Need splitting or extraction: N
 - Not practitioner documentation: N
+- Orientation (`start/`): N
 - New pages required: N
 - **Gaps found and not filled:** _(list — missing tutorials above all)_
 
@@ -24,6 +25,7 @@ biggest problem, and what the restructure will change for readers.
 ```
 docs/
   index.md
+  start/            # orientation, for a reader still deciding — at most three pages
   tutorials/
     index.md
     ...
@@ -56,6 +58,7 @@ actionable without re-reading.
 |---|---|---|---|---|
 | `tutorials/first-pipeline.md` | tutorial | No lesson exists anywhere; every entry path assumes competence | Partly extractable from `getting-started.md`; needs new narrative | High — write and user-test |
 | `reference/errors.md` | reference | Error strings only appear inline in how-tos | Grep the source for message strings | Medium |
+| `start/is-it-right.md` | orientation | Nothing anywhere says which data or problems the project suits; readers cannot self-select | Scattered caveats in how-tos, plus the maintainers | Medium |
 
 Tutorials are almost always the expensive item. Say so here rather than letting it surface late.
 
