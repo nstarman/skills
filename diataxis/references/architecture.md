@@ -7,6 +7,7 @@ practitioner documentation, and what to do when the doc set has a second dimensi
 **Contents**
 
 - [The default tree](#the-default-tree)
+- [Before the modes: the `start/` doorway](#before-the-modes-the-start-doorway)
 - [Section landing pages](#section-landing-pages)
 - [Navigation](#navigation)
 - [Naming the sections](#naming-the-sections)
@@ -24,6 +25,10 @@ practitioner documentation, and what to do when the doc set has a second dimensi
 ```
 docs/
   index.md                  # site landing page
+  start/                    # orientation, before the modes — see below
+    what-it-does.md
+    is-it-right.md
+    quickstart.md
   tutorials/
     index.md                # section landing page
     first-pipeline.md
@@ -59,6 +64,106 @@ clicks Explanation, finds one stub, and stops trusting the nav.
 
 ---
 
+## Before the modes: the `start/` doorway
+
+All four modes serve a reader who has already decided to use the software. A reader still
+deciding *whether* to is served by none of them: a tutorial asks for an hour of work before it
+says what the thing is, reference answers questions they do not yet know they have, and
+explanation discusses the design of a system they have not agreed to adopt. That reader lands on
+`index.md`, sees four doors that all assume adoption, and leaves.
+
+The fix is a small orientation section, at most three pages, placed first in the nav:
+
+```
+docs/
+  index.md
+  start/
+    what-it-does.md
+    is-it-right.md
+    quickstart.md
+  tutorials/
+  how-to/
+  reference/
+  explanation/
+  about/
+```
+
+**`what-it-does.md`** — the mental model, in the project's own terms: what problem the software
+addresses, what it produces, and the shape of the thing you get back (what you hand it, what
+comes out, what type that is). Prose, not a feature list; a reader should be able to decide from
+this page alone whether to keep reading. It names the default path through the software in a
+paragraph or two and links to explanation for the mechanism rather than describing it.
+
+**`is-it-right.md`** — the distinctive page, and the one with no possible home in the four modes,
+because every mode presumes adoption. It answers "does this apply to my data, or my problem, at
+all". It is built from triage tables that route rather than describe — one keyed on what the
+reader has, one on what they want:
+
+```
+## What you have
+
+| You have | Use | Read more |
+|---|---|---|
+| <a property of the reader's data or situation, in their words> | <the call, class or setting that handles it> | <the how-to or tutorial> |
+
+## What you want
+
+| You want | <Project> gives | Read more |
+|---|---|---|
+| <an outcome the reader came for> | <the attribute, call or result that is it> | <the page> |
+```
+
+Every row is a sentence the reader can recognise as their own case, and every row ends in a
+link, so the page is a switchboard and never an explanation. Then a short **"What it does not
+do"** list: the honest limits, each one stated plainly. That list is what makes the page
+trustworthy, and no mode will host it — reference describes what exists, explanation discusses
+why it was built that way, and neither of them will tell a reader "this is not for you."
+
+**`quickstart.md`** — the smallest end-to-end result: install, call, look at the output, stop.
+Shorter than a tutorial and with no teaching ambition, so the tutorial preflight does not apply
+to it — but its code must run, and its output must be real. It has one path and no branches; a
+reader who wants to learn goes to the tutorial, which this page links to at the end.
+
+**Installation is usually one line on the landing page or in the quickstart**, not a page. It
+earns `start/install.md` only when there is a genuine choice to document: optional extras,
+accelerator or platform-specific builds, several package managers with different incantations. A
+page that holds one `pip install` command is a nav entry a reader has to click to learn nothing.
+Whichever way you go, the nav must match the files on disk — a `start/install` entry pointing at
+a file nobody wrote is the way this section rots first, and the three-page shape means every
+entry here is cheap to check.
+
+### It is not a fifth mode
+
+Nothing in `start/` teaches a skill, walks through a task, specifies behaviour, or explains a
+design at depth; it routes a stranger to the mode that will. It sits beside `about/` as the
+other non-mode home: `about/` holds material that is not practitioner documentation, `start/`
+holds the pages for a reader who is not yet in the four modes' audience. Four rules keep it from
+drifting into a fifth mode, and they are the whole discipline of the section:
+
+- **No page in `start/` is the canonical home for a fact.** Its tables name a call or an option
+  and link to the reference row that owns it. The moment a default or a type is *defined* here,
+  there are two authoritative copies and they will drift.
+- **Two screens per page.** When `what-it-does.md` grows a passage on how the mechanism works,
+  EXTRACT it to explanation. When `quickstart.md` grows a second scenario, a platform branch, or
+  a troubleshooting section, it is turning into a tutorial or a how-to; move the growth, not the
+  page.
+- **Nothing in `start/` is a prerequisite.** A reader who ignores the whole section and opens the
+  tutorial loses nothing. If a tutorial says "first read `what-it-does`", the tutorial has a gap.
+- **Three pages, four with an earned install page, and no more.** A `start/` with six pages in it
+  is the "Advanced" overflow bucket under a friendlier name.
+
+In the nav, `start/` comes first, above Tutorials, and the root landing page gets a card for it
+alongside the four mode cards. It needs no section landing page of its own — `what-it-does.md` is
+the doorway, so list the three pages directly in the nav and point the card at that first page.
+If the landing page carries a "where to start" routing list, that list and `is-it-right.md` are
+the same job done twice: keep the short version on the landing page and let it link through.
+
+One honest outcome of trying to write `is-it-right.md` is discovering that you cannot — that
+nobody can say in a table which data the software suits. That is worth reporting as a finding
+about the software, not papering over with a page of prose.
+
+---
+
 ## Section landing pages
 
 Every section needs an index page, and its job is not to list its children — the nav already
@@ -87,15 +192,17 @@ annotated list with a good orienting sentence beats a beautiful grid of bare tit
 The **root** index page has a different job: route a stranger to the right mode within a few
 seconds. Four entries, each with a one-line description phrased as the reader's own situation
 ("I want to learn the basics", "I need to get something done", "I need to look something up",
-"I want to understand how it works"). Add whatever the site's single most common entry point
-is — usually install, or the tutorial.
+"I want to understand how it works"), plus a fifth for the reader who has decided nothing yet
+("I want to know what this is and whether it fits"). Add whatever the site's single most common
+entry point is — usually install, or the tutorial.
 
 ---
 
 ## Navigation
 
-- **Four top-level entries**, plus a home for non-practitioner material. When something resists
-  classification it is usually two things fused, not a fifth mode.
+- **Four top-level entries**, with the orientation doorway (`start/`) first and the
+  non-practitioner home (`about/`) last. When something resists classification it is usually two
+  things fused, not a fifth mode.
 - **Two visible levels is usually right.** Section → page. A third level of nesting means a
   reader has to open two things to see whether the page they want exists.
 - **Group lists longer than about seven.** Diátaxis notes that "lists longer than a few items

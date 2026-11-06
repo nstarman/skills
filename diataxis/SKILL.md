@@ -46,6 +46,31 @@ table of every config flag at the bottom. A page-level audit records "how-to, fi
 section-level audit records "how-to + explanation §2 + reference §5 — three destinations." The
 second one is a work order; the first is a shrug.
 
+## The reader who has not decided yet
+
+Both of the compass's questions presume the reader has adopted the software, so the four modes
+between them serve nobody who is still deciding whether to. A tutorial asks for an hour of work
+before it says what the thing is; reference answers questions the reader does not yet have;
+explanation discusses the design of a system they have not agreed to use. That reader lands on
+`index.md`, sees four doors that all assume adoption, and leaves.
+
+The pattern that serves them is an orientation section, `start/`, at most three pages, placed
+first in the nav: `what-it-does.md` (the mental model in the project's own terms), `is-it-right.md`
+(triage tables matching the reader's data and goals to the call to use and the page to read), and
+`quickstart.md` (the smallest end-to-end result, with no teaching ambition). Audit for it with the
+first question in phase 1, and treat a missing `start/` as a gap in the same way a missing tutorial
+is one — it is a writing job, not a moving job.
+
+`start/` is not a fifth mode. Nothing in it teaches, instructs, specifies or explains at depth,
+nothing in it is the canonical home for a fact, and a reader who skips the whole section loses
+nothing. It sits beside `about/` as the other non-mode home: `about/` for material that is not
+practitioner documentation, `start/` for readers not yet in the four modes' audience.
+
+**Before writing any of the three pages, read the `start/` section of `references/architecture.md`.**
+It has what goes on each page, the shape of the fit tables, where installation belongs, and the
+four rules that keep `start/` from growing into the overflow bucket an "Advanced" section always
+becomes.
+
 ## Ground rules
 
 These bind on every job, and two of them are what separates a real refactor from a
@@ -153,6 +178,9 @@ Then read the pages, working down each heading tree with the compass. Alongside,
 site-level questions:
 
 - Where does a brand-new user actually land, and does anything there teach them?
+- **Where does a reader who has not decided to use this yet land?** Nothing in the four modes
+  tells them what the software does or whether it fits their problem. If `index.md` is the whole
+  answer, the gap is a `start/` section.
 - **Is there any real tutorial?** Usually there is not — there is a "Getting Started" page that
   is an installation how-to. This is the most common gap in a doc set, and it is a writing job,
   not a moving job.
@@ -166,9 +194,10 @@ site-level questions:
 One table covering every page; template in `assets/audit-template.md`.
 
 **Every source file gets exactly one row and one destination. No blanks.** The legal destinations
-are: one of the four mode sections; the non-practitioner section; *dissolved into* N named pages;
-or *deleted, with a redirect*. There is no fifth option and no "leave it at the root." A page
-that will not fit is either two things fused (SPLIT) or not practitioner documentation. Before
+are: one of the four mode sections; the orientation section (`start/`); the non-practitioner
+section (`about/`); *dissolved into* N named pages; or *deleted, with a redirect*. There is
+nothing else, and no "leave it at the root." A page that will not fit is two things fused
+(SPLIT), orientation material, or not practitioner documentation at all. Before
 calling the map done, count its rows against the source file count and state both numbers.
 
 Order the work by leverage: entry points first (a contaminated entry point costs more than a
@@ -217,6 +246,7 @@ contaminated pages into tidier folders.
 | A tutorial with troubleshooting sections | It does not reliably work; tutorials must not fail | Fix the tutorial; move edge cases to a how-to |
 | "Note: this only works if…" scattered through prose | Reference facts homeless in narrative | DRAIN |
 | A table of every option mid-walkthrough | Reference fused to a tutorial or how-to | DRAIN + LINK |
+| A "Why use X?" or "Is this for me?" section inside a tutorial, explanation or README | Orientation material with no mode to live in | EXTRACT to `start/` |
 | An "Advanced" or "Guides" section | Unsorted overflow bucket, not a mode | Re-audit its contents individually |
 
 ## Examples, architecture, toolchain
@@ -224,8 +254,9 @@ contaminated pages into tidier folders.
 - **Writing or reviewing examples and code blocks** → `references/examples.md`. An example that
   would be excellent in one mode is a defect in another; that file has the per-mode rules and the
   practices that stop examples rotting.
-- **Planning the tree, writing landing pages, nav depth, cross-linking, a second dimension
-  (products/roles/platforms), or keeping the structure from decaying** → `references/architecture.md`.
+- **Planning the tree, the `start/` orientation pages, writing landing pages, nav depth,
+  cross-linking, a second dimension (products/roles/platforms), or keeping the structure from
+  decaying** → `references/architecture.md`.
   Templates: `assets/landing-page-template.md`, `assets/contributing-diataxis.md`.
 - **Sphinx / MyST** → `references/sphinx-myst.md`. **Zensical** → `references/zensical.md`.
   Other stacks: the modes and moves are unchanged; find their equivalents for nav, section index
@@ -290,7 +321,8 @@ examples has removed test coverage, whatever the page count says.
 ## Before you say you're done
 
 - Map rows = source file count, and both numbers are stated.
-- No practitioner page sits outside the four mode sections.
+- Every practitioner page sits in one of the four mode sections, apart from the orientation
+  pages in `start/` — at most three of them, four if an install page is earned.
 - Every created file has real content or appears in the gap list.
 - Every moved URL has a redirect, or the no-redirect mitigation is written down.
 - `check_links.py` passes, and the scanner reports no duplicated table rows across the new tree
@@ -304,4 +336,6 @@ examples has removed test coverage, whatever the page count says.
 - Any build or run you claim to have done, you actually did — and the claim is in the summary,
   not in a shipped config comment or page.
 - Every tutorial passes the preflight.
-- No fifth mode in the nav.
+- No fifth mode in the nav. `start/` and `about/` are not modes and do not breach this: nothing
+  in them teaches, instructs, specifies or explains at depth, and neither owns a fact. Any other
+  section holding practitioner content is a fifth mode, and that is still forbidden.
