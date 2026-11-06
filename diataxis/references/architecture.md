@@ -114,10 +114,18 @@ reader has, one on what they want:
 ```
 
 Every row is a sentence the reader can recognise as their own case, and every row ends in a
-link, so the page is a switchboard and never an explanation. Then a short **"What it does not
-do"** list: the honest limits, each one stated plainly. That list is what makes the page
-trustworthy, and no mode will host it — reference describes what exists, explanation discusses
-why it was built that way, and neither of them will tell a reader "this is not for you."
+link, so the page is a switchboard and never an explanation. One row is the exception: the case
+the software does not serve, whose honest answer is "nothing here, use the standard library" and
+which has nowhere to link. That row is worth more to a stranger than most of the others, so
+write it and leave its last column empty.
+
+Then two short lists, a few bullets each. **"What it does not do"** — the honest limits, each one
+stated plainly. **"What it costs"** — the dependencies it adds, the global state it touches, the
+work a reader takes on by adopting it. Together they are what make the page trustworthy, and no
+mode will host either: reference describes what exists, explanation discusses why it was built
+that way, and neither of them will tell a reader "this is not for you." Link the facts rather
+than restating them. A cost that spells out a default or a registration rule is reference
+material with a second copy here, and the second copy is the one that goes stale.
 
 **`quickstart.md`** — the smallest end-to-end result: install, call, look at the output, stop.
 Shorter than a tutorial and with no teaching ambition, so the tutorial preflight does not apply
