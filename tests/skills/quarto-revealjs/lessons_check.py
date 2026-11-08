@@ -2,7 +2,8 @@
 
     python lessons_check.py DECK.html [--webkit]
 
-The background-iframe app runs from a blob: URL (nothing beside the deck), the
+The background-iframe app runs from a blob: URL (nothing beside the deck), so does the
+data-app iframe over 2 MB, only once its slide is shown; the
 "]" key skips to a slide's last step and then on and is listed under "?", and both citation forms render as links.
 """
 import pathlib, sys
@@ -43,6 +44,23 @@ with sync_playwright() as p:
     if "Skip to the last step" not in pg.evaluate("document.body.innerText"):
         fails.append('"]" is not listed in the ? help overlay')
     pg.evaluate("Reveal.toggleHelp(false)")
+
+    big = "document.querySelector('#big-app iframe')"
+    src, lazy = pg.evaluate(f"[{big}.getAttribute('src'), {big}.getAttribute('data-src')]")
+    if src or not (lazy or "").startswith("blob:"):
+        fails.append(f"data-app iframe before its slide: src {src!r}, data-src {(lazy or '')[:30]!r} (want none, blob:)")
+    go("big-app")
+    ok = None
+    for _ in range(20):
+        try:
+            ok = [f.evaluate("document.getElementById('msg').textContent") for f in pg.frames if f.url == lazy]
+        except Exception as e:
+            ok = str(e).splitlines()[0]
+        if ok == ["big app ok"]:
+            break
+        pg.wait_for_timeout(250)
+    else:
+        fails.append(f"data-app iframe over 2 MB did not run from its blob: URL: {ok}; frames {[f.url[:30] for f in pg.frames]}")
 
     go("full-app")
     ok = None

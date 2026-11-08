@@ -4,6 +4,9 @@
 `_quarto.yml`. Since the talk-lessons update, `_quarto.yml` includes `_deck/skip-steps.html`, and a
 render without that file fails. New assets (`inline_apps.py`, `check_overflow.py`,
 `bibliography.py`, `_extensions/paper/`, `_quarto-share.yml`) are optional; copy the ones you use.
+Since the inline-apps-over-2-MB update, `inline_apps.py` understands `<iframe data-app="apps/x.html">`:
+copy it again and change each inline app's `src` to `data-app` (an app over 2 MB in `src` is blank in
+Chrome).
 
 This skill documents a moving target: Quarto, the reveal.js it bundles, MathJax and plotly.py.
 Every claim in `references/quarto-revealjs-guide.md` was observed in a browser against the versions in
@@ -31,7 +34,7 @@ Every claim in `references/quarto-revealjs-guide.md` was observed in a browser a
    The steps: version check, set up a deck folder from `assets/` exactly as `SKILL.md` says, render
    the fixture decks, offline check in Chromium and WebKit (network, missing files, errors, raw TeX),
    `inline_apps.py` (the inlined `lessons.html` alone in an empty folder still runs its background
-   app; `lessons_check.py` also checks the "]" skip key and the `paper` shortcode), the share build
+   app, and its 3 MB `data-app` app once that slide is shown; `lessons_check.py` also checks the "]" skip key and the `paper` shortcode), the share build
    (no notes), `check_overflow.py` (only `#too-long` flagged in `lessons.html`, in both engines), PDF (6 pages including
    the app's still), the feature table (`feature_check.py`, which also checks the demo deck's Plotly
    figure and equation fragment), and the documented gotchas (`fixture/gotchas/`: KaTeX not

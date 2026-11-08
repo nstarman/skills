@@ -64,6 +64,16 @@ class InlineAppsTest(unittest.TestCase):
         self.assertIn('src="data:text/html;base64,AA=="', out)
         self.assertIn('<aside class="notes">', out)
 
+    def test_data_app_becomes_lazy_data_src(self):
+        # pandoc leaves data-app alone (src/data-src become data: URLs, which Chrome caps at 2 MB)
+        deck = DECK.replace('<iframe data-src="apps/inline.html">', '<iframe data-app="apps/inline.html">')
+        out, missing = inline_apps.inline(deck, self.root)
+        self.assertEqual(missing, [])
+        self.assertIn('"inlined-app-1": ["apps/inline.html", "text/html"]', out)
+        self.assertIn('if (f.getAttribute("data-app") === path) f.setAttribute("data-src", url);', out)
+        (self.root / "apps/inline.html").unlink()
+        self.assertEqual(inline_apps.inline(deck, self.root)[1], ["apps/inline.html"])
+
     def test_non_html_app_keeps_its_type(self):
         (self.root / "apps/fig.svg").write_text("<svg/>")
         out, _ = inline_apps.inline(DECK.replace("apps/full.html", "apps/fig.svg"), self.root)

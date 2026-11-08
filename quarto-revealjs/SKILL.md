@@ -98,8 +98,8 @@ chalkboard, multiplex): `references/quarto-revealjs-guide.md`.
 
 ## Embed an interactive app (single-file HTML, e.g. a figpress-apps build)
 
-Copy the app's single-file HTML into `apps/`. Inline on a slide (inlined into the deck, so still one
-file):
+Copy the app's single-file HTML into `apps/`. Inline on a slide (inlined into the deck by
+`inline_apps.py`, so still one file):
 
 ```markdown
 ## The explorer
@@ -107,25 +107,33 @@ file):
 ![](apps/explorer.png){.print-only .r-stretch}
 
 ::: {.r-stretch .print-hide style="position:relative; overflow:hidden;"}
-<iframe src="apps/explorer.html" style="position:absolute; top:0; left:0; width:200%; height:200%;
+<iframe data-app="apps/explorer.html" title="explorer" style="position:absolute; top:0; left:0; width:200%; height:200%;
   max-width:none; max-height:none; border:0; transform:scale(0.5); transform-origin:0 0;"></iframe>
 :::
 ```
 
+- `data-app`, not `src`. Pandoc inlines `src` and `data-src` as `data:` URLs, and Chrome loads no
+  `data:` URL over 2 MB: a 3 MB and a 9 MB figpress-apps build showed a blank slide
+  (`about:blank#blocked`). Pandoc leaves `data-app` alone; `python inline_apps.py _output/talk.html`
+  puts the app in the deck and gives the iframe a `blob:` URL as its `data-src`, so reveal.js loads
+  the app when its slide is shown and unloads it when you leave (it starts fresh on each visit).
+  Loading it only when shown also stopped an app from throwing a page error while its slide was
+  hidden at zero size. Until `inline_apps.py` runs, the slide is empty.
 - 2× size scaled by 0.5 gives the app room for its wide layout; `max-width/max-height: none`
   undoes reveal.js's 95% cap on iframes.
 - Full slide instead: `## {background-iframe="apps/explorer.html" background-interactive="true"}`.
-  Quarto leaves a background iframe as a path; `python inline_apps.py _output/talk.html` (from the deck
-  folder, or `--root <folder>`) puts the app inside the deck as base64 and serves it from a `blob:` URL at load. A `data:`
-  URL is not enough: in the talk this came from, a real app stayed blank there (opaque origin;
+  Quarto leaves a background iframe as a path; `inline_apps.py` (from the deck folder, or
+  `--root <folder>`) puts that app inside the deck too and serves it from a `blob:` URL at load. A
+  `data:` URL is not enough: in the talk this came from, a real app stayed blank there (opaque origin;
   observed, not reproduced by the test, whose stand-in app runs either way). The same step swaps
   `<object data="file">`, which pandoc never inlines, for a `data:` URI.
 - Match the deck's theme: an app that follows system dark mode must be pinned in its copy, e.g.
-  `<html lang="en" data-theme="light">`. The deck cannot script into an inlined (`data:`) iframe, and
-  Chrome does not pass an iframe's CSS `color-scheme` into the page.
-- A live app does not reliably make it into the PDF: a 2D-canvas app in an inline iframe printed, the
-  same app as a background iframe printed blank (observed by hand with `make_pdf.py`; WebGL untested). Give each app a `.print-only` still
-  (a screenshot of it).
+  `<html lang="en" data-theme="light">`. The deck cannot script into an inlined iframe (`data:`, or
+  from a file a `blob:` one in Chrome), and Chrome does not pass an iframe's CSS `color-scheme` into
+  the page.
+- A live app does not make it into the PDF: reveal's print view never loads a `data-app` iframe,
+  and a background iframe printed blank (observed by hand with `make_pdf.py`). Give each app a
+  `.print-only` still (a screenshot of it).
 - A click into the app takes the keyboard; the header script gives it back so arrow keys still
   change slides.
 
@@ -135,7 +143,7 @@ The scripts need `pip install playwright` and Google Chrome or Playwright's own 
 (`python -m playwright install chromium webkit`). They run headless and block the network.
 
 ```bash
-python inline_apps.py _output/my-talk.html    # background-iframe apps and <object> files inside
+python inline_apps.py _output/my-talk.html    # data-app and background-iframe apps, <object> files inside
 python check_offline.py _output/*.html        # network requests, missing files, errors, raw TeX
 python check_overflow.py _output/*.html       # anything past the slide edge, in slide coordinates
 python check_offline.py --webkit _output/*.html && python check_overflow.py --webkit _output/*.html
@@ -181,6 +189,7 @@ alone (front matter wins over profiles and `-M`).
 - Chalkboard refuses `embed-resources` (render that deck as a folder); multiplex needs a hosted server.
 - Background video and parallax images stay relative paths: ship them. Background iframes too,
   until `inline_apps.py` runs.
+- An inline app over 2 MB in `<iframe src>` is blank in Chrome (`data:` URL limit); use `data-app`.
 - A fragment `.grow` on a full-width block scales off the left edge; put it on a span.
 - Re-rendering while the deck is open over HTTP: reload without cache (Shift-Cmd-R) to see changes
   in background iframes.
