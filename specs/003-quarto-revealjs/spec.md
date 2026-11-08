@@ -11,6 +11,9 @@ settled by testing (see [research.md](research.md)).
 **Amended**: 2026-11-04, lessons from a 45-slide talk built without the skill (user stories 6–12,
 FR-101–FR-110, SC-101–SC-105); planned in [../004-quarto-revealjs-talk-lessons/](../004-quarto-revealjs-talk-lessons/plan.md).
 
+**Amended**: 2026-11-08, inline apps over 2 MB (user story 7 scenario 5, FR-111, SC-106): in a talk, two
+figpress-apps builds inlined as `<iframe src>` were blank in Chrome, which loads no `data:` URL over 2 MB.
+
 **Input**: User description: "Distil what we learned about building reveal.js presentations in
 Quarto into a skill: decks that stay openable in a browser for a very long time, as local files,
 with math, Python/Plotly figures, speaker notes, transitions and embedded interactive paper
@@ -169,6 +172,9 @@ and check it offline: no missing files, the app draws.
    archived build still has them.
 4. **Given** a deck whose front matter sets `embed-resources`, **When** the share build runs, **Then**
    the skill has warned that front matter overrides profiles and `-M`, and says to keep it out.
+5. **Given** an inline app over 2 MB written as `<iframe data-app="apps/x.html">`, **When** the deck is
+   rendered and inlined, **Then** the app is not loaded before its slide and runs from a `blob:` URL
+   once its slide is shown.
 
 ---
 
@@ -314,6 +320,9 @@ Playwright's bundled Chromium.
   to bundled Chromium; the skill MUST say no visible browser window may be opened.
 - **FR-110**: The end-to-end test MUST cover FR-102 to FR-107 on fixtures; new scripts that run
   without a browser MUST have unit tests run by `check.yml`.
+- **FR-111**: The skill MUST recommend `<iframe data-app="…">` for an app on a slide and say why
+  (pandoc inlines `src` as a `data:` URL, which Chrome refuses over 2 MB; the app loads only when
+  its slide is shown); the inlining step MUST give such an iframe the app's `blob:` URL as `data-src`.
 
 ### Key Entities
 
@@ -342,6 +351,8 @@ Playwright's bundled Chromium.
 - **SC-103**: The share build of the fixture contains 0 speaker notes; the archive build keeps all.
 - **SC-104**: The offline check passes in WebKit on every fixture deck that passes in Chromium.
 - **SC-105**: 0 scripts in the skill open a visible browser window.
+- **SC-106**: A fixture `data-app` app of 3 MB, in the inlined deck alone in an empty folder, runs once
+  its slide is shown, in Chromium and WebKit.
 
 ## Assumptions
 

@@ -42,6 +42,9 @@ ffmpeg -loglevel error -y -f lavfi -i "testsrc2=size=640x360:rate=24:duration=3"
 ffmpeg -loglevel error -y -f lavfi -i "sine=frequency=440:duration=2" media/tone.mp3
 ffmpeg -loglevel error -y -f lavfi -i "testsrc2=size=1280x720" -frames:v 1 apps/explorer.png
 ffmpeg -loglevel error -y -f lavfi -i "smptebars=size=1280x720" -frames:v 1 apps/explorer-full.png
+# An inline app over Chrome's 2 MB data: URL limit (lessons.qmd, #big-app), padded so nothing big is committed.
+python3 -c "import pathlib; a = pathlib.Path('apps'); pathlib.Path(a, 'big.html').write_text(
+    a.joinpath('background.html').read_text().replace('app ok', 'big app ok').replace('</body>', '<!--' + 'x' * 3_000_000 + '-->\\n</body>'))"
 
 step "render"
 export QUARTO_PYTHON=${QUARTO_PYTHON:-$(command -v python3)}
@@ -51,7 +54,7 @@ step "offline check (no network requests, no missing files, no page errors, no r
 python3 check_offline.py _output/demo.html _output/reveal-features.html || fail "offline check"
 python3 check_offline.py --webkit _output/demo.html _output/reveal-features.html || fail "offline check (WebKit)"
 
-step "inline_apps.py: the deck alone in an empty folder still has its background-iframe app"
+step "inline_apps.py: the deck alone in an empty folder still has its apps (background iframe, data-app over 2 MB)"
 solo="$work-solo"; rm -rf "$solo"; mkdir -p "$solo"
 python3 inline_apps.py _output/lessons.html -o "$solo/lessons.html" || fail "inline_apps.py"
 python3 check_offline.py "$solo/lessons.html" || fail "inlined deck is not self-contained"

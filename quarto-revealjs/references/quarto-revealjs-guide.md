@@ -22,7 +22,8 @@ Legend: ✓ works as documented · ◐ works with a caveat or a workaround · �
 | Media: video | `{{< video clip.mp4 width="480" height="270" >}}` (Quarto uses video.js) | ✓ | yes (inlined) |
 | Media: audio | raw `<audio controls src="tone.mp3">` | ✓ | yes (inlined) |
 | Media: lazy loading | `<img data-src="…">`, `<iframe data-src="…">` | ✓ | yes (inlined) |
-| Media: inline iframe | `<iframe src="app.html">` | ✓ | yes (inlined as a `data:` URL) |
+| Media: inline iframe | `<iframe src="app.html">` | ✓ | yes (inlined as a `data:` URL); blank in Chrome over 2 MB |
+| Inline app (this skill) | `<iframe data-app="app.html">` | ✓ | after `inline_apps.py` (a `blob:` URL, loaded when the slide is shown) |
 | Lightbox (reveal.js 5.2+ `data-preview-image`) | — | ✗ (not in 5.1) | — |
 | Lightbox, Quarto's own (GLightbox) | YAML `lightbox: true`; image `![](img.png){.lightbox}` | ✓ | yes |
 | Preview links (overlay iframe) | `[text](https://…){preview-link="true"}` or YAML `preview-links: true` | ◐ only `http`/`www` URLs; local files navigate away. Workaround below | n/a (needs the web) |
@@ -578,7 +579,7 @@ Third-party plugins are distributed the same way (`quarto add owner/repo`).
 
 Copy the app's single-file HTML into `apps/` and pick one of two embeddings:
 
-**Inline on a slide (inlined into the deck, single file):**
+**Inline on a slide (inlined into the deck by `inline_apps.py`, single file):**
 
 ```markdown
 ## The explorer
@@ -586,13 +587,24 @@ Copy the app's single-file HTML into `apps/` and pick one of two embeddings:
 ![](apps/explorer.png){.print-only .r-stretch}
 
 ::: {.r-stretch .print-hide style="position:relative; overflow:hidden;"}
-<iframe src="apps/explorer.html" style="position:absolute; top:0; left:0; width:200%; height:200%;
+<iframe data-app="apps/explorer.html" title="explorer" style="position:absolute; top:0; left:0; width:200%; height:200%;
   max-width:none; max-height:none; border:0; transform:scale(0.5); transform-origin:0 0;"></iframe>
 :::
 ```
 
 Laying the iframe out at 2× and scaling it by 0.5 gives the app enough room for its wide layout;
 `max-width/max-height: none` undoes reveal.js's 95% cap on iframes.
+
+Write `data-app`, not `src`. With `embed-resources: true` pandoc inlines an iframe's `src` and
+`data-src` as `data:` URLs, and Chrome refuses to load a `data:` URL longer than 2 MB: the iframe
+ends at `about:blank#blocked` and the slide is blank. A 3 MB and a 9 MB figpress-apps build hit this
+in a talk; a 3 MB stand-in does the same in headless Chrome, while smaller apps load. Pandoc leaves
+`data-app` alone, and `inline_apps.py` (below) gives the iframe the app's `blob:` URL as its
+`data-src`. reveal.js then loads the app when its slide is shown and unloads it when you leave, so
+the app starts fresh on each visit; the print view never loads it. Lazy loading also stopped an app
+from throwing a page error while its slide was hidden at zero size (observed in the talk). Until
+`inline_apps.py` runs the slide is empty. The end-to-end test checks a 3 MB `data-app` app in
+Chromium and WebKit: not loaded before its slide, running from a `blob:` URL once shown.
 
 **Full-slide background:**
 
@@ -605,8 +617,8 @@ Laying the iframe out at 2× and scaling it by 0.5 gives the app enough room for
 Quarto leaves the background iframe as a path. To make the deck one file again, run
 `python inline_apps.py _output/talk.html` from the deck folder after rendering: each app goes into the
 deck as base64 in a `<script type="text/plain">`, and a small script, run before reveal.js starts,
-turns it into a `blob:` URL and points `data-background-iframe` (and any iframe `src`/`data-src`
-with that path) at it. Pointing the background at a `data:` URL instead was tried with a real app: it
+turns it into a `blob:` URL and points `data-background-iframe` (and any iframe `data-app`,
+`src` or `data-src` with that path) at it. Pointing the background at a `data:` URL instead was tried with a real app: it
 stayed blank (a `data:` page gets an opaque origin, which many single-file apps cannot run in).
 That is observed, not tested: the test's stand-in app would run either way. What the end-to-end
 test does check: the inlined deck, alone in an empty folder, runs its app from a `blob:` URL.
@@ -619,9 +631,9 @@ Things to know:
   `perl -pi -e 's|<html lang="en">|<html lang="en" data-theme="light">|' apps/app.html` (works on macOS and Linux).
 - **Keyboard**: clicking into an app gives it the keyboard; the header script hands focus back so the
   arrow keys keep changing slides. Dragging is unaffected.
-- **Print**: a live app does not reliably reach reveal.js's print view. Tested with a 2D-canvas app:
-  inline iframe printed, background iframe printed blank (observed by hand); WebGL was not tested. Give each app a
-  `.print-only` still (a screenshot of the app).
+- **Print**: a live app does not reach reveal.js's print view. A `data-app` iframe is never loaded
+  there (checked headless); a 2D-canvas app as a background iframe printed blank (observed by hand).
+  Give each app a `.print-only` still (a screenshot of the app).
 - **Browser cache**: when re-rendering while the deck is open over HTTP, reload with Shift-Cmd-R.
 
 ## 6b. Safari and WebKit
@@ -667,7 +679,8 @@ reproduced by the test in WebKit.
 8. `keyboard:` and `postMessageEvents` need JavaScript, not YAML.
 9. Chalkboard and multiplex cannot be single-file / offline.
 10. Background video and parallax images are not inlined; list them under `resources:`. Background
-    iframes and `<object>` files neither, until `inline_apps.py` runs.
+    iframes, `data-app` iframes and `<object>` files neither, until `inline_apps.py` runs. An inline
+    app over 2 MB in `<iframe src>` is blank in Chrome; use `data-app` (section 6).
 11. reveal.js caps iframes at 95%; MathJax fragments need `Reveal.sync()`.
 12. Embedded apps follow system dark mode unless their `<html>` pins `data-theme`.
 13. Deck front matter overrides `_quarto.yml`, profiles and `quarto render -M`: keep options a build

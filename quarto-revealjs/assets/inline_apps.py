@@ -11,12 +11,19 @@ Each app goes into the deck as base64 in a `<script type="text/plain">`; a small
 into a `blob:` URL before reveal.js starts and points the slide (and any iframe `src`/`data-src`
 with that path) at it. A `data:` URL would be simpler but leaves many apps blank: a `data:` page
 has an opaque origin. `<object>` files become `data:` URIs. Exits 1 if a referenced file is missing.
+
+For an app on a slide, write `<iframe data-app="apps/x.html">`, not `src`: `embed-resources` turns
+`src` and `data-src` into `data:` URLs, and Chrome will not load a `data:` URL over 2 MB (the iframe
+shows `about:blank#blocked`). Pandoc leaves `data-app` alone; the loader gives the iframe that
+app's `blob:` URL as `data-src`, which reveal.js loads when the slide is shown.
 """
 import argparse, base64, html, json, mimetypes, pathlib, re, sys
 from urllib.parse import unquote
 
 BG = re.compile(r'data-background-iframe="([^"]+)"')
-IFRAME = re.compile(r'<iframe\b[^>]*?\b(?:data-src|src)="([^"]+)"')
+# data-app="apps/x.html": an app pandoc must not inline (it inlines src and data-src as data: URLs, and
+# Chrome won't load a data: URL over 2 MB); it becomes the iframe's data-src, which reveal lazy-loads
+IFRAME = re.compile(r'<iframe\b[^>]*?\b(?:data-src|src|data-app)="([^"]+)"')
 OBJ = re.compile(r'''(<object\b[^>]*?\bdata=")([^"]+)(")''')
 LOCALPATH = re.compile(r"^(?![a-z][a-z0-9+.-]*:|//|#)")   # no scheme, not protocol-relative, not #
 NOTES = re.compile(r"""<aside\b[^>]*\bclass="(?:[^"]*\s)?notes(?:\s[^"]*)?"[^>]*>.*?</aside>""", re.S)
@@ -72,6 +79,7 @@ def inline(text, root=pathlib.Path("."), strip_notes=False):
     document.querySelectorAll("iframe").forEach((f) => {
       if (f.getAttribute("data-src") === path) f.setAttribute("data-src", url);
       if (f.getAttribute("src") === path) f.setAttribute("src", url);
+      if (f.getAttribute("data-app") === path) f.setAttribute("data-src", url);
     });
   }
 })();</script>
