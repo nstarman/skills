@@ -31,12 +31,12 @@
         "source": "git-subdir",
         "url": "nstarman/figpress-apps",
         "path": "skills/figpress-apps",
-        "ref": "v2026.11.01"
+        "ref": "v2026.11.08"
       },
       "skills": [
         "./"
       ],
-      "homepage": "https://github.com/nstarman/figpress-apps/tree/v2026.11.01/skills/figpress-apps"
+      "homepage": "https://github.com/nstarman/figpress-apps/tree/v2026.11.08/skills/figpress-apps"
     },
     {
       "name": "figpress-apps-upgrade",
@@ -45,12 +45,12 @@
         "source": "git-subdir",
         "url": "nstarman/figpress-apps",
         "path": "skills/figpress-apps-upgrade",
-        "ref": "v2026.11.01"
+        "ref": "v2026.11.08"
       },
       "skills": [
         "./"
       ],
-      "homepage": "https://github.com/nstarman/figpress-apps/tree/v2026.11.01/skills/figpress-apps-upgrade"
+      "homepage": "https://github.com/nstarman/figpress-apps/tree/v2026.11.08/skills/figpress-apps-upgrade"
     },
     {
       "name": "quarto-revealjs",
@@ -109,12 +109,12 @@
         "source": "git-subdir",
         "url": "nstarman/syw-site",
         "path": "skills/syw-site",
-        "ref": "v2026.11.01.1"
+        "ref": "v2026.11.05.1"
       },
       "skills": [
         "./"
       ],
-      "homepage": "https://github.com/nstarman/syw-site/tree/v2026.11.01.1/skills/syw-site"
+      "homepage": "https://github.com/nstarman/syw-site/tree/v2026.11.05.1/skills/syw-site"
     },
     {
       "name": "syw-site-upgrade",
@@ -123,12 +123,12 @@
         "source": "git-subdir",
         "url": "nstarman/syw-site",
         "path": "skills/syw-site-upgrade",
-        "ref": "v2026.11.01.1"
+        "ref": "v2026.11.05.1"
       },
       "skills": [
         "./"
       ],
-      "homepage": "https://github.com/nstarman/syw-site/tree/v2026.11.01.1/skills/syw-site-upgrade"
+      "homepage": "https://github.com/nstarman/syw-site/tree/v2026.11.05.1/skills/syw-site-upgrade"
     },
     {
       "name": "syw-zenodo-cache",
