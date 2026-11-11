@@ -13,8 +13,8 @@ apps = {k: v[0] for k, v in json.loads(apps[1]).items()} if apps else {}
 for m in re.finditer(r"data:([\w/+.-]+);base64,[A-Za-z0-9+/=]{20000,}", text):
     ctx = re.sub(r"\s+", " ", text[max(0, m.start() - 160):m.start()])
     items.append((m.end() - m.start(), m[1], ctx[-80:]))
-for chunk in text.split("</script>"):
-    m = re.search(r"<script([^>]*)>(.*)\Z", chunk, re.S)
+for chunk in re.split(r"</script\s*>", text, flags=re.I):
+    m = re.search(r"<script\b([^>]*)>(.*)\Z", chunk, re.S | re.I)
     if m and len(m[2]) > 20000 and not m[2].startswith("data:"):   # a holder of one data: URI is listed above
         app = re.search(r'id="(inlined-app-\d+)"', m[1])
         items.append((len(m[2]), f"app {apps.get(app[1], app[1])} (gzip)" if app else "script",
