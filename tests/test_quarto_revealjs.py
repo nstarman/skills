@@ -5,6 +5,8 @@ import importlib.util
 import io
 import json
 import os
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -141,6 +143,48 @@ class InlineAppsTest(unittest.TestCase):
             os.chdir(cwd)
         self.assertIn("inlined-app-0", deck.read_text())
         self.assertNotIn("<aside", deck.read_text())
+
+    def test_repeated_data_uri_is_kept_once(self):
+        # pandoc embeds a file once per use: an image on three slides is in the deck three times
+        big = "data:image/png;base64," + "A" * 5000
+        small = "data:image/png;base64,BB=="
+        deck = DECK.replace("<section id=\"t\">",
+            f'<section><img src="{big}"><img src="{small}"><svg><image xlink:href="{big}"/></svg></section>'
+            f'<section><img src="{big}"><img src="{small}"><script src="data:text/javascript;base64,{"C" * 5000}"></script>'
+            f'<script src="data:text/javascript;base64,{"C" * 5000}"></script></section><section id="t">')
+        out, _ = inline_apps.inline(deck, self.root)
+        self.assertEqual(out.count(big), 1)
+        self.assertEqual(out.count('data-dup-src="dup-0"'), 2)
+        self.assertIn('<image data-dup-href="dup-0"/>', out)       # xlink:href comes back as href
+        self.assertEqual(out.count(small), 2)                      # small ones are not worth it
+        self.assertEqual(out.count("C" * 5000), 2)                 # scripts stay where they run
+        # restored before reveal.js starts, and a second run changes nothing
+        self.assertLess(out.index('id="dup-0"'), out.index("<script>Reveal.initialize"))
+        self.assertGreater(out.index('id="dup-0"'), out.index("/* lib */"))
+        self.assertEqual(inline_apps.inline(out, self.root)[0], out)
+
+
+class SizeReportTest(unittest.TestCase):
+    def test_lists_largest_parts(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            (root / "apps").mkdir()
+            (root / "apps/full.html").write_text("x" * 40000)
+            (root / "apps/inline.html").write_text("<p>inline</p>")
+            (root / "media").mkdir()
+            (root / "media/header.svg").write_text("<svg/>")
+            deck = DECK.replace("<section id=\"t\">",
+                                '<section><img alt="a photo" src="data:image/webp;base64,' + "D" * 30000 + '"></section><section id="t">')
+            out, _ = inline_apps.inline(deck, root)
+            (root / "deck.html").write_text(out)
+            r = subprocess.run([sys.executable, str(ASSETS / "size_report.py"), str(root / "deck.html"), "5"],
+                               capture_output=True, text=True, check=True)
+        lines = r.stdout.splitlines()
+        self.assertRegex(lines[0], r"^0\.\d MB in all; the largest parts:$")
+        self.assertIn("app apps/full.html", lines[1])                # 53 kB of base64, listed first
+        self.assertIn("image/webp", lines[2])
+        self.assertIn('alt="a photo"', lines[2])
+        self.assertEqual(len(lines), 3)
 
 
 def item(last, year, title, doi="", url="", kind="journalArticle", n=1):

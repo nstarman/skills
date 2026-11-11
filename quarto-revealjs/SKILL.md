@@ -144,11 +144,15 @@ The scripts need `pip install playwright` and Google Chrome or Playwright's own 
 
 ```bash
 python inline_apps.py _output/my-talk.html    # data-app and background-iframe apps, <object> files inside
+rm -rf _output/figures                        # Quarto's copies of inlined images (see "Keep it small")
 python check_offline.py _output/*.html        # network requests, missing files, errors, raw TeX
 python check_overflow.py _output/*.html       # anything past the slide edge, in slide coordinates
 python check_offline.py --webkit _output/*.html && python check_overflow.py --webkit _output/*.html
 python make_pdf.py _output/my-talk.html       # -> _output/my-talk.pdf, notes on their own pages
+python size_report.py _output/my-talk.html 8  # the 8 largest things in the deck
 ```
+
+Put these lines in a `build.sh` once the deck has a few slides, so every build runs all of them.
 
 `check_overflow.py` measures each slide with all fragments shown and names each element outside
 the slide box with its position; it ignores notes, SVG internals, MathJax internals (struts,
@@ -165,6 +169,29 @@ the PDF: fragment steps are separate pages, live content shows its still.
 `make_pdf.py` is reveal.js's own PDF route (`?print-pdf`) automated; Chrome's
 `--headless --print-to-pdf` gives a blank page. Do not set `show-notes` in YAML: it shows the notes to
 the audience. The script turns them on only for the PDF.
+
+## Keep it small
+
+One talk's deck was 41.6 MB and its folder 221 MB before these steps, 34.8 MB and 157 MB after.
+Do them from the first slide; shrinking a finished deck means redoing every figure.
+
+- Size a raster figure to about twice its size on the slide (no figure shows wider than the deck's
+  `width`, 1050 px unless `_quarto.yml` sets it), and save it as WebP:
+  `cwebp -q 85 -resize W 0 in.png -o out.webp`. A 3000 px photo shown 1380 px wide was 1 MB; at
+  2000 px WebP it was 200 kB.
+- Self-host fonts as subset woff2 files, made with `pyftsubset --flavor=woff2` (fonttools and
+  brotli), and load them with `@font-face`. Never `@import` Google Fonts: embedding then pulls the
+  full TTF, 520 kB a weight instead of 68 kB.
+- `inline_apps.py` keeps a `data:` URI that pandoc embedded several times (an image on several
+  slides) once, and a small script puts it back before reveal.js starts.
+- Quarto copies the deck's images into `_output/` and never prunes them, so they pile up. Keep
+  raster figures in `figures/` and delete `_output/figures` after `inline_apps.py`; keep `media/`
+  (background video and parallax images stay relative paths). `check_offline.py` runs after the
+  delete, so it catches a file the deck still needs.
+- Read the `size_report.py` output after each build: it lists the largest things embedded in the
+  deck (apps, images, scripts) with the text just before each, so you know what to shrink.
+- Every app or figure you commit stays in `.git` for good, including each rebuild (one talk's
+  `.git` reached about 80 MB). Commit an app when it is final, not after each rebuild.
 
 ## A shareable copy
 

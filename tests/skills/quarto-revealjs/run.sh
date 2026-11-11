@@ -66,6 +66,9 @@ python3 "$here/lessons_check.py" "$solo/lessons.html" || fail "lessons check (Ch
 python3 "$here/lessons_check.py" "$solo/lessons.html" --webkit || fail "lessons check (WebKit)"
 grep -q '<object data="data:image/svg+xml' "$solo/lessons.html" || fail "<object> not inlined"
 grep -q '<aside class="notes"' "$solo/lessons.html" || fail "archive copy lost its notes"
+python3 -c "import base64, sys; b = base64.b64encode(open('apps/explorer.png', 'rb').read()).decode()
+sys.exit(open(sys.argv[1]).read().count(b) != 1)" "$solo/lessons.html" || fail "image on two slides embedded twice"
+python3 size_report.py "$solo/lessons.html" 3 | grep -q "app apps/big.html" || fail "size_report.py does not list the 3 MB app"
 
 step "share build: quarto render --profile share, then inline_apps.py --strip-notes"
 quarto render lessons.qmd --profile share >/dev/null 2>&1 || fail "share render"

@@ -76,6 +76,15 @@ with sync_playwright() as p:
     else:
         fails.append(f"background-iframe app did not load from a blob: URL: {ok}; frames {[f.url[:30] for f in pg.frames]}")
 
+    # inline_apps.py keeps an image used on two slides once and puts it back before reveal.js starts
+    imgs = []
+    for i in ("twice", "twice-2"):
+        go(i)   # reveal.js lazy-loads the image (data-src) when its slide is near
+        imgs.append(pg.evaluate(f"""(() => {{ const im = document.querySelector('#{i} img');
+            return im && [(im.getAttribute('src') || '').slice(0, 15), im.complete && im.naturalWidth > 0]; }})()"""))
+    if imgs != [["data:image/png;", True]] * 2:
+        fails.append(f"image on two slides not restored: {imgs}")
+
     links = pg.evaluate("""[...document.querySelectorAll('#cite a.paper-ref')].map(a =>
         [a.getAttribute('href'), a.classList.contains('paper-corner'), a.innerText.trim(),
          !!a.querySelector('.paper-icon'), a.getAttribute('title')])""")

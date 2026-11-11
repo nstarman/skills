@@ -7,6 +7,9 @@ render without that file fails. New assets (`inline_apps.py`, `check_overflow.py
 Since the inline-apps-over-2-MB update, `inline_apps.py` understands `<iframe data-app="apps/x.html">`:
 copy it again and change each inline app's `src` to `data-app` (an app over 2 MB in `src` is blank in
 Chrome).
+Since the keep-it-small update, `inline_apps.py` keeps an image used on several slides once, and
+`size_report.py` lists what makes a deck large: copy both again and add the new lines of "Check
+offline, then print" in `SKILL.md` to the deck's build.
 
 This skill documents a moving target: Quarto, the reveal.js it bundles, MathJax and plotly.py.
 Every claim in `references/quarto-revealjs-guide.md` was observed in a browser against the versions in

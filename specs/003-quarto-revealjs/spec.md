@@ -14,6 +14,10 @@ FR-101–FR-110, SC-101–SC-105); planned in [../004-quarto-revealjs-talk-lesso
 **Amended**: 2026-11-08, inline apps over 2 MB (user story 7 scenario 5, FR-111, SC-106): in a talk, two
 figpress-apps builds inlined as `<iframe src>` were blank in Chrome, which loads no `data:` URL over 2 MB.
 
+**Amended**: 2026-11-11, small decks (FR-112, SC-107): a talk's deck reached 41.6 MB and its folder
+221 MB, from images embedded once per use, oversized figures, full Google Fonts TTFs and Quarto's
+unpruned copies of the figures.
+
 **Input**: User description: "Distil what we learned about building reveal.js presentations in
 Quarto into a skill: decks that stay openable in a browser for a very long time, as local files,
 with math, Python/Plotly figures, speaker notes, transitions and embedded interactive paper
@@ -323,6 +327,10 @@ Playwright's bundled Chromium.
 - **FR-111**: The skill MUST recommend `<iframe data-app="…">` for an app on a slide and say why
   (pandoc inlines `src` as a `data:` URL, which Chrome refuses over 2 MB; the app loads only when
   its slide is shown); the inlining step MUST give such an iframe the app's `blob:` URL as `data-src`.
+- **FR-112**: The inlining step MUST keep a `data:` URI that the deck holds more than once only once
+  and restore it before reveal.js starts; the skill MUST provide a size report of the largest parts
+  of a deck and MUST say how to keep a deck small (figure size and format, subset self-hosted fonts,
+  pruning Quarto's copies of the figures, committing apps only when final).
 
 ### Key Entities
 
@@ -353,6 +361,8 @@ Playwright's bundled Chromium.
 - **SC-105**: 0 scripts in the skill open a visible browser window.
 - **SC-106**: A fixture `data-app` app of 3 MB, in the inlined deck alone in an empty folder, runs once
   its slide is shown, in Chromium and WebKit.
+- **SC-107**: A fixture image on two slides is embedded once in the inlined deck and shows on both
+  slides, in Chromium and WebKit.
 
 ## Assumptions
 
