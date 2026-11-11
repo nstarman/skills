@@ -26,6 +26,14 @@ A long speaker note that runs well past the slide. A long speaker note that runs
 
 <object data="media/header.svg" type="image/svg+xml" width="400" height="40"></object>
 
+## One image on two slides {#twice}
+
+![](apps/explorer.png){width="200"}
+
+## The same image again {#twice-2}
+
+![](apps/explorer.png){width="200"}
+
 ## Citations {#cite}
 
 {{< paper url="https://doi.org/10.1000/one" who="Author et al." year="2020" title="A paper" corner="true" >}}

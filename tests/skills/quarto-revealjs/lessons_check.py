@@ -5,6 +5,7 @@
 The background-iframe app runs from a blob: URL (nothing beside the deck), so does the
 data-app iframe over 2 MB, only once its slide is shown; the
 "]" key skips to a slide's last step and then on and is listed under "?", and both citation forms render as links.
+Both apps also run when the deck is opened on their slide, and an image used on two slides shows on both.
 """
 import pathlib, sys
 from playwright.sync_api import sync_playwright
@@ -76,6 +77,15 @@ with sync_playwright() as p:
     else:
         fails.append(f"background-iframe app did not load from a blob: URL: {ok}; frames {[f.url[:30] for f in pg.frames]}")
 
+    # inline_apps.py keeps an image used on two slides once and puts it back before reveal.js starts
+    imgs = []
+    for i in ("twice", "twice-2"):
+        go(i)   # reveal.js lazy-loads the image (data-src) when its slide is near
+        imgs.append(pg.evaluate(f"""(() => {{ const im = document.querySelector('#{i} img');
+            return im && [(im.getAttribute('src') || '').slice(0, 15), im.complete && im.naturalWidth > 0]; }})()"""))
+    if imgs != [["data:image/png;", True]] * 2:
+        fails.append(f"image on two slides not restored: {imgs}")
+
     links = pg.evaluate("""[...document.querySelectorAll('#cite a.paper-ref')].map(a =>
         [a.getAttribute('href'), a.classList.contains('paper-corner'), a.innerText.trim(),
          !!a.querySelector('.paper-icon'), a.getAttribute('title')])""")
@@ -83,6 +93,23 @@ with sync_playwright() as p:
             ["https://doi.org/10.1000/two", False, "Other & Second (2021)", True, "Other & Second (2021): Another paper"]]
     if links != want:
         fails.append(f"citations: {links}")
+
+    # the apps are unzipped asynchronously, so reveal.js may load an app slide first: open the deck on each
+    for slide, want in (("big-app", "big app ok"), ("full-app", "app ok")):
+        pg2 = ctx.new_page()
+        pg2.goto(deck.as_uri() + "#/" + slide)
+        ok = None
+        for _ in range(40):
+            try:
+                ok = [f.evaluate("document.getElementById('msg')?.textContent") for f in pg2.frames if f.url.startswith("blob:")]
+            except Exception as e:
+                ok = str(e).splitlines()[0]
+            if isinstance(ok, list) and want in ok:
+                break
+            pg2.wait_for_timeout(250)
+        else:
+            fails.append(f"deck opened on #{slide}: app did not run from its blob: URL: {ok}; frames {[f.url[:30] for f in pg2.frames]}")
+        pg2.close()
     browser.close()
 
 for m in fails:

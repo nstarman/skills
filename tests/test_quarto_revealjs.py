@@ -1,10 +1,14 @@
 """quarto-revealjs/assets: inline_apps.py (apps and <object> into the deck) and bibliography.py."""
 
 import base64
+import gzip
 import importlib.util
 import io
 import json
 import os
+import re
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -51,8 +55,9 @@ class InlineAppsTest(unittest.TestCase):
     def test_apps_become_blobs_before_reveal_starts(self):
         out, missing = inline_apps.inline(DECK, self.root)
         self.assertEqual(missing, [])
-        b64 = base64.b64encode(b"<p>full</p>").decode()
-        self.assertIn(f'<script type="text/plain" id="inlined-app-0">{b64}</script>', out)
+        b64 = re.search(r'<script type="text/plain" id="inlined-app-0">([^<]+)</script>', out)[1]
+        self.assertEqual(gzip.decompress(base64.b64decode(b64)), b"<p>full</p>")   # gzipped, unzipped in the browser
+        self.assertIn('new DecompressionStream("gzip")', out)
         self.assertIn('"inlined-app-1": ["apps/inline.html", "text/html"]', out)
         self.assertIn("URL.createObjectURL", out)
         # loader sits right before the script that calls Reveal.initialize (the last one)
@@ -70,7 +75,8 @@ class InlineAppsTest(unittest.TestCase):
         out, missing = inline_apps.inline(deck, self.root)
         self.assertEqual(missing, [])
         self.assertIn('"inlined-app-1": ["apps/inline.html", "text/html"]', out)
-        self.assertIn('if (f.getAttribute("data-app") === path) f.setAttribute("data-src", url);', out)
+        self.assertIn('[f.getAttribute("data-app"), f.getAttribute("data-src"), f.getAttribute("src")].includes(path)', out)
+        self.assertIn('f.setAttribute("data-src", url);', out)
         (self.root / "apps/inline.html").unlink()
         self.assertEqual(inline_apps.inline(deck, self.root)[1], ["apps/inline.html"])
 
@@ -141,6 +147,48 @@ class InlineAppsTest(unittest.TestCase):
             os.chdir(cwd)
         self.assertIn("inlined-app-0", deck.read_text())
         self.assertNotIn("<aside", deck.read_text())
+
+    def test_repeated_data_uri_is_kept_once(self):
+        # pandoc embeds a file once per use: an image on three slides is in the deck three times
+        big = "data:image/png;base64," + "A" * 5000
+        small = "data:image/png;base64,BB=="
+        deck = DECK.replace("<section id=\"t\">",
+            f'<section><img src="{big}"><img src="{small}"><svg><image xlink:href="{big}"/></svg></section>'
+            f'<section><img src="{big}"><img src="{small}"><script src="data:text/javascript;base64,{"C" * 5000}"></script>'
+            f'<script src="data:text/javascript;base64,{"C" * 5000}"></script></section><section id="t">')
+        out, _ = inline_apps.inline(deck, self.root)
+        self.assertEqual(out.count(big), 1)
+        self.assertEqual(out.count('data-dup-src="dup-0"'), 2)
+        self.assertIn('<image data-dup-href="dup-0"/>', out)       # xlink:href comes back as href
+        self.assertEqual(out.count(small), 2)                      # small ones are not worth it
+        self.assertEqual(out.count("C" * 5000), 2)                 # scripts stay where they run
+        # restored before reveal.js starts, and a second run changes nothing
+        self.assertLess(out.index('id="dup-0"'), out.index("<script>Reveal.initialize"))
+        self.assertGreater(out.index('id="dup-0"'), out.index("/* lib */"))
+        self.assertEqual(inline_apps.inline(out, self.root)[0], out)
+
+
+class SizeReportTest(unittest.TestCase):
+    def test_lists_largest_parts(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            (root / "apps").mkdir()
+            (root / "apps/full.html").write_text(base64.b64encode(os.urandom(30000)).decode())   # gzip can't shrink it
+            (root / "apps/inline.html").write_text("<p>inline</p>")
+            (root / "media").mkdir()
+            (root / "media/header.svg").write_text("<svg/>")
+            deck = DECK.replace("<section id=\"t\">",
+                                '<section><img alt="a photo" src="data:image/webp;base64,' + "D" * 30000 + '"></section><section id="t">')
+            out, _ = inline_apps.inline(deck, root)
+            (root / "deck.html").write_text(out)
+            r = subprocess.run([sys.executable, str(ASSETS / "size_report.py"), str(root / "deck.html"), "5"],
+                               capture_output=True, text=True, check=True)
+        lines = r.stdout.splitlines()
+        self.assertRegex(lines[0], r"^0\.\d MB in all; the largest parts:$")
+        self.assertIn("app apps/full.html (gzip)", lines[1])         # ~41 kB of base64, listed first
+        self.assertIn("image/webp", lines[2])
+        self.assertIn('alt="a photo"', lines[2])
+        self.assertEqual(len(lines), 3)
 
 
 def item(last, year, title, doi="", url="", kind="journalArticle", n=1):
