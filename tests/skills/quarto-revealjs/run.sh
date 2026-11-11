@@ -65,6 +65,8 @@ python3 inline_apps.py "$solo/again.html" >/dev/null 2>&1 \
 python3 "$here/lessons_check.py" "$solo/lessons.html" || fail "lessons check (Chromium)"
 python3 "$here/lessons_check.py" "$solo/lessons.html" --webkit || fail "lessons check (WebKit)"
 grep -q '<object data="data:image/svg+xml' "$solo/lessons.html" || fail "<object> not inlined"
+grep -q '<image href="media/header.svg"' _output/lessons.html || fail "pandoc now inlines SVG <image href> (update the guide)"
+grep -q '<image href="data:image/svg+xml' "$solo/lessons.html" || fail "SVG <image href> not inlined"
 grep -q '<aside class="notes"' "$solo/lessons.html" || fail "archive copy lost its notes"
 python3 -c "import base64, sys; b = base64.b64encode(open('apps/explorer.png', 'rb').read()).decode()
 sys.exit(open(sys.argv[1]).read().count(b) != 1)" "$solo/lessons.html" || fail "image on two slides embedded twice"

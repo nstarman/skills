@@ -679,7 +679,8 @@ reproduced by the test in WebKit.
 8. `keyboard:` and `postMessageEvents` need JavaScript, not YAML.
 9. Chalkboard and multiplex cannot be single-file / offline.
 10. Background video and parallax images are not inlined; list them under `resources:`. Background
-    iframes, `data-app` iframes and `<object>` files neither, until `inline_apps.py` runs. An inline
+    iframes, `data-app` iframes, `<object>` files and `<image href>` inside an inline `<svg>` neither,
+    until `inline_apps.py` runs. An inline
     app over 2 MB in `<iframe src>` is blank in Chrome; use `data-app` (section 6).
 11. reveal.js caps iframes at 95%; MathJax fragments need `Reveal.sync()`.
 12. Embedded apps follow system dark mode unless their `<html>` pins `data-theme`.

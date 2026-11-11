@@ -98,6 +98,17 @@ class InlineAppsTest(unittest.TestCase):
         self.assertIn(f'<object data="data:image/svg+xml;base64,{svg}"', out)
         self.assertIn('<object data="https://x.org/a.svg">', out)
 
+    def test_svg_image_becomes_data_uri(self):
+        deck = DECK.replace("<section id=\"t\">", '<section><svg><image href="media/header.svg"/>'
+                            '<image xlink:href="media/header.svg"/><image href="https://x.org/a.png"/></svg></section><section id="t">')
+        out, missing = inline_apps.inline(deck, self.root)
+        self.assertEqual(missing, [])
+        self.assertIn('<image href="data:image/svg+xml;base64,PHN2Zy8+"/>', out)
+        self.assertIn('<image xlink:href="data:image/svg+xml;base64,PHN2Zy8+"/>', out)
+        self.assertIn('<image href="https://x.org/a.png"/>', out)
+        (self.root / "media/header.svg").unlink()
+        self.assertIn("media/header.svg", inline_apps.inline(deck, self.root)[1])
+
     def test_strip_notes(self):
         out, _ = inline_apps.inline(DECK, self.root, strip_notes=True)
         self.assertNotIn("<aside", out)

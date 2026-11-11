@@ -10,6 +10,8 @@ Chrome).
 Since the keep-it-small update, `inline_apps.py` gzips the apps and keeps an image used on several slides once, and
 `size_report.py` lists what makes a deck large: copy both again and add the new lines of "Check
 offline, then print" in `SKILL.md` to the deck's build.
+Since the SVG-images update, `inline_apps.py` also inlines `<image href>` files inside inline SVGs:
+copy it again.
 
 This skill documents a moving target: Quarto, the reveal.js it bundles, MathJax and plotly.py.
 Every claim in `references/quarto-revealjs-guide.md` was observed in a browser against the versions in
