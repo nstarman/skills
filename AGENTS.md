@@ -58,7 +58,9 @@ hand: change the skill or the registry entry and run `python scripts/build_index
 A skill that documents a fast-moving tool can have a behaviour test under
 `tests/skills/<skill>/` (a `run.sh` plus fixtures) and its own workflow
 (`.github/workflows/test-<skill>.yml`) that runs it weekly against the latest upstream release and
-on pull requests touching the skill. These tests may install third-party tools (Quarto, Playwright,
+on pull requests touching the skill. The quarto-revealjs job (`test quarto-revealjs`) is a required
+check on `main`: it runs on every pull request and skips its steps when the skill is untouched,
+since a `paths:` filter would leave a required check pending for ever. These tests may install third-party tools (Quarto, Playwright,
 Chrome, Sphinx, Zensical); the standard-library rule is for `scripts/`. A scheduled failure opens an
 issue, and the skill's `UPDATING.md` says how to bring it current. Today: `quarto-revealjs`,
 `diataxis`. Every script a skill ships also has a unit test in `tests/test_*.py` (stubs on `PATH`
