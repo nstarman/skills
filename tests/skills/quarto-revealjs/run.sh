@@ -68,7 +68,9 @@ grep -q '<object data="data:image/svg+xml' "$solo/lessons.html" || fail "<object
 grep -q '<aside class="notes"' "$solo/lessons.html" || fail "archive copy lost its notes"
 python3 -c "import base64, sys; b = base64.b64encode(open('apps/explorer.png', 'rb').read()).decode()
 sys.exit(open(sys.argv[1]).read().count(b) != 1)" "$solo/lessons.html" || fail "image on two slides embedded twice"
-python3 size_report.py "$solo/lessons.html" 3 | grep -q "app apps/big.html" || fail "size_report.py does not list the 3 MB app"
+# the 3 MB app is padding, so gzipped it adds almost nothing (4 MB of base64 without gzip)
+[ $(( $(wc -c < "$solo/lessons.html") - $(wc -c < _output/lessons.html) )) -lt 1000000 ] || fail "inlined apps are not gzipped"
+python3 size_report.py "$solo/lessons.html" 3 | grep -q "MB in all; the largest parts:" || fail "size_report.py"
 
 step "share build: quarto render --profile share, then inline_apps.py --strip-notes"
 quarto render lessons.qmd --profile share >/dev/null 2>&1 || fail "share render"

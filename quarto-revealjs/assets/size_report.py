@@ -17,7 +17,7 @@ for chunk in text.split("</script>"):
     m = re.search(r"<script([^>]*)>(.*)\Z", chunk, re.S)
     if m and len(m[2]) > 20000 and not m[2].startswith("data:"):   # a holder of one data: URI is listed above
         app = re.search(r'id="(inlined-app-\d+)"', m[1])
-        items.append((len(m[2]), f"app {apps.get(app[1], app[1])}" if app else "script",
+        items.append((len(m[2]), f"app {apps.get(app[1], app[1])} (gzip)" if app else "script",
                       "" if app else m[2][:60].replace("\n", " ")))
 items.sort(reverse=True)
 print(f"{len(text) / 1e6:.1f} MB in all; the largest parts:")

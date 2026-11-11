@@ -182,8 +182,9 @@ Do them from the first slide; shrinking a finished deck means redoing every figu
 - Self-host fonts as subset woff2 files, made with `pyftsubset --flavor=woff2` (fonttools and
   brotli), and load them with `@font-face`. Never `@import` Google Fonts: embedding then pulls the
   full TTF, 520 kB a weight instead of 68 kB.
-- `inline_apps.py` keeps a `data:` URI that pandoc embedded several times (an image on several
-  slides) once, and a small script puts it back before reveal.js starts.
+- `inline_apps.py` gzips each app (the browser unzips it when the deck opens, in a few ms) and
+  keeps a `data:` URI that pandoc embedded several times (an image on several slides) once; a
+  small script puts it back before reveal.js starts.
 - Quarto copies the deck's images into `_output/` and never prunes them, so they pile up. Keep
   raster figures in `figures/` and delete `_output/figures` after `inline_apps.py`; keep `media/`
   (background video and parallax images stay relative paths). `check_offline.py` runs after the

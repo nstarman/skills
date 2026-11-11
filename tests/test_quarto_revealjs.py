@@ -1,10 +1,12 @@
 """quarto-revealjs/assets: inline_apps.py (apps and <object> into the deck) and bibliography.py."""
 
 import base64
+import gzip
 import importlib.util
 import io
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -53,8 +55,9 @@ class InlineAppsTest(unittest.TestCase):
     def test_apps_become_blobs_before_reveal_starts(self):
         out, missing = inline_apps.inline(DECK, self.root)
         self.assertEqual(missing, [])
-        b64 = base64.b64encode(b"<p>full</p>").decode()
-        self.assertIn(f'<script type="text/plain" id="inlined-app-0">{b64}</script>', out)
+        b64 = re.search(r'<script type="text/plain" id="inlined-app-0">([^<]+)</script>', out)[1]
+        self.assertEqual(gzip.decompress(base64.b64decode(b64)), b"<p>full</p>")   # gzipped, unzipped in the browser
+        self.assertIn('new DecompressionStream("gzip")', out)
         self.assertIn('"inlined-app-1": ["apps/inline.html", "text/html"]', out)
         self.assertIn("URL.createObjectURL", out)
         # loader sits right before the script that calls Reveal.initialize (the last one)
@@ -72,7 +75,8 @@ class InlineAppsTest(unittest.TestCase):
         out, missing = inline_apps.inline(deck, self.root)
         self.assertEqual(missing, [])
         self.assertIn('"inlined-app-1": ["apps/inline.html", "text/html"]', out)
-        self.assertIn('if (f.getAttribute("data-app") === path) f.setAttribute("data-src", url);', out)
+        self.assertIn('[f.getAttribute("data-app"), f.getAttribute("data-src"), f.getAttribute("src")].includes(path)', out)
+        self.assertIn('f.setAttribute("data-src", url);', out)
         (self.root / "apps/inline.html").unlink()
         self.assertEqual(inline_apps.inline(deck, self.root)[1], ["apps/inline.html"])
 
@@ -169,7 +173,7 @@ class SizeReportTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
             (root / "apps").mkdir()
-            (root / "apps/full.html").write_text("x" * 40000)
+            (root / "apps/full.html").write_text(base64.b64encode(os.urandom(30000)).decode())   # gzip can't shrink it
             (root / "apps/inline.html").write_text("<p>inline</p>")
             (root / "media").mkdir()
             (root / "media/header.svg").write_text("<svg/>")
@@ -181,7 +185,7 @@ class SizeReportTest(unittest.TestCase):
                                capture_output=True, text=True, check=True)
         lines = r.stdout.splitlines()
         self.assertRegex(lines[0], r"^0\.\d MB in all; the largest parts:$")
-        self.assertIn("app apps/full.html", lines[1])                # 53 kB of base64, listed first
+        self.assertIn("app apps/full.html (gzip)", lines[1])         # ~41 kB of base64, listed first
         self.assertIn("image/webp", lines[2])
         self.assertIn('alt="a photo"', lines[2])
         self.assertEqual(len(lines), 3)

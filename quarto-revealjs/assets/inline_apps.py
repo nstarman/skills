@@ -7,18 +7,19 @@
 
 Relative paths are looked up in the deck (source) folder: the current folder, or `--root DIR`. `embed-resources` leaves
 `data-background-iframe="apps/x.html"` as a path, and pandoc never inlines `<object data=…>`.
-Each app goes into the deck as base64 in a `<script type="text/plain">`; a small script turns it
-into a `blob:` URL before reveal.js starts and points the slide (and any iframe `src`/`data-src`
-with that path) at it. A `data:` URL would be simpler but leaves many apps blank: a `data:` page
-has an opaque origin. `<object>` files become `data:` URIs. A `data:` URI used more than once (pandoc
-embeds a file once per use) is kept once and put back by a script. Exits 1 if a referenced file is missing.
+Each app goes into the deck gzipped, as base64 in a `<script type="text/plain">`; a small script
+unzips it (DecompressionStream, a few ms) into a `blob:` URL and points the slide (and any iframe
+`src`/`data-src` with that path, including one reveal.js already loaded) at it. A `data:` URL would
+be simpler but leaves many apps blank: a `data:` page has an opaque origin. `<object>` files become
+`data:` URIs. A `data:` URI used more than once (pandoc embeds a file once per use) is kept once and
+put back by a script. Exits 1 if a referenced file is missing.
 
 For an app on a slide, write `<iframe data-app="apps/x.html">`, not `src`: `embed-resources` turns
 `src` and `data-src` into `data:` URLs, and Chrome will not load a `data:` URL over 2 MB (the iframe
 shows `about:blank#blocked`). Pandoc leaves `data-app` alone; the loader gives the iframe that
 app's `blob:` URL as `data-src`, which reveal.js loads when the slide is shown.
 """
-import argparse, base64, collections, html, json, mimetypes, pathlib, re, sys
+import argparse, base64, collections, gzip, html, json, mimetypes, pathlib, re, sys
 from urllib.parse import unquote
 
 BG = re.compile(r'data-background-iframe="([^"]+)"')
@@ -102,21 +103,24 @@ def inline(text, root=pathlib.Path("."), strip_notes=False):
         f = file_for(root, path)
         if not f.is_file():
             missing.append(path); continue
-        blobs.append((i, (path, mime(f)), base64.b64encode(f.read_bytes()).decode()))
+        blobs.append((i, (path, mime(f)), base64.b64encode(gzip.compress(f.read_bytes(), 9, mtime=0)).decode()))
     if blobs:
         data = "".join(f'<script type="text/plain" id="inlined-app-{i}">{b}</script>\n' for i, _, b in blobs)
         paths = {f"inlined-app-{i}": p for i, p, _ in blobs}
         loader = data + "<script>(() => {\n" + f"  const apps = {json.dumps(paths)};\n" + r"""
   for (const [id, [path, type]] of Object.entries(apps)) {
-    const b = atob(document.getElementById(id).textContent);
-    const url = URL.createObjectURL(new Blob([Uint8Array.from(b, (c) => c.charCodeAt(0))], { type }));
-    document.querySelectorAll("[data-background-iframe]").forEach((e) => {
-      if (e.getAttribute("data-background-iframe") === path) e.setAttribute("data-background-iframe", url);
-    });
-    document.querySelectorAll("iframe").forEach((f) => {
-      if (f.getAttribute("data-src") === path) f.setAttribute("data-src", url);
-      if (f.getAttribute("src") === path) f.setAttribute("src", url);
-      if (f.getAttribute("data-app") === path) f.setAttribute("data-src", url);
+    const gz = Uint8Array.from(atob(document.getElementById(id).textContent), (c) => c.charCodeAt(0));
+    new Response(new Blob([gz]).stream().pipeThrough(new DecompressionStream("gzip"))).blob().then((b) => {
+      const url = URL.createObjectURL(new Blob([b], { type }));
+      document.querySelectorAll("[data-background-iframe]").forEach((e) => {
+        if (e.getAttribute("data-background-iframe") === path) e.setAttribute("data-background-iframe", url);
+      });
+      document.querySelectorAll("iframe").forEach((f) => {
+        if (![f.getAttribute("data-app"), f.getAttribute("data-src"), f.getAttribute("src")].includes(path)) return;
+        f.setAttribute("data-src", url);
+        // reveal.js got there first (the deck opened on this slide): load it now
+        if (f.getAttribute("src") === path || (!f.getAttribute("src") && f.closest("section.present"))) f.setAttribute("src", url);
+      });
     });
   }
 })();</script>

@@ -327,7 +327,7 @@ Playwright's bundled Chromium.
 - **FR-111**: The skill MUST recommend `<iframe data-app="…">` for an app on a slide and say why
   (pandoc inlines `src` as a `data:` URL, which Chrome refuses over 2 MB; the app loads only when
   its slide is shown); the inlining step MUST give such an iframe the app's `blob:` URL as `data-src`.
-- **FR-112**: The inlining step MUST keep a `data:` URI that the deck holds more than once only once
+- **FR-112**: The inlining step MUST gzip the apps it embeds, MUST keep a `data:` URI that the deck holds more than once only once
   and restore it before reveal.js starts; the skill MUST provide a size report of the largest parts
   of a deck and MUST say how to keep a deck small (figure size and format, subset self-hosted fonts,
   pruning Quarto's copies of the figures, committing apps only when final).
@@ -362,7 +362,7 @@ Playwright's bundled Chromium.
 - **SC-106**: A fixture `data-app` app of 3 MB, in the inlined deck alone in an empty folder, runs once
   its slide is shown, in Chromium and WebKit.
 - **SC-107**: A fixture image on two slides is embedded once in the inlined deck and shows on both
-  slides, in Chromium and WebKit.
+  slides; the inlined fixture apps run when the deck is opened on their slide; in Chromium and WebKit.
 
 ## Assumptions
 
