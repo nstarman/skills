@@ -1,4 +1,4 @@
-"""Make a rendered deck truly one file: put its background-iframe apps and <object> files inside it.
+"""Make a rendered deck truly one file: put its apps, <object> files and SVG <image> files inside it.
 
     python inline_apps.py _output/talk.html                       # in place
     python inline_apps.py --strip-notes _share/talk.html          # shared copy: no speaker notes
@@ -10,8 +10,8 @@ Relative paths are looked up in the deck (source) folder: the current folder, or
 Each app goes into the deck gzipped, as base64 in a `<script type="text/plain">`; a small script
 unzips it (DecompressionStream, a few ms) into a `blob:` URL and points the slide (and any iframe
 `src`/`data-src` with that path, including one reveal.js already loaded) at it. A `data:` URL would
-be simpler but leaves many apps blank: a `data:` page has an opaque origin. `<object>` files become
-`data:` URIs. A `data:` URI used more than once (pandoc embeds a file once per use) is kept once and
+be simpler but leaves many apps blank: a `data:` page has an opaque origin. `<object>` files and
+`<image href>` files inside inline SVGs become `data:` URIs. A `data:` URI used more than once (pandoc embeds a file once per use) is kept once and
 put back by a script. Exits 1 if a referenced file is missing.
 
 For an app on a slide, write `<iframe data-app="apps/x.html">`, not `src`: `embed-resources` turns
@@ -27,6 +27,8 @@ BG = re.compile(r'data-background-iframe="([^"]+)"')
 # Chrome won't load a data: URL over 2 MB); it becomes the iframe's data-src, which reveal lazy-loads
 IFRAME = re.compile(r'<iframe\b[^>]*?\b(?:data-src|src|data-app)="([^"]+)"')
 OBJ = re.compile(r'''(<object\b[^>]*?\bdata=")([^"]+)(")''')
+# <image href="figures/x.jpg"> inside an inline <svg>: pandoc leaves it a path (it only inlines <img>), so it becomes a data: URI too
+SVGIMG = re.compile(r'''(<image\b[^>]*?\b(?:xlink:)?href=")([^"]+)(")''')
 LOCALPATH = re.compile(r"^(?![a-z][a-z0-9+.-]*:|//|#)")   # no scheme, not protocol-relative, not #
 NOTES = re.compile(r"""<aside\b[^>]*\bclass="(?:[^"]*\s)?notes(?:\s[^"]*)?"[^>]*>.*?</aside>""", re.S)
 DONE = 'id="inlined-app-'   # a deck this script already inlined
@@ -91,6 +93,7 @@ def inline(text, root=pathlib.Path("."), strip_notes=False):
             missing.append(path); return m[0]
         return f"{m[1]}data:{mime(f)};base64,{base64.b64encode(f.read_bytes()).decode()}{m[3]}"
     text = OBJ.sub(obj, text)
+    text = SVGIMG.sub(obj, text)
     text = dedupe(text)
 
     if DONE in text:   # already inlined: running again would embed every app a second time

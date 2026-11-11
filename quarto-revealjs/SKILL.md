@@ -143,7 +143,7 @@ The scripts need `pip install playwright` and Google Chrome or Playwright's own 
 (`python -m playwright install chromium webkit`). They run headless and block the network.
 
 ```bash
-python inline_apps.py _output/my-talk.html    # data-app and background-iframe apps, <object> files inside
+python inline_apps.py _output/my-talk.html    # apps, <object> and SVG <image> files inside
 rm -rf _output/figures                        # Quarto's copies of inlined images (see "Keep it small")
 python check_offline.py _output/*.html        # network requests, missing files, errors, raw TeX
 python check_overflow.py _output/*.html       # anything past the slide edge, in slide coordinates
