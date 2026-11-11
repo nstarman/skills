@@ -95,7 +95,7 @@ def inline(text, root=pathlib.Path("."), strip_notes=False):
 
     if DONE in text:   # already inlined: running again would embed every app a second time
         return text, missing
-    markup = re.sub(r"<script\b.*?</script>", "", text, flags=re.S)   # inlined libraries hold `<iframe src="${…}">`
+    markup = re.sub(r"<script\b.*?</script>", "", text, flags=re.S | re.I)   # inlined libraries hold `<iframe src="${…}">`
     found = BG.findall(markup) + IFRAME.findall(markup)
     apps = list(dict.fromkeys(p for p in map(html.unescape, found) if LOCALPATH.match(p)))
     blobs = []
