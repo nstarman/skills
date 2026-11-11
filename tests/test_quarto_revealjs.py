@@ -129,6 +129,11 @@ class InlineAppsTest(unittest.TestCase):
         self.assertEqual(missing, ["apps/full.html"])
         self.assertIn('data-background-iframe="apps/full.html"', out)
 
+    def test_iframes_inside_scripts_are_not_apps(self):
+        # any case, and an end tag with a space before ">": an app path inside a script is not an app
+        deck = DECK.replace("<script>/* lib */", '<SCRIPT>/* lib */ `<iframe src="apps/gone.html">`</script >\n<script>')
+        self.assertEqual(inline_apps.inline(deck, self.root)[1], [])
+
     def test_no_apps_no_loader(self):
         out, missing = inline_apps.inline("<html><body><p>x</p></body></html>", self.root)
         self.assertEqual((out, missing), ("<html><body><p>x</p></body></html>", []))
