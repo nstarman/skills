@@ -1,6 +1,6 @@
 """Drive every reveal.js feature in fixture/reveal-features.qmd, offline, and compare with the guide.
 
-    python feature_check.py _output/reveal-features.html <out-dir> [_output/demo.html]
+    python feature_check.py out-features/reveal-features.html <out-dir> [out-demo/demo.html]
 
 Each check prints PASS or FAIL. EXPECTED_FAIL lists what the guide documents as not working in the
 tested Quarto/reveal.js versions; such a check must *return* False. The run fails (exit 1) when any
@@ -17,6 +17,7 @@ EXPECTED_FAIL = {
     "Links: preview overlay",    # preview links only for http/www URLs
 }
 LOCAL = ("file:", "data:", "blob:", "about:")
+APP = "explorer.html"   # the background-iframe app; after `qd export` it runs from a blob: URL
 
 deck = pathlib.Path(sys.argv[1]).resolve()
 out = pathlib.Path(sys.argv[2]).resolve(); out.mkdir(parents=True, exist_ok=True)
@@ -46,7 +47,7 @@ def frame(page, suffix, js, timeout=8000):
     """The value of js in the first frame whose URL ends with suffix, once it is truthy."""
     for _ in range(timeout // 250):
         for f in page.frames:
-            if f.url.endswith(suffix):
+            if f.url.endswith(suffix) or (suffix == APP and f.url.startswith("blob:")):
                 try:
                     v = f.evaluate(js)
                     if v: return v
@@ -94,7 +95,7 @@ with sync_playwright() as p:
         return c == "rgb(11, 29, 58)", c
     check("Background: colour", bgcolour)
     def bgiframe():
-        go("bg-iframe"); n = frame(pg, "explorer.html", "window.__draws || 0")
+        go("bg-iframe"); n = frame(pg, APP, "window.__draws || 0")
         return bool(n), f"background app drew {n} times"
     check("Background: iframe", bgiframe)
     def bggrad():
@@ -138,7 +139,7 @@ with sync_playwright() as p:
     check("Links: preview overlay", preview)
     def preview_local():
         go("lightbox"); pg.locator("a.preview-local").click()
-        n = frame(pg, "explorer.html", "window.__draws || 0") if pg.url.startswith(URL) else None
+        n = frame(pg, "_talk/apps/explorer.html", "window.__draws || 0") if pg.url.startswith(URL) else None
         if n: pg.keyboard.press("Escape"); pg.wait_for_timeout(600)
         return bool(n), f"local app in overlay, drew {n} times"
     check("Links: preview (local file)", preview_local)
@@ -222,7 +223,7 @@ with sync_playwright() as p:
         return ev("JSON.stringify(Reveal.getIndices())") != before, "X bound via Reveal.addKeyBinding"
     check("Keyboard: custom binding", custom_key)
     def iframe_focus():
-        go("bg-iframe"); frame(pg, "explorer.html", "window.__draws || 0")
+        go("bg-iframe"); frame(pg, APP, "window.__draws || 0")
         pg.mouse.click(640, 400); pg.wait_for_timeout(500)          # into the interactive background app
         key("ArrowRight")
         return cur() != "bg-iframe", f"after clicking into the app, ArrowRight -> {cur()}"
@@ -312,11 +313,11 @@ with sync_playwright() as p:
     dark = new_ctx(color_scheme="dark")
     pg4 = dark.new_page(); pg4.goto(URL + "#/bg-iframe")
     def theme():
-        bgc = frame(pg4, "explorer.html", "getComputedStyle(document.querySelector('.fk-app')).backgroundColor", 15000)
+        bgc = frame(pg4, APP, "getComputedStyle(document.querySelector('.fk-app')).backgroundColor", 15000)
         return bgc == "rgb(255, 255, 255)", f"system dark, pinned app background {bgc}"
     check("Embedded app theme pinned", theme)
 
-    # The demo deck: the setup's Plotly renderer drew, and a fragment inside an equation steps
+    # The demo deck: qd export's Plotly renderer drew, and a fragment inside an equation steps
     if demo:
         pg5 = ctx.new_page(); pg5.goto(demo.as_uri()); until(pg5, "typeof Reveal !== 'undefined' && Reveal.isReady()", 15000)
         def plotly():

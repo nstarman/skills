@@ -12,6 +12,6 @@
    with or without it */
 .reveal .slides section > p:has(> .paper-corner:only-child) { margin: 0; height: 0; }
 .reveal .paper-corner { position: absolute; top: 0; right: 0; font-size: 1.4em; }
-/* bibliography slide: {{< include _bibliography.qmd >}} inside ::: {.bibliography} */
+/* References slide: ## References {.bibliography}, its list written between the bibliography:start/end comments by qd bib */
 .reveal .bibliography ul { columns: 3; font-size: 0.5em; list-style: none; margin: 0; padding: 0; }
 .reveal .bibliography li { break-inside: avoid; }

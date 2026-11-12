@@ -1,0 +1,46 @@
+<!-- A preview for building the deck, never for the audience: the current slide's speaker notes in a panel
+     below it, only with ?preview in the address (not ?notes: reveal.js uses that to open the speaker window on load). When presenting, the notes live in reveal.js's speaker view
+     (press S). Even with ?preview the panel stays off in print/PDF, inside the speaker view's slide previews
+     (?receiver), in a copy whose notes were stripped, and whenever the deck is fullscreen. N toggles it. -->
+<style>
+  html.notes-below:not(.nb-hidden) .reveal { height: 66vh !important; }
+  html.nb-hidden #notes-below { display: none; }
+  #notes-below {
+    position: fixed; left: 0; right: 0; bottom: 0; height: 34vh; overflow: auto; z-index: 50; box-sizing: border-box;
+    padding: 12px 28px 16px; background: #f2efe8; border-top: 4px solid #3d4a5c;
+    font: 16px/1.5 "IBM Plex Sans", "Helvetica Neue", sans-serif; color: #1d2128;
+  }
+  #notes-below p { margin: 0 0 0.6em; }
+  #notes-below hr { border: 0; border-top: 1px dashed #b9b3a7; margin: 0.8em 0; }
+  #notes-below hr ~ * { color: #5f6672; font-size: 14px; }
+  #notes-below .nb-id { float: right; color: #8a8f98; font-size: 13px; }
+</style>
+<script>
+(() => {
+  const off = !/[?&]preview\b/.test(location.search) || /[?&](print-pdf|receiver)\b/.test(location.search) || !document.querySelector(".reveal aside.notes");
+  if (off) return;
+  document.documentElement.classList.add("notes-below");
+  const box = document.createElement("div");
+  box.id = "notes-below";
+  document.body.appendChild(box);
+  const show = () => {
+    const s = Reveal.getCurrentSlide();
+    if (!s) return;
+    const n = s.querySelector(":scope > aside.notes");
+    box.innerHTML = `<span class="nb-id">#${s.id}</span>` + (n ? n.innerHTML : "<em>No notes on this slide.</em>");
+    box.style.borderTopColor = s.style.getPropertyValue("--sec") || "#3d4a5c";
+    box.scrollTop = 0;
+  };
+  const start = () => { Reveal.layout(); show(); };
+  Reveal.isReady() ? start() : Reveal.on("ready", start);
+  Reveal.on("slidechanged", show);
+  // hide while presenting fullscreen, and on N; reveal re-lays-out the slide to the full height
+  const html = document.documentElement;
+  const set = (hidden) => { html.classList.toggle("nb-hidden", hidden); Reveal.layout(); };
+  document.addEventListener("fullscreenchange", () => set(!!document.fullscreenElement));
+  document.addEventListener("keydown", (e) => {
+    if (e.key.toLowerCase() === "n" && !e.metaKey && !e.ctrlKey && !e.altKey && !/input|textarea/i.test(e.target.tagName))
+      set(!html.classList.contains("nb-hidden"));
+  });
+})();
+</script>

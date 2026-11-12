@@ -1,4 +1,9 @@
 <script>
+  // qd export's header loads MathJax 3, but reveal.js's math plugin still loads its about:blank
+  // script; Safari/WebKit fires `load` for it and the plugin then calls MathJax 2's API (a page
+  // error). A no-op stand-in, set here because this file comes after the header's MathJax.
+  if (window.MathJax && !MathJax.Hub) MathJax.Hub = { Config() {}, Queue() {} };
+
   // "]" jumps to the last step of the current slide (skip a long build-up); pressed again at the
   // last step, it moves to the next slide.
   (function () {

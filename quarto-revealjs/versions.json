@@ -1,8 +1,9 @@
 {
-  "$comment": "Versions the skill and its guide were last verified against. Update with UPDATING.md.",
+  "$comment": "Versions the skill and its guide were last verified against. Update with UPDATING.md. qd: quartz-deck commit (cargo install --git ... --rev).",
   "verified": "2026-11-11",
   "quarto": "1.11.9",
   "revealjs": "5.1.0",
   "mathjax": "3.2.2",
-  "plotly": "7.1.0"
+  "plotly": "7.1.0",
+  "qd": "90fec66"
 }

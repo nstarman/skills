@@ -16,14 +16,14 @@ Legend: ✓ works as documented · ◐ works with a caveat or a workaround · �
 | Background colour | `## Title {background-color="#0b1d3a"}` | ✓ | yes |
 | Background gradient | `{background-gradient="linear-gradient(to bottom, #283b95, #17b2c3)"}` | ✓ | yes |
 | Background image | `{background-image="img.png" background-size="contain" background-opacity="0.4"}` | ✓ | yes (inlined) |
-| Background video | `{background-video="clip.mp4" background-video-loop="true" background-video-muted="true"}` | ✓ | **no**: stays a relative path; ship the file beside the deck |
-| Background iframe | `{background-iframe="app.html" background-interactive="true"}` | ✓ | after `inline_apps.py` (as a `blob:` URL); Quarto alone leaves a path |
+| Background video | `{background-video="clip.mp4" background-video-loop="true" background-video-muted="true"}` | ✓ | **no**: stays a relative path; `qd export` copies the file beside the deck |
+| Background iframe | `{background-iframe="app.html" background-interactive="true"}` | ✓ | after `qd export` (as a `blob:` URL); Quarto alone leaves a path |
 | Parallax background | YAML `parallax-background-image:`, `parallax-background-size:` | ✓ | **no**: relative path |
 | Media: video | `{{< video clip.mp4 width="480" height="270" >}}` (Quarto uses video.js) | ✓ | yes (inlined) |
 | Media: audio | raw `<audio controls src="tone.mp3">` | ✓ | yes (inlined) |
 | Media: lazy loading | `<img data-src="…">`, `<iframe data-src="…">` | ✓ | yes (inlined) |
 | Media: inline iframe | `<iframe src="app.html">` | ✓ | yes (inlined as a `data:` URL); blank in Chrome over 2 MB |
-| Inline app (this skill) | `<iframe data-app="app.html">` | ✓ | after `inline_apps.py` (a `blob:` URL, loaded when the slide is shown) |
+| Inline app (this skill) | `<iframe data-app="app.html">` | ✓ | after `qd export` (a `blob:` URL, loaded when the slide is shown) |
 | Lightbox (reveal.js 5.2+ `data-preview-image`) | — | ✗ (not in 5.1) | — |
 | Lightbox, Quarto's own (GLightbox) | YAML `lightbox: true`; image `![](img.png){.lightbox}` | ✓ | yes |
 | Preview links (overlay iframe) | `[text](https://…){preview-link="true"}` or YAML `preview-links: true` | ◐ only `http`/`www` URLs; local files navigate away. Workaround below | n/a (needs the web) |
@@ -53,7 +53,7 @@ Legend: ✓ works as documented · ◐ works with a caveat or a workaround · �
 | Slide numbers | YAML `slide-number: c/t` (or `true`, `h.v`, `c`), `show-slide-number: all\|print\|speaker` | ✓ | yes |
 | Jump to slide | press **G**, type a number, Enter (numbers count across vertical stacks) | ✓ | yes |
 | Touch navigation | on by default (`touch: true`) | ✓ | yes |
-| PDF export | open `deck.html?print-pdf` in Chrome, or the `make_pdf.py` script below | ✓ | yes |
+| PDF export | open `deck.html?print-pdf` in Chrome, or `qd export --pdf` / `qd pdf` | ✓ | yes |
 | Overview mode | **O** or **Esc** | ✓ | yes |
 | Fullscreen | **F** | ✓ | yes |
 | Pause / blackout | **B** or **.** | ✓ | yes |
@@ -87,79 +87,79 @@ A default Quarto reveal.js deck is **not** offline-safe, even with `embed-resour
 - Plotly figures also add an `import` of plotly.js from its CDN unless `plotly-connected: false`.
 
 The fix is to load each library exactly once, from a local copy, and stop the plugins from loading their
-own. Folder layout:
+own. quartz-deck's `qd export` (github.com/nstarman/quartz-deck) does this on a copy of the deck, so
+the deck folder carries no libraries and no build scripts:
+
+- it sets `embed-resources: true` and points `html-math-method`'s `url` at `about:blank`: reveal.js's
+  math plugin always appends a MathJax `<script>` with that URL, so it loads nothing;
+- it adds its offline header: MathJax 3.2.2 (full SVG build, with the `html` extension for
+  `\class{fragment}`) from qd's cache, downloaded once and checked by SHA-256, and, for a deck with
+  Python Plotly cells, plotly.js from the Python plotly package; `embed-resources` inlines both. The
+  header also defines `.print-only` / `.print-hide` for PDF stills, lets reveal.js find fragments
+  inside equations once MathJax is done (section 2, Math), and hands keyboard focus back to the deck
+  after a click into an embedded app;
+- for a deck with Python Plotly cells it adds a cell that switches Plotly to a renderer that outputs
+  bare divs: no per-figure plotly.js, no CDN MathJax tag;
+- after Quarto renders, it puts apps, `<object>` files and SVG `<image href>` files inside the deck
+  (section 6), checks it offline in headless Chromium, and copies background videos and the parallax
+  image beside it.
+
+If the project already sets `url: "about:blank"`, qd assumes the deck loads MathJax itself and adds no
+header. The scaffold's `_quarto.yml` therefore sets no `html-math-method`. The scaffold's
+`_talk/html/skip-steps.html` defines a no-op `MathJax.Hub` for WebKit (section 6b).
+
+Folder layout (the scaffold in `assets/`):
 
 ```
 <deck-folder>/
-  _quarto.yml            shared settings for every deck in the folder
-  _deck/header.html      loads MathJax + plotly.js once; small fixes (below)
-  _deck/setup.qmd        Plotly renderer for decks (Python)
-  _vendor/mathjax/tex-svg-full.js   MathJax 3.2.2, full build (from the MathJax repo or npm)
-  _vendor/plotly/plotly.min.js      from your Python plotly package: plotly/package_data/plotly.min.js
-  apps/                  single-file interactive apps + their print stills
-  media/                 video and audio
-  make_pdf.py            prints a deck to PDF with the network blocked
-  my-talk.qmd
-  _output/               rendered decks land here
+  presentation.qmd       the talk (one deck per folder; qd picks the only .qmd)
+  abstract.md            title and abstract (optional)
+  Makefile               make, make notes, make refs
+  README.md
+  _quarto.yml            project options (Quarto reads it only at the root)
+  _extensions/           the paper shortcode (Quarto looks for extensions only at the root)
+  _talk/                 everything else; Quarto skips folders that start with _
+    style/               presentation.css, fonts/ (subset woff2)
+    html/                skip-steps, notes panel, {{< include >}} slide pieces
+    vendor/              third-party scripts the deck loads itself
+    figures/  apps/      figures, single-file interactive apps and their print stills
+    src/                 scripts that made figures and apps
+  _output/               written by `make`: presentation.html and presentation.pdf
 ```
 
 ### `_quarto.yml`
 
-See `assets/_quarto.yml` (copy it into the deck folder).
+See `assets/_quarto.yml`.
 
 Two things that do **not** work in `_quarto.yml`:
 
 - `jupyter: python3` at project level is ignored; Quarto then picks *some* Python kernel installed on
   the machine. Put `jupyter: python3` in each deck's own header.
 - `show-notes: separate-page` puts the notes **on screen during the talk**, not only in the PDF. Turn
-  notes on only when printing (`?showNotes=separate-page`, as `make_pdf.py` does).
-
-### `_deck/header.html`
-
-See `assets/_deck/header.html` (copy it into the deck folder). It:
-
-- loads MathJax 3 (full SVG build, with the `html` extension for `\class{fragment}`) and plotly.js
-  once, from `_vendor/`; `embed-resources` inlines both;
-- defines `.print-only` / `.print-hide` for PDF stills of live content;
-- after MathJax finishes, lets reveal.js find fragments inside equations (section 2, Math);
-- hands keyboard focus back to the deck after a click into an embedded app.
-
-`_quarto.yml` points `html-math-method`'s `url` at `about:blank`: reveal.js's math plugin always
-appends a MathJax `<script>` with that URL, so this stops it loading a second (CDN) copy.
-
-### `_deck/setup.qmd` (for decks with Python Plotly cells)
-
-See `assets/_deck/setup.qmd`. It switches Plotly to a renderer that outputs bare divs: no per-figure plotly.js, no CDN MathJax tag.
+  notes on only when printing (`qd pdf --notes` does it with `?showNotes=separate-page`).
 
 ### A deck
 
 ````markdown
 ---
 title: "My talk"
-jupyter: python3
-resources:
-  - media/         # only for background-video / parallax files (apps: inline_apps.py)
+jupyter: python3      # only with Python cells
 ---
-
-{{< include _deck/setup.qmd >}}
 
 ## First slide
 ````
 
-Render and print:
+Build and print, from the deck folder:
 
 ```bash
-quarto render                              # every deck in the folder -> _output/
-python make_pdf.py _output/my-talk.html    # -> _output/my-talk.pdf
+make                                         # qd export --pdf --out _output
+make notes                                   # qd pdf --html _output/presentation.html --notes
 ```
 
-### `make_pdf.py`
-
-See `assets/make_pdf.py` (copy it into the deck folder).
-
+`qd export` owns its `--out` folder and replaces all of it, so the PDF is printed in the same run.
 Chrome's own `--headless --print-to-pdf` gives a blank page: it does not wait for reveal.js's print
-layout. The PDF route is reveal.js's native one (`?print-pdf`); the script only automates the print
-dialog's settings (page size, no margins, backgrounds).
+layout. `qd pdf` uses reveal.js's native route (`?print-pdf`) with the right page size and the
+network blocked, and recompresses the images with ghostscript when `gs` is installed.
 
 ---
 
@@ -187,24 +187,24 @@ Slide attributes become reveal.js `data-background-*` attributes:
 ## Dark slide {background-color="#0b1d3a"}
 ## Gradient {background-gradient="linear-gradient(to bottom, #283b95, #17b2c3)"}
 ## Image {background-image="img.png" background-size="contain" background-opacity="0.4"}
-## Video {background-video="media/clip.mp4" background-video-loop="true" background-video-muted="true"}
-## {background-iframe="apps/app.html" background-interactive="true"}
+## Video {background-video="_talk/figures/clip.mp4" background-video-loop="true" background-video-muted="true"}
+## {background-iframe="_talk/apps/app.html" background-interactive="true"}
 ```
 
 Parallax is deck-wide: `parallax-background-image:` and `parallax-background-size: "2560px 1440px"`.
 
 Packaging: background **images** are inlined into the HTML. Background **videos** and the
 **parallax** image are left as relative paths: list their folders under `resources:` and ship them
-next to the deck, or use `{{< video >}}` (inlined). Background **iframes** are also left as paths by
-Quarto, but `inline_apps.py` puts them inside the deck afterwards (section 6). It does the same for
-`<object data="…">`, which pandoc never inlines.
+next to the deck (`qd export` copies them beside the HTML), or use `{{< video >}}` (inlined).
+Background **iframes** are also left as paths by Quarto, but `qd export` puts them inside the deck
+afterwards (section 6). It does the same for `<object data="…">`, which pandoc never inlines.
 
 ### Media
 
 ```markdown
-{{< video media/clip.mp4 width="480" height="270" >}}
+{{< video _talk/figures/clip.mp4 width="480" height="270" >}}
 
-<audio controls src="media/tone.mp3"></audio>
+<audio controls src="_talk/figures/tone.mp3"></audio>
 
 <img data-src="big.png">   <!-- loaded only when the slide is near -->
 ```
@@ -221,7 +221,7 @@ The video shortcode gives a video.js player. All three were inlined as `data:` U
   file navigates the whole page away from the deck. To preview a local file (e.g. a single-file app):
 
   ```html
-  <a href="apps/app.html" onclick="Reveal.showPreview(this.href); return false;">Open the app</a>
+  <a href="_talk/apps/app.html" onclick="Reveal.showPreview(this.href); return false;">Open the app</a>
   ```
 
 ### Code
@@ -295,9 +295,11 @@ it scales off the left edge.
 - A sequence of slides that builds up one figure keeps an **identical base-figure box** (same image
   size, same position, same aspect ratio: export every stage on the same canvas) and only adds
   layers; with `auto-animate` give the base the same `data-id` so it stays put.
-- A long build-up gets a skip key: the template's `_deck/skip-steps.html` binds **]** to "last
+- A long build-up gets a skip key: the template's `_talk/html/skip-steps.html` binds **]** to "last
   step of this slide" (pressed again: next slide). It is listed in the **?** help overlay.
-- Check with `check_overflow.py`, which measures every slide with all fragments shown.
+- `qd export` reports anything past the slide edge (`P_OVERFLOW`), measured with all fragments
+  shown. It skips notes, SVG and MathJax internals, content inside a clipping container, and
+  anything inside `.overflow-ok` (a full-bleed footer band drawn on purpose).
 
 ### Links
 
@@ -466,15 +468,15 @@ for sharing after the talk. (Tested: the deck switches to scroll view and scroll
 ### PDF export
 
 reveal.js's native route: `deck.html?print-pdf` in Chrome, print to PDF, landscape, no margins,
-background graphics on. `make_pdf.py` does exactly that with the right page size and the network
+background graphics on. `qd pdf` does exactly that with the right page size and the network
 blocked. Live content does not reliably print (a 2D-canvas app printed in an inline iframe and came
-out blank as a background iframe, observed by hand with `make_pdf.py`; WebGL untested), so give it a still:
+out blank as a background iframe, observed by hand with the skill's earlier PDF script; WebGL untested), so give it a still:
 
 ```markdown
-![](apps/app.png){.print-only .r-stretch}
+![](_talk/apps/app.png){.print-only .r-stretch}
 
 ::: {.print-hide}
-<iframe src="apps/app.html" …></iframe>
+<iframe src="_talk/apps/app.html" …></iframe>
 :::
 ```
 
@@ -577,17 +579,17 @@ Third-party plugins are distributed the same way (`quarto add owner/repo`).
 
 ## 6. Embedding interactive apps (single-file HTML builds, e.g. figpress-apps)
 
-Copy the app's single-file HTML into `apps/` and pick one of two embeddings:
+Copy the app's single-file HTML into `_talk/apps/` and pick one of two embeddings:
 
-**Inline on a slide (inlined into the deck by `inline_apps.py`, single file):**
+**Inline on a slide (inlined into the deck by `qd export`, single file):**
 
 ```markdown
 ## The explorer
 
-![](apps/explorer.png){.print-only .r-stretch}
+![](_talk/apps/explorer.png){.print-only .r-stretch}
 
 ::: {.r-stretch .print-hide style="position:relative; overflow:hidden;"}
-<iframe data-app="apps/explorer.html" title="explorer" style="position:absolute; top:0; left:0; width:200%; height:200%;
+<iframe data-app="_talk/apps/explorer.html" title="explorer" style="position:absolute; top:0; left:0; width:200%; height:200%;
   max-width:none; max-height:none; border:0; transform:scale(0.5); transform-origin:0 0;"></iframe>
 :::
 ```
@@ -599,24 +601,23 @@ Write `data-app`, not `src`. With `embed-resources: true` pandoc inlines an ifra
 `data-src` as `data:` URLs, and Chrome refuses to load a `data:` URL longer than 2 MB: the iframe
 ends at `about:blank#blocked` and the slide is blank. A 3 MB and a 9 MB figpress-apps build hit this
 in a talk; a 3 MB stand-in does the same in headless Chrome, while smaller apps load. Pandoc leaves
-`data-app` alone, and `inline_apps.py` (below) gives the iframe the app's `blob:` URL as its
+`data-app` alone, and `qd export` (below) gives the iframe the app's `blob:` URL as its
 `data-src`. reveal.js then loads the app when its slide is shown and unloads it when you leave, so
 the app starts fresh on each visit; the print view never loads it. Lazy loading also stopped an app
 from throwing a page error while its slide was hidden at zero size (observed in the talk). Until
-`inline_apps.py` runs the slide is empty. The end-to-end test checks a 3 MB `data-app` app in
+`qd export` runs the slide is empty. The end-to-end test checks a 3 MB `data-app` app in
 Chromium and WebKit: not loaded before its slide, running from a `blob:` URL once shown.
 
 **Full-slide background:**
 
 ```markdown
-## {background-iframe="apps/explorer-full.html" background-interactive="true"}
+## {background-iframe="_talk/apps/explorer-full.html" background-interactive="true"}
 
-![](apps/explorer-full.png){.print-only .r-stretch}
+![](_talk/apps/explorer-full.png){.print-only .r-stretch}
 ```
 
-Quarto leaves the background iframe as a path. To make the deck one file again, run
-`python inline_apps.py _output/talk.html` from the deck folder after rendering: each app goes into the
-deck as base64 in a `<script type="text/plain">`, and a small script, run before reveal.js starts,
+Quarto leaves the background iframe as a path. `qd export` makes the deck one file again: each app
+goes into the deck, gzipped, as base64 in a `<script type="text/plain">`, and a small script, run before reveal.js starts,
 turns it into a `blob:` URL and points `data-background-iframe` (and any iframe `data-app`,
 `src` or `data-src` with that path) at it. Pointing the background at a `data:` URL instead was tried with a real app: it
 stayed blank (a `data:` page gets an opaque origin, which many single-file apps cannot run in).
@@ -628,7 +629,7 @@ Things to know:
 - **Theme**: the apps follow the system's dark mode unless `<html data-theme="light|dark">` is set.
   The deck cannot script into an inlined (`data:` URL) iframe (nor, opened from a file, into a `blob:` one in Chrome), and Chrome does not pass an iframe's CSS
   `color-scheme` into the page, so pin the theme in the copy:
-  `perl -pi -e 's|<html lang="en">|<html lang="en" data-theme="light">|' apps/app.html` (works on macOS and Linux).
+  `perl -pi -e 's|<html lang="en">|<html lang="en" data-theme="light">|' _talk/apps/app.html` (works on macOS and Linux).
 - **Keyboard**: clicking into an app gives it the keyboard; the header script hands focus back so the
   arrow keys keep changing slides. Dragging is unaffected.
 - **Print**: a live app does not reach reveal.js's print view. A `data-app` iframe is never loaded
@@ -659,10 +660,12 @@ reproduced by the test in WebKit.
   mask image from a separate file in a deck opened as a local file. Embed the mask as a `data:` URI in
   the CSS and set both `-webkit-mask` and `mask` (the `paper` shortcode's CSS does this).
 - **MathJax**: WebKit fires `load` for the math plugin's `about:blank` script, and the plugin then calls
-  MathJax 2's API: a page error. `_deck/header.html` defines a no-op `MathJax.Hub` for it.
-- **Checks**: `check_offline.py --webkit` and `check_overflow.py --webkit` run Playwright's WebKit
-  (`python -m playwright install webkit`), close to Safari but not Safari: step through the deck in
-  Safari once too. The PDF route is Chromium only.
+  MathJax 2's API: a page error. qd's header (at quartz-deck 90fec66) does not define `MathJax.Hub`,
+  so the scaffold's `_talk/html/skip-steps.html` (included after the body, after MathJax has loaded)
+  defines a no-op one.
+- **Checks**: `qd export` checks in Chromium only. The skill's end-to-end test also opens the exported
+  decks in Playwright's WebKit, close to Safari but not Safari: step through the deck in Safari once
+  too. The PDF route is Chromium only.
 
 ---
 
@@ -670,17 +673,19 @@ reproduced by the test in WebKit.
 
 1. Quarto 1.11.9 ships reveal.js 5.1.0; features from 5.2+ (native lightbox) and 6.0 are missing.
 2. A default deck loads MathJax from a CDN even without math; KaTeX is never embedded; Plotly output
-   carries its own CDN MathJax. Use the section 1 setup.
+   carries its own CDN MathJax. Build with `qd export` (section 1); it replaces `html-math-method`
+   with its local MathJax.
 3. `show-notes` in YAML shows notes on screen; set it only when printing.
 4. `jupyter:` in `_quarto.yml` is ignored; set it per deck.
-5. Put decks at the top of the deck folder: the header's `_vendor/` paths are relative to the deck.
+5. One deck per folder, at its top: `qd` picks the only `.qmd` there, and Quarto reads `_quarto.yml`
+   and `_extensions/` only at the project root.
 6. Slide links: `#id`, not `#/id`. Navigation classes on `<button>`, not `<a href="#">`.
 7. Preview links only for `http`/`www`; use `Reveal.showPreview()` for local files.
 8. `keyboard:` and `postMessageEvents` need JavaScript, not YAML.
 9. Chalkboard and multiplex cannot be single-file / offline.
 10. Background video and parallax images are not inlined; list them under `resources:`. Background
     iframes, `data-app` iframes, `<object>` files and `<image href>` inside an inline `<svg>` neither,
-    until `inline_apps.py` runs. An inline
+    until `qd export` runs. An inline
     app over 2 MB in `<iframe src>` is blank in Chrome; use `data-app` (section 6).
 11. reveal.js caps iframes at 95%; MathJax fragments need `Reveal.sync()`.
 12. Embedded apps follow system dark mode unless their `<html>` pins `data-theme`.
