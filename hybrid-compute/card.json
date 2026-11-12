@@ -1,0 +1,4 @@
+{
+  "name": "hybrid-compute",
+  "description": "Splits a research project between a laptop and a Slurm cluster: edit locally, run jobs on the cluster, and sync code and results through a private git repo. Ships profiles for MIT's Engaging and subMIT."
+}

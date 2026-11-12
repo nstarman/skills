@@ -16,15 +16,6 @@
       "homepage": "https://github.com/nstarman/skills/tree/main/diataxis"
     },
     {
-      "name": "engaging-hybrid-compute",
-      "description": "Splits a research project between a laptop and MIT's Engaging cluster: edit locally, run Slurm jobs on the cluster, and sync code and results through a private git repo.",
-      "source": "./engaging-hybrid-compute",
-      "skills": [
-        "./"
-      ],
-      "homepage": "https://github.com/nstarman/skills/tree/main/engaging-hybrid-compute"
-    },
-    {
       "name": "figpress-apps",
       "description": "Builds an interactive webapp for a scientific paper with figpress-apps: exports the paper's arrays, ports the per-interaction science to tested JavaScript, composes linked views, and publishes a static site plus a single archivable HTML file that also runs in notebooks.",
       "source": {
@@ -53,6 +44,15 @@
       "homepage": "https://github.com/nstarman/figpress-apps/tree/v2026.11.01/skills/figpress-apps-upgrade"
     },
     {
+      "name": "hybrid-compute",
+      "description": "Splits a research project between a laptop and a Slurm cluster: edit locally, run jobs on the cluster, and sync code and results through a private git repo. Ships profiles for MIT's Engaging and subMIT.",
+      "source": "./hybrid-compute",
+      "skills": [
+        "./"
+      ],
+      "homepage": "https://github.com/nstarman/skills/tree/main/hybrid-compute"
+    },
+    {
       "name": "quarto-revealjs",
       "description": "Builds Quarto reveal.js presentations that work offline for good: one self-contained HTML file plus a PDF, with math, Plotly figures, speaker notes and embedded interactive apps, and a tested guide to which reveal.js features Quarto supports and how to write them.",
       "source": {
@@ -79,15 +79,6 @@
         "./"
       ],
       "homepage": "https://github.com/nstarman/quax/tree/main/skills/quax"
-    },
-    {
-      "name": "submit-hybrid-compute",
-      "description": "Splits a research project between a laptop and MIT's subMIT cluster: edit locally, run Slurm jobs on the submit partition, and sync code and results through a private git repo.",
-      "source": "./submit-hybrid-compute",
-      "skills": [
-        "./"
-      ],
-      "homepage": "https://github.com/nstarman/skills/tree/main/submit-hybrid-compute"
     },
     {
       "name": "syw-adopt-overleaf",
