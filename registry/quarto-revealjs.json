@@ -1,0 +1,5 @@
+{
+  "name": "quarto-revealjs",
+  "description": "Builds Quarto reveal.js presentations that work offline for good: one self-contained HTML file plus a PDF, with math, Plotly figures, speaker notes and embedded interactive apps, and a tested guide to which reveal.js features Quarto supports and how to write them.",
+  "source": { "repo": "nstarman/quartz-deck", "path": "skills/quarto-revealjs", "ref": "main" }
+}
