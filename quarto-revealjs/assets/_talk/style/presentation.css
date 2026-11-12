@@ -1,6 +1,0 @@
-/* The deck's look. Fonts: subset woff2 files in _talk/style/fonts/, never an @import of Google
-   Fonts (embedding then pulls the full TTF, 520 kB a weight instead of 68 kB). For example:
-@font-face { font-family: "IBM Plex Sans"; font-weight: 400;
-             src: url("fonts/IBMPlexSans-Regular.woff2") format("woff2"); }
-.reveal { font-family: "IBM Plex Sans", sans-serif; }
-*/

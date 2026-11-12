@@ -58,12 +58,13 @@ hand: change the skill or the registry entry and run `python scripts/build_index
 A skill that documents a fast-moving tool can have a behaviour test under
 `tests/skills/<skill>/` (a `run.sh` plus fixtures) and its own workflow
 (`.github/workflows/test-<skill>.yml`) that runs it weekly against the latest upstream release and
-on pull requests touching the skill. The quarto-revealjs job (`test quarto-revealjs`) is a required
-check on `main`: it runs on every pull request and skips its steps when the skill is untouched,
-since a `paths:` filter would leave a required check pending for ever. These tests may install third-party tools (Quarto, Playwright,
+on pull requests touching the skill. If such a job is made a required check on `main`, it must run on
+every pull request and skip its steps when the skill is untouched, since a `paths:` filter would
+leave a required check pending for ever. These tests may install third-party tools (Quarto, Playwright,
 Chrome, Sphinx, Zensical); the standard-library rule is for `scripts/`. A scheduled failure opens an
-issue, and the skill's `UPDATING.md` says how to bring it current. Today: `quarto-revealjs`,
-`diataxis`. Every script a skill ships also has a unit test in `tests/test_*.py` (stubs on `PATH`
+issue, and the skill's `UPDATING.md` says how to bring it current. Today: `diataxis`. An external
+skill keeps its test in its own repository (quarto-revealjs: nstarman/quartz-deck,
+`tests/skills/quarto-revealjs/`). Every script a skill ships also has a unit test in `tests/test_*.py` (stubs on `PATH`
 stand in for ssh, Slurm and the like), so `check.yml` covers it.
 
 Everything here is public, not only the skills: no personal details (usernames, home paths, password-manager items, project or

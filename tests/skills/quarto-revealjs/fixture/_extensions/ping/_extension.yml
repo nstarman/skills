@@ -1,6 +1,0 @@
-title: ping
-version: 0.0.1
-contributes:
-  revealjs-plugins:
-    - name: RevealPing
-      script: ping.js
