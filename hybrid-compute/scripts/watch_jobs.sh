@@ -2,9 +2,10 @@
 # Run LOCALLY (e.g. as a background task): wait until no job whose name matches REGEX is queued,
 # then print the last lines of their logs. Matches by name, because `squeue -j a,b,c` prints
 # nothing if any ID is invalid, which looks like "done". Stops loudly if ssh fails.
-#   scripts/watch_jobs.sh '^(fit_|lap_)' orcd-login ~/orcd/pool/PROJECT 600
+#   scripts/watch_jobs.sh '^(fit_|lap_)' <alias> <cluster-repo> 600
 set -u
-REGEX=${1:?name regex}; HOST=${2:-orcd-login}; REPO=${3:-'~/orcd/pool/PROJECT'}; EVERY=${4:-600}
+REGEX=${1:?name regex}; HOST=${2:?ssh alias for the cluster}
+REPO=${3:?cluster repo path, e.g. /path/to/cluster/clone/PROJECT}; EVERY=${4:-600}
 # These values are pasted into commands run on the cluster: refuse anything that could break out.
 case $REGEX in *\'*) echo "regex must not contain a single quote"; exit 2 ;; esac
 safe_host='^[A-Za-z0-9][A-Za-z0-9._-]*$'; safe_path='^[~A-Za-z0-9_./-]+$'

@@ -17,19 +17,6 @@
       "zip": "https://github.com/nstarman/skills/releases/latest/download/diataxis.zip"
     },
     {
-      "name": "engaging-hybrid-compute",
-      "description": "Splits a research project between a laptop and MIT's Engaging cluster: edit locally, run Slurm jobs on the cluster, and sync code and results through a private git repo.",
-      "origin": "local",
-      "href": "https://github.com/nstarman/skills/tree/main/engaging-hybrid-compute",
-      "source": {
-        "repo": "nstarman/skills",
-        "path": "engaging-hybrid-compute",
-        "ref": "main"
-      },
-      "install": "engaging-hybrid-compute@nstarman-skills",
-      "zip": "https://github.com/nstarman/skills/releases/latest/download/engaging-hybrid-compute.zip"
-    },
-    {
       "name": "figpress-apps",
       "description": "Builds an interactive webapp for a scientific paper with figpress-apps: exports the paper's arrays, ports the per-interaction science to tested JavaScript, composes linked views, and publishes a static site plus a single archivable HTML file that also runs in notebooks.",
       "origin": "external",
@@ -56,6 +43,19 @@
       "zip": "https://github.com/nstarman/skills/releases/latest/download/figpress-apps-upgrade.zip"
     },
     {
+      "name": "hybrid-compute",
+      "description": "Splits a research project between a laptop and a Slurm cluster: edit locally, run jobs on the cluster, and sync code and results through a private git repo. Ships profiles for MIT's Engaging and subMIT.",
+      "origin": "local",
+      "href": "https://github.com/nstarman/skills/tree/main/hybrid-compute",
+      "source": {
+        "repo": "nstarman/skills",
+        "path": "hybrid-compute",
+        "ref": "main"
+      },
+      "install": "hybrid-compute@nstarman-skills",
+      "zip": "https://github.com/nstarman/skills/releases/latest/download/hybrid-compute.zip"
+    },
+    {
       "name": "quarto-revealjs",
       "description": "Builds Quarto reveal.js presentations that work offline for good: one self-contained HTML file plus a PDF, with math, Plotly figures, speaker notes and embedded interactive apps, and a tested guide to which reveal.js features Quarto supports and how to write them.",
       "origin": "external",
@@ -80,19 +80,6 @@
       },
       "install": "quax@nstarman-skills",
       "zip": "https://github.com/nstarman/skills/releases/latest/download/quax.zip"
-    },
-    {
-      "name": "submit-hybrid-compute",
-      "description": "Splits a research project between a laptop and MIT's subMIT cluster: edit locally, run Slurm jobs on the submit partition, and sync code and results through a private git repo.",
-      "origin": "local",
-      "href": "https://github.com/nstarman/skills/tree/main/submit-hybrid-compute",
-      "source": {
-        "repo": "nstarman/skills",
-        "path": "submit-hybrid-compute",
-        "ref": "main"
-      },
-      "install": "submit-hybrid-compute@nstarman-skills",
-      "zip": "https://github.com/nstarman/skills/releases/latest/download/submit-hybrid-compute.zip"
     },
     {
       "name": "syw-adopt-overleaf",

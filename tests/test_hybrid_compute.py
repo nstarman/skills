@@ -1,4 +1,4 @@
-"""{engaging,submit}-hybrid-compute/scripts: run_modes, push_results, watch_jobs, engaging-connect, duo-askpass.
+"""hybrid-compute/scripts: run_modes, push_results, watch_jobs, and the Engaging helpers.
 
 Every external command (ssh, timeout, sleep, osascript, uv) is a stub first on PATH that logs its argv.
 """
@@ -10,7 +10,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SKILLS = ("engaging-hybrid-compute", "submit-hybrid-compute")
+SKILL = ROOT / "hybrid-compute"
 GIT_ENV = {
     "GIT_CONFIG_GLOBAL": os.devnull,
     "GIT_CONFIG_SYSTEM": os.devnull,
@@ -88,28 +88,25 @@ class Sandbox(unittest.TestCase):
             stdin=subprocess.DEVNULL,
         )
 
-    def retargeted(self, skill, script, pattern, line):
-        """Copy a script with the hard-coded cluster path (a line matching `pattern`) replaced."""
-        out = self.dir / skill / script
+    def retargeted(self, script, pattern, line):
+        """Copy a script with its placeholder path (the line matching `pattern`) replaced."""
+        out = self.dir / "scripts" / script
         out.parent.mkdir(exist_ok=True)
-        text = (ROOT / skill / "scripts" / script).read_text()
+        text = (SKILL / "scripts" / script).read_text()
         lines = [line if l.startswith(pattern) else l for l in text.splitlines()]
         out.write_text("\n".join(lines) + "\n")
         return out
 
 
-class ClusterScripts:
-    """Tests shared by both cluster skills; one subclass per skill is generated below."""
-
-    skill = ""
+class ClusterScriptsTest(Sandbox):
+    """The three scripts that are shared by every cluster."""
 
     def test_run_modes_picks_the_mode_of_its_array_task(self):
-        skill = self.skill
         repo = self.dir / "clone"
         repo.mkdir()
         subprocess.run(["git", "init", "-q"], cwd=repo, env=self.env, check=True)
         self.stub("uv", LOGGER, self.home / ".local" / "bin")
-        script = self.retargeted(skill, "run_modes.sh", "REPO_DIR=", f"REPO_DIR={repo}")
+        script = self.retargeted("run_modes.sh", "REPO_DIR=", f"REPO_DIR={repo}")
         p = self.run_script(script, "fit.py", "modeA", "modeB", "modeC", SLURM_ARRAY_TASK_ID="1", SEED="3")
         self.assertEqual(p.returncode, 0, p.stderr)
         self.assertIn("task 1: fit.py modeB", p.stdout)
@@ -118,14 +115,18 @@ class ClusterScripts:
         self.assertEqual(self.logged(), ["uv run --frozen python fit.py modeB"])
 
     def test_run_modes_fails_when_the_clone_is_missing(self):
-        skill = self.skill
-        script = self.retargeted(skill, "run_modes.sh", "REPO_DIR=", f"REPO_DIR={self.dir}/nope")
+        script = self.retargeted("run_modes.sh", "REPO_DIR=", f"REPO_DIR={self.dir}/nope")
         p = self.run_script(script, "fit.py", "modeA", SLURM_ARRAY_TASK_ID="0")
         self.assertNotEqual(p.returncode, 0)
         self.assertEqual(self.logged(), [])
 
+    def test_run_modes_ships_no_real_cluster_path(self):
+        """The #SBATCH values and REPO_DIR are placeholders the reader edits, not one site's values."""
+        text = (SKILL / "scripts" / "run_modes.sh").read_text()
+        self.assertIn("REPO_DIR=/path/to/cluster/clone/PROJECT", text)
+        self.assertIn("#SBATCH -p PARTITION", text)
+
     def test_push_results_commits_only_result_files(self):
-        skill = self.skill
         git = lambda cwd, *a: subprocess.run(["git", "-c", "init.defaultBranch=main", *a], cwd=cwd, env=self.env, check=True, capture_output=True)
         origin, work = self.dir / "origin.git", self.dir / "clone"
         git(self.dir, "init", "-q", "--bare", str(origin))
@@ -140,7 +141,7 @@ class ClusterScripts:
         (work / "01_exp" / "run.log").write_text("log")
         (work / "notes").mkdir()
         (work / "notes" / "fig.png").write_text("not an experiment folder")
-        script = self.retargeted(skill, "push_results.sh", "cd ", f"cd {work}")
+        script = self.retargeted("push_results.sh", "cd ", f"cd {work}")
         p = self.run_script(script, "seeds 0-4")
         self.assertEqual(p.returncode, 0, p.stderr)
         shown = subprocess.run(["git", "--git-dir", str(origin), "show", "--name-only", "--format=%s", "main"], capture_output=True, text=True, env=self.env).stdout.split()
@@ -153,9 +154,8 @@ class ClusterScripts:
         self.assertNotEqual(self.run_script(script).returncode, 0)  # message is required
 
     def test_watch_jobs_waits_for_the_queue_then_prints_logs(self):
-        skill = self.skill
         (self.dir / "counts").write_text("2\n1\n0\n")
-        p = self.run_script(ROOT / skill / "scripts" / "watch_jobs.sh", "^(fit_|lap_)", "cl", "~/proj", "0")
+        p = self.run_script(SKILL / "scripts" / "watch_jobs.sh", "^(fit_|lap_)", "cl", "~/proj", "0")
         self.assertEqual(p.returncode, 0, p.stderr)
         self.assertIn("== fit_a-1_0.out", p.stdout)
         calls = self.logged()
@@ -165,28 +165,29 @@ class ClusterScripts:
         self.assertIn("cd ~/proj/slurm/logs", calls[3])
 
     def test_watch_jobs_stops_when_ssh_fails(self):
-        skill = self.skill
         (self.dir / "counts").write_text("rc=255\n")
-        p = self.run_script(ROOT / skill / "scripts" / "watch_jobs.sh", "fit_", "cl", "~/proj", "0")
+        p = self.run_script(SKILL / "scripts" / "watch_jobs.sh", "fit_", "cl", "~/proj", "0")
         self.assertEqual(p.returncode, 1)
         self.assertIn("ssh failed (rc=255)", p.stdout)
 
+    def test_watch_jobs_requires_a_host_and_a_repo(self):
+        """One shared copy has no sensible default for either, so both are required."""
+        script = SKILL / "scripts" / "watch_jobs.sh"
+        for args in (("fit_",), ("fit_", "cl")):
+            p = self.run_script(script, *args)
+            self.assertNotEqual(p.returncode, 0, args)
+        self.assertEqual(self.logged(), [])  # nothing reached ssh
+
     def test_watch_jobs_refuses_values_that_could_break_out(self):
-        skill = self.skill
-        script = ROOT / skill / "scripts" / "watch_jobs.sh"
+        script = SKILL / "scripts" / "watch_jobs.sh"
         for args in (("a'b", "cl", "~/p", "0"), ("fit", "cl; rm -rf x", "~/p", "0"), ("fit", "cl", "~/p; x", "0"), ("fit", "cl", "~/p", "1 2")):
             p = self.run_script(script, *args)
             self.assertEqual(p.returncode, 2, args)
         self.assertEqual(self.logged(), [])  # nothing reached ssh
 
 
-for _skill in SKILLS:
-    _name = "".join(w.title() for w in _skill.split("-")) + "Test"
-    globals()[_name] = type(_name, (ClusterScripts, Sandbox), {"skill": _skill})
-
-
 class EngagingConnectTest(Sandbox):
-    script = ROOT / "engaging-hybrid-compute" / "scripts" / "engaging-connect"
+    script = SKILL / "scripts" / "engaging" / "engaging-connect"
 
     def test_noop_when_connection_is_up(self):
         (self.dir / "up").touch()
@@ -214,7 +215,7 @@ class EngagingConnectTest(Sandbox):
 
 
 class DuoAskpassTest(Sandbox):
-    script = ROOT / "engaging-hybrid-compute" / "scripts" / "duo-askpass"
+    script = SKILL / "scripts" / "engaging" / "duo-askpass"
 
     def test_answers_only_the_duo_menu(self):
         for prompt in ("Passcode or option (1-3): ", "Duo two-factor login for <kerb>"):
