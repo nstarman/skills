@@ -1,5 +1,5 @@
 project:
-  output-dir: _output            # rendered, self-contained decks; sources and _vendor/ stay apart
+  output-dir: _output            # `make` (qd export) replaces this folder as a whole
 
 format:
   revealjs:
@@ -7,11 +7,11 @@ format:
     slide-number: true
     transition: slide
     background-transition: fade
-    html-math-method:
-      method: mathjax
-      url: "about:blank"         # reveal's math plugin loads nothing; _deck/header.html loads MathJax
-    include-in-header: _deck/header.html
-    include-after-body: _deck/skip-steps.html   # "]": skip to the last step of a slide
-    pdf-separate-fragments: true # PDF only (make_pdf.py): one page per fragment step
+    css: _talk/style/presentation.css
+    include-after-body:
+      - _talk/html/skip-steps.html     # "]": skip to the last step of a slide
+      - _talk/html/notes-below.html    # ?preview: the slide's notes below it, while building
     pdf-max-pages-per-slide: 1
-
+# No html-math-method or MathJax header: `qd export` adds both (one local MathJax 3.2.2, plus
+# plotly.js when the deck has Python Plotly cells). Setting `url: "about:blank"` here would make
+# qd skip its header, and the deck would have no MathJax.

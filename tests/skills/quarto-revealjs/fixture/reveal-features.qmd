@@ -11,13 +11,13 @@ format:
     jump-to-slide: true              # Jump to Slide (G)
     preview-links: true              # Links / Lightbox-style iframe previews
     lightbox: true                   # Quarto's image lightbox (GLightbox)
-    parallax-background-image: apps/explorer.png
+    parallax-background-image: _talk/apps/explorer.png
     parallax-background-size: "2560px 1440px"
     revealjs-plugins:                # Creating a Plugin: a local Quarto extension
       - ping
 resources:
-  - media/
-  - apps/
+  - _talk/figures/
+  - _talk/apps/
 ---
 
 # Content {#content}
@@ -32,31 +32,31 @@ Pandoc Markdown becomes reveal.js `<section>` markup.
 
 ## Background: colour {#bg-colour background-color="#0b1d3a"}
 
-## Background: iframe {#bg-iframe background-iframe="apps/explorer.html" background-interactive="true"}
+## Background: iframe {#bg-iframe background-iframe="_talk/apps/explorer.html" background-interactive="true"}
 
 ## Background: gradient {#bg-gradient background-gradient="linear-gradient(to bottom, #283b95, #17b2c3)"}
 
-## Background: image {#bg-image background-image="apps/explorer.png" background-size="contain" background-opacity="0.4"}
+## Background: image {#bg-image background-image="_talk/apps/explorer.png" background-size="contain" background-opacity="0.4"}
 
-## Background: video {#bg-video background-video="media/clip.mp4" background-video-loop="true" background-video-muted="true"}
+## Background: video {#bg-video background-video="_talk/figures/clip.mp4" background-video-loop="true" background-video-muted="true"}
 
 ## Media {#media}
 
-{{< video media/clip.mp4 width="480" height="270" >}}
+{{< video _talk/figures/clip.mp4 width="480" height="270" >}}
 
-<audio class="audio-test" controls src="media/tone.mp3"></audio>
+<audio class="audio-test" controls src="_talk/figures/tone.mp3"></audio>
 
-<img class="lazy-test" data-src="apps/explorer.png" width="200">
+<img class="lazy-test" data-src="_talk/apps/explorer.png" width="200">
 
 ## Lightbox and preview links {#lightbox}
 
-![Click to enlarge](apps/explorer.png){.lightbox width="320"}
+![Click to enlarge](_talk/apps/explorer.png){.lightbox width="320"}
 
-<img class="native-lightbox" src="apps/explorer.png" width="160" data-preview-image>
+<img class="native-lightbox" src="_talk/apps/explorer.png" width="160" data-preview-image>
 
-[Open the app in an overlay](apps/explorer.html){preview-link="true" .preview-test}
+[Open the app in an overlay](_talk/apps/explorer.html){preview-link="true" .preview-test}
 
-<a href="apps/explorer.html" class="preview-local" onclick="Reveal.showPreview(this.href); return false;">Local file preview via Reveal.showPreview</a>
+<a href="_talk/apps/explorer.html" class="preview-local" onclick="Reveal.showPreview(this.href); return false;">Local file preview via Reveal.showPreview</a>
 
 ## Code {#code}
 
@@ -103,9 +103,9 @@ outer [nested]{.fragment .highlight-blue fragment-index=6}
 ## Layout {#layout}
 
 ::: {.r-stack}
-![](apps/explorer.png){.fragment width="400"}
+![](_talk/apps/explorer.png){.fragment width="400"}
 
-![](apps/explorer-full.png){.fragment width="400"}
+![](_talk/apps/explorer-full.png){.fragment width="400"}
 :::
 
 ::: {.r-fit-text}

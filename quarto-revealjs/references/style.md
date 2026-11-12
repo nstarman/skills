@@ -39,7 +39,7 @@ Plane regenerated from the review's public code (scripts/planes.py). Microlensin
 ## Citations
 
 - Every paper cited in the talk is in the talk's **Zotero collection**; the bibliography slide is
-  generated from it (`bibliography.py`), never typed by hand. Add a paper to the collection when you
+  generated from it (`make refs`, i.e. `qd bib --zotero KEY`), never typed by hand. Add a paper to the collection when you
   cite it.
 - Cite on a slide with the `paper` shortcode: "[icon] Name et al. (year)", linking to the DOI.
 - **Check before showing**: every citation, arXiv ID, DOI, figure number or label and physical claim is

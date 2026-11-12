@@ -1,0 +1,18 @@
+---
+title: "Title of the talk"
+author: "Speaker"
+date: 2026-01-01
+---
+
+## First slide {#start}
+
+Text.
+
+::: {.notes}
+What I say on this slide.
+:::
+
+## References {#bibliography .bibliography visibility="uncounted"}
+
+<!-- bibliography:start (written by `make refs`, i.e. qd bib; edits here are overwritten) -->
+<!-- bibliography:end -->

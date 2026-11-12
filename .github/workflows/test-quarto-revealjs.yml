@@ -1,8 +1,8 @@
 name: test quarto-revealjs
 
-# End-to-end test of the quarto-revealjs skill against the latest Quarto release: renders the
-# fixture decks with the skill's assets and checks them offline, as PDF, and feature by feature
-# against the guide. Weekly, so upstream changes (Quarto, its bundled reveal.js, plotly) show up
+# End-to-end test of the quarto-revealjs skill against the latest Quarto release: builds the
+# fixture decks with the skill's assets and quartz-deck's qd, and checks them offline, as PDF, and
+# feature by feature against the guide. Weekly, so upstream changes (Quarto, its bundled reveal.js, plotly) show up
 # here. A scheduled run that fails, or passes on versions newer than quarto-revealjs/versions.json,
 # opens (or comments on) an issue. See quarto-revealjs/UPDATING.md.
 on:
@@ -63,6 +63,11 @@ jobs:
             --pattern 'quarto-*-linux-amd64.deb' --output quarto.deb
           sudo apt-get update -q && sudo apt-get install -y -q ./quarto.deb ffmpeg
           quarto --version
+      - name: quartz-deck's qd (the commit in quarto-revealjs/versions.json)
+        if: steps.changes.outputs.skill == 'true'
+        run: |
+          cargo install --locked --git https://github.com/nstarman/quartz-deck --rev "$(jq -r .qd quarto-revealjs/versions.json)"
+          qd --version && qd browser --install --human
       - name: Python packages (latest, to catch upstream changes)
         if: steps.changes.outputs.skill == 'true'
         run: |
@@ -77,7 +82,9 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: quarto-revealjs-output
-          path: ${{ runner.temp }}/deck/_output
+          path: |
+            ${{ runner.temp }}/deck/out-*
+            ${{ runner.temp }}/deck-scaffold/_output
 
   remind:
     # Only this job can write issues; it runs no repository code.

@@ -1,7 +1,10 @@
 """Open rendered reveal.js decks with the network blocked and report what would break offline.
 
-    python check_offline.py _output/*.html
-    python check_offline.py --webkit _output/*.html     # Safari's engine
+    python offline_check.py out/*.html
+    python offline_check.py --webkit out/*.html     # Safari's engine
+
+Test helper only (decks are checked by `qd export`, which uses Chromium): the end-to-end test runs
+it in WebKit too, and on the gotcha decks that are rendered with plain Quarto.
 
 Needs `pip install playwright`, and Google Chrome or `python -m playwright install chromium webkit`.
 Runs headless (no window). For each deck it prints requests that tried to

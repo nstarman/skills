@@ -22,17 +22,17 @@ A long speaker note that runs well past the slide. A long speaker note that runs
 
 ## An SVG whose insides overflow {#svg}
 
-<svg width="300" height="150" style="overflow:hidden"><circle cx="2500" cy="75" r="60" fill="#D55E00"/><rect x="10" y="10" width="100" height="100" fill="#0072B2"/><image href="media/header.svg" x="120" y="10" width="160" height="16"/></svg>
+<svg width="300" height="150" style="overflow:hidden"><circle cx="2500" cy="75" r="60" fill="#D55E00"/><rect x="10" y="10" width="100" height="100" fill="#0072B2"/><image href="_talk/figures/header.svg" x="120" y="10" width="160" height="16"/></svg>
 
-<object data="media/header.svg" type="image/svg+xml" width="400" height="40"></object>
+<object data="_talk/figures/header.svg" type="image/svg+xml" width="400" height="40"></object>
 
 ## One image on two slides {#twice}
 
-![](apps/explorer.png){width="200"}
+![](_talk/apps/explorer.png){width="200"}
 
 ## The same image again {#twice-2}
 
-![](apps/explorer.png){width="200"}
+![](_talk/apps/explorer.png){width="200"}
 
 ## Citations {#cite}
 
@@ -57,16 +57,16 @@ Three
 ## A clipped 2× app {#clipped}
 
 ::: {.r-stretch style="position:relative; overflow:hidden;"}
-<iframe src="apps/explorer.html" style="position:absolute; top:0; left:0; width:200%; height:200%; max-width:none; max-height:none; border:0; transform:scale(0.5); transform-origin:0 0;"></iframe>
+<iframe src="_talk/apps/explorer.html" style="position:absolute; top:0; left:0; width:200%; height:200%; max-width:none; max-height:none; border:0; transform:scale(0.5); transform-origin:0 0;"></iframe>
 :::
 
 ## An app over 2 MB, loaded when shown {#big-app}
 
 ::: {.r-stretch style="position:relative; overflow:hidden;"}
-<iframe data-app="apps/big.html" title="big app" style="position:absolute; top:0; left:0; width:100%; height:100%; max-width:none; max-height:none; border:0;"></iframe>
+<iframe data-app="_talk/apps/big.html" title="big app" style="position:absolute; top:0; left:0; width:100%; height:100%; max-width:none; max-height:none; border:0;"></iframe>
 :::
 
-## {#full-app background-iframe="apps/background.html" background-interactive="true"}
+## {#full-app background-iframe="_talk/apps/background.html" background-interactive="true"}
 
 ## Too long {#too-long}
 

@@ -1,17 +1,20 @@
 # Keeping quarto-revealjs current
 
-**Updating a deck folder made with an older version of the skill**: copy `_deck/` together with
-`_quarto.yml`. Since the talk-lessons update, `_quarto.yml` includes `_deck/skip-steps.html`, and a
-render without that file fails. New assets (`inline_apps.py`, `check_overflow.py`,
-`bibliography.py`, `_extensions/paper/`, `_quarto-share.yml`) are optional; copy the ones you use.
-Since the inline-apps-over-2-MB update, `inline_apps.py` understands `<iframe data-app="apps/x.html">`:
-copy it again and change each inline app's `src` to `data-app` (an app over 2 MB in `src` is blank in
-Chrome).
-Since the keep-it-small update, `inline_apps.py` gzips the apps and keeps an image used on several slides once, and
-`size_report.py` lists what makes a deck large: copy both again and add the new lines of "Check
-offline, then print" in `SKILL.md` to the deck's build.
-Since the SVG-images update, `inline_apps.py` also inlines `<image href>` files inside inline SVGs:
-copy it again.
+**Updating a deck folder made with an older version of the skill**: since the qd update, decks are
+built only with quartz-deck's `qd`, and the per-deck tools are gone (`inline_apps.py`, `make_pdf.py`,
+`check_offline.py`, `check_overflow.py`, `size_report.py`, `bibliography.py`, `_quarto-share.yml`,
+`_deck/header.html`, `_deck/setup.qmd`, `_vendor/`). To convert a folder:
+1. Install `qd` at the commit in `versions.json` (SKILL.md, step 0).
+2. Copy `assets/Makefile` (set `ZOTERO`) and move the sources into the layout in SKILL.md: decks at
+   the root, one per folder; css, html pieces, figures, apps and scripts under `_talk/`. Fix the paths
+   in the deck (`apps/x.html` → `_talk/apps/x.html`, and so on).
+3. From `_quarto.yml` remove `html-math-method`, the `include-in-header` of the old header and
+   `pdf-separate-fragments`; include `_talk/html/skip-steps.html` after the body (it carries the
+   WebKit `MathJax.Hub` stand-in the old header had). Delete `_vendor/` and the scripts above, and
+   the `{{< include _deck/setup.qmd >}}` line (qd adds its own Plotly renderer).
+4. Put `<!-- bibliography:start -->` and `<!-- bibliography:end -->` on the References slide in
+   place of `{{< include _bibliography.qmd >}}`, run `make refs`, and delete `_bibliography.qmd`.
+5. Give a full-bleed footer band class `overflow-ok`. Run `make`; `qd export` reports what is left.
 
 This skill documents a moving target: Quarto, the reveal.js it bundles, MathJax and plotly.py.
 Every claim in `references/quarto-revealjs-guide.md` was observed in a browser against the versions in
@@ -32,17 +35,22 @@ Every claim in `references/quarto-revealjs-guide.md` was observed in a browser a
 
 1. **Reproduce locally** with the new versions:
    ```bash
-   tests/skills/quarto-revealjs/run.sh /tmp/qr-test     # needs quarto, ffmpeg, python3 with
+   tests/skills/quarto-revealjs/run.sh /tmp/qr-test     # needs quarto, qd, ffmpeg, python3 with
                                                           # plotly jupyter playwright, and
                                                           # playwright's chromium + webkit
    ```
-   The steps: version check, set up a deck folder from `assets/` exactly as `SKILL.md` says, render
-   the fixture decks, offline check in Chromium and WebKit (network, missing files, errors, raw TeX),
-   `inline_apps.py` (the inlined `lessons.html` alone in an empty folder still runs its background
-   app, and its 3 MB `data-app` app once that slide is shown; `lessons_check.py` also checks the "]" skip key and the `paper` shortcode), the share build
-   (no notes), `check_overflow.py` (only `#too-long` flagged in `lessons.html`, in both engines), PDF (6 pages including
-   the app's still), the feature table (`feature_check.py`, which also checks the demo deck's Plotly
-   figure and equation fragment), and the documented gotchas (`fixture/gotchas/`: KaTeX not
+   The steps: version check; the scaffold in `assets/` (the files SKILL.md lists, none of the removed
+   tools, the Makefile targets, the bibliography markers); a new deck from the scaffold alone built
+   with `make` and `make notes` (an equation, and a full-bleed `.overflow-ok` band that must not be
+   flagged), `qd check`, and WebKit; `qd export` of each fixture deck; exactly one MathJax in
+   `demo.html`; the exported decks in WebKit (`offline_check.py --webkit`: network, errors, raw TeX);
+   `lessons.html` alone in an empty folder (`lessons_check.py`, Chromium and WebKit: the background
+   app and the 3 MB `data-app` app run, the "]" skip key, the `paper` shortcode, an image on two
+   slides kept once; `<object>` and SVG `<image href>` inlined, notes kept, apps gzipped, a size
+   report); qd's overflow check (only `#too-long` in `lessons.html`, nothing in `demo.html`); the
+   shared copy (`--strip-notes`); the PDF (5 pages including the app's still, and a longer notes
+   PDF); the feature table (`feature_check.py`, which also checks the demo deck's Plotly figure and
+   equation fragment); and the documented gotchas with plain Quarto (`fixture/gotchas/`: KaTeX not
    embedded, chalkboard refusing one file).
 2. **Read what changed**:
    - `DIFFERS FROM THE GUIDE: '<check>'` on a check listed in `EXPECTED_FAIL` that passed: a limitation went away (e.g. reveal.js 5.2's
@@ -55,9 +63,11 @@ Every claim in `references/quarto-revealjs-guide.md` was observed in a browser a
      docs and changelogs, fix the guide (and the fixture deck if the syntax changed), or, if it is
      simply broken upstream, mark it ✗ in the guide, add it to `EXPECTED_FAIL` with a comment, and
      report it upstream.
-   - Offline check fails: something now loads from the network. Usually a new CDN default in
-     Quarto's templates (`share/formats/revealjs/`) or in plotly.py's notebook renderer; adjust
-     `assets/` (`_quarto.yml`, `_deck/header.html`, `_deck/setup.qmd`) so it is loaded once, locally.
+   - Offline check fails (qd's, or `offline_check.py` in WebKit): something now loads from the
+     network. Usually a new CDN default in Quarto's templates (`share/formats/revealjs/`) or in
+     plotly.py's notebook renderer. The offline header and Plotly renderer live in quartz-deck
+     (`src/export.rs`): fix it there, then move `qd` in `versions.json` to that commit. Adjust
+     `assets/_quarto.yml` only for what the deck itself sets.
    - A gotcha step fails: the documented gotcha no longer holds (KaTeX now embedded, chalkboard
      now allowed). Update the guide, SKILL.md and the fixture.
    - Render fails: an option was renamed or removed; check Quarto's schema in
@@ -67,17 +77,19 @@ Every claim in `references/quarto-revealjs-guide.md` was observed in a browser a
    `tests/skills/quarto-revealjs/fixture/reveal-features.qmd`, a check to `feature_check.py`, and a
    row to the guide. Re-check the guide's "Gotchas" and the `SKILL.md` gotchas one by one; several
    (preview links only for http, `#/id` rewriting, the 95% iframe cap) are version-specific.
-4. **Re-check the workarounds** in `assets/_deck/header.html` still need to exist: the `about:blank`
-   math URL, the `Reveal.sync()` after MathJax, the iframe focus hand-back. Remove any that the new
+4. **Re-check the workarounds** still need to exist: in qd's header the `about:blank` math URL, the
+   `Reveal.sync()` after MathJax and the iframe focus hand-back; in `assets/_talk/html/skip-steps.html`
+   the WebKit `MathJax.Hub` stand-in (drop it once qd's header defines one). Remove any that the new
    versions make unnecessary, and say so in the guide.
 5. **Record the versions**: update `versions.json` (`verified` date, `quarto`, `revealjs`, `mathjax`,
-   `plotly`), and the version numbers quoted in the guide's first paragraph and `SKILL.md`.
+   `plotly`, `qd`), and the version numbers quoted in the guide's first paragraph and `SKILL.md`
+   (including the `cargo install --rev`). The workflow installs `qd` at the commit in `versions.json`.
 6. Run the repository checks (`python -m unittest discover tests`,
    `python scripts/build_index.py --check`) and open a pull request; the workflow runs on it.
 
 ## MathJax
 
-The skill pins MathJax 3.2.2's `tex-svg-full.js` (`versions.json` → `mathjax`; the test downloads that
-version). Move to a newer MathJax only after checking that its SVG build is still one file with every
+The skill pins MathJax 3.2.2's `tex-svg-full.js` (`versions.json` → `mathjax`); qd pins the same file
+by SHA-256 (`src/assets.rs` in quartz-deck) and downloads it once into its cache. Move to a newer MathJax only after checking that its SVG build is still one file with every
 TeX extension and no runtime font or component loading (MathJax 4's is not), and that
 `\class{fragment}` still works.
