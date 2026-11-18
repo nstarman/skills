@@ -1,6 +1,6 @@
-"""hybrid-compute/scripts: run_modes, push_results, watch_jobs, and the Engaging helpers.
+"""hybrid-compute/scripts: run_modes, push_results, watch_jobs, sync_data, and the Engaging helpers.
 
-Every external command (ssh, timeout, sleep, osascript, uv) is a stub first on PATH that logs its argv.
+Every external command (ssh, rsync, timeout, sleep, osascript, uv) is a stub first on PATH that logs its argv.
 """
 
 import os
@@ -184,6 +184,60 @@ class ClusterScriptsTest(Sandbox):
             p = self.run_script(script, *args)
             self.assertEqual(p.returncode, 2, args)
         self.assertEqual(self.logged(), [])  # nothing reached ssh
+
+
+class SyncDataTest(Sandbox):
+    """sync_data.sh: rsync of one data folder, with the repo root and slurm/ off limits."""
+
+    script = SKILL / "scripts" / "sync_data.sh"
+
+    def setUp(self):
+        super().setUp()
+        self.stub("rsync", LOGGER)
+        subprocess.run(["git", "init", "-q"], cwd=self.dir, env=self.env, check=True)
+        (self.dir / "sub").mkdir()
+
+    def test_pull_copies_the_cluster_folder_into_the_repo_root(self):
+        p = subprocess.run(["bash", str(self.script), "pull", "cl", "~/proj", "03_runs/snaps/"], env=self.env, capture_output=True, text=True, cwd=self.dir / "sub")
+        self.assertEqual(p.returncode, 0, p.stderr)
+        (call,) = self.logged()
+        self.assertIn("-e ssh -o BatchMode=yes", call)
+        self.assertIn("--exclude slurm/", call)
+        self.assertTrue(call.endswith(" cl:~/proj/03_runs/snaps/ ./03_runs/snaps/"), call)
+        self.assertTrue((self.dir / "03_runs" / "snaps").is_dir())  # made at the root, not in sub/
+        self.assertNotIn("--info", call)  # openrsync on macOS has no --info
+
+    def test_push_makes_the_cluster_folder_first(self):
+        (self.dir / "inputs").mkdir()
+        p = self.run_script(self.script, "push", "cl", "~/proj", "inputs")
+        self.assertEqual(p.returncode, 0, p.stderr)
+        (call,) = self.logged()
+        self.assertIn("--rsync-path mkdir -p ~/proj/inputs && rsync", call)
+        self.assertTrue(call.endswith(" ./inputs/ cl:~/proj/inputs/"), call)
+        self.assertNotEqual(self.run_script(self.script, "push", "cl", "~/proj", "missing").returncode, 0)
+
+    def test_delete_is_a_dry_run_until_confirmed(self):
+        p = self.run_script(self.script, "pull", "cl", "~/proj", "data", "--delete")
+        self.assertEqual(p.returncode, 3)
+        (dry,) = self.logged()
+        self.assertIn("--delete", dry)
+        self.assertIn("--dry-run", dry)
+        p = self.run_script(self.script, "pull", "cl", "~/proj", "data", "--delete", CONFIRM_DELETE="1")
+        self.assertEqual(p.returncode, 0, p.stderr)
+        real = self.logged()[1]
+        self.assertIn("--delete", real)
+        self.assertNotIn("--dry-run", real)
+
+    def test_refuses_the_root_slurm_and_values_that_could_break_out(self):
+        bad = [
+            ("pull", "cl", "~/p", "."), ("pull", "cl", "~/p", "/"), ("pull", "cl", "~/p", "a/../.."),
+            ("pull", "cl", "~/p", "/abs"), ("pull", "cl", "~/p", "~/x"), ("pull", "cl", "~/p", "slurm/logs"),
+            ("pull", "cl", "~/p", "a b"), ("pull", "cl; x", "~/p", "d"), ("pull", "cl", "~/p;x", "d"),
+            ("sync", "cl", "~/p", "d"), ("pull", "cl", "~/p", "d", "--force"),
+        ]
+        for args in bad:
+            self.assertEqual(self.run_script(self.script, *args).returncode, 2, args)
+        self.assertEqual(self.logged(), [])  # nothing reached rsync
 
 
 class EngagingConnectTest(Sandbox):

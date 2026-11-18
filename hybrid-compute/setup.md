@@ -99,8 +99,10 @@ NOTES.md                running log of decisions and findings
 `.gitignore`: `.venv/`, `slurm/logs/`, `__pycache__/`, and large caches, snapshots or checkpoints —
 everything on the rsync side of the division in `SKILL.md`.
 
-Copy the scripts from `scripts/` into `slurm/` and edit their marked placeholders: the `#SBATCH`
-partition and resource lines, and the clone path. The profile says what to put in each.
+Copy `run_modes.sh` and `push_results.sh` from `scripts/` into `slurm/` and edit their marked
+placeholders: the `#SBATCH` partition and resource lines, and the clone path. The profile says what
+to put in each. `watch_jobs.sh` and `sync_data.sh` run locally and take everything as arguments, so
+they need no copy.
 
 ## 6. Pilot
 

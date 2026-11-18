@@ -128,18 +128,25 @@ git-ignored, and they're not worth syncing.
 Worked examples: a 40 kB figure → git. A 3 MB `.npz` of fit parameters → git. A one-page summary
 table → git. A 200 MB snapshot → rsync. A checkpoint directory → rsync. Job logs → neither.
 
-**Running the transfer.** Pull the direction you need, with the repo's own machinery excluded:
+**Running the transfer.** Use `scripts/sync_data.sh`, run locally from anywhere inside the local
+clone. It moves one folder, at the same path relative to the repo root on both sides:
 
 ```bash
-rsync -az --info=progress2 \
-  --exclude '.git/' --exclude '.venv/' --exclude '__pycache__/' --exclude 'slurm/logs/' \
-  <alias>:<cluster-repo>/<dir>/ ./<dir>/
+scripts/sync_data.sh pull <alias> <cluster-repo> <dir>   # cluster → local: results, snapshots
+scripts/sync_data.sh push <alias> <cluster-repo> <dir>   # local → cluster: big inputs
 ```
+
+It leaves out `.git/`, `.venv/`, `__pycache__/` and `slurm/`, runs ssh with `BatchMode`, and on a
+push creates the folder on the cluster first. It uses only options the macOS rsync (openrsync) also
+has, so `--info=progress2` is out; it prints `--stats` at the end instead. To copy from a scratch
+filesystem outside the clone, pass that scratch root as `<cluster-repo>`.
 
 - **Never point a `--delete` sync at the cluster repo.** `slurm/` exists only there and is
   git-ignored, so a deleting push from the local tree wipes the logs and the job scripts' output
-  directory. If you need `--delete`, scope it to one data directory, never the repo root, and run
-  `--dry-run` first.
+  directory. The script refuses the repo root and `slurm/`. Given `--delete` as a fifth argument,
+  it prints a dry run of what would be removed and stops (exit 3). Show that list to the user. Only
+  after their yes, run it again with `CONFIRM_DELETE=1`. A `push --delete` deletes on the cluster,
+  which is on the ask-first list above.
 - `rsync` goes over ssh, so on a cluster whose profile describes a shared connection it needs that
   connection open, same as any other command.
 - Big transfers are I/O on a shared login node. Move one directory at a time rather than the whole
