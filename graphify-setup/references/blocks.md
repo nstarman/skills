@@ -68,6 +68,9 @@ below are the common ones; check the repository's own config for others that mat
         exclude: ^graphify-out/graph\.json$
 ```
 
+Check the spell checker before adding that last exclusion: whether it reads the graph depends on how
+the repository configures it, and if it already skips JSON there is nothing to exclude.
+
 `trailing-whitespace` and `mixed-line-ending` need no exclusion: a single line with no trailing
 space comes back byte-identical.
 
@@ -110,24 +113,28 @@ only home: the workflow below reads the version back out of this file. `env` is 
 
 ## drift workflow
 
-`.github/workflows/graphify.yml`. Two things to adjust before using it:
+`.github/workflows/graphify.yml`. Three things to settle before using it:
 
 - **Pin the actions** the way this repository's other workflows pin theirs — copy the `uses:` lines
   from a sibling workflow rather than taking the tags below.
-- **Check the token can open a pull request.** `github.token` often cannot, either because it is
-  read-only or because Actions is not allowed to open pull requests. Where that is so, use whatever
-  that repository already does for bot pull requests — a GitHub App token, or a PAT — and, if it
-  uses an action for the pull request itself, prefer that over the hand-rolled `gh pr list` check
-  below, which it replaces.
-
-The `grep` must not be loosened: `[0-9.]*` matches the empty string, so a comment that merely
-mentions `graphifyy==` would be picked up as a second pin and break the `uvx` call.
+- **Decide how the pull request gets opened.** `github.token` often cannot open one, either because
+  it is read-only or because Actions is not permitted to. Where it can, drop the app-token step and
+  pass `token: ${{ github.token }}`. Where it cannot, mint a token the way this repository already
+  does for bot pull requests — the app-token step below, or a PAT.
+- **The `grep` must not be loosened**: `[0-9.]*` matches the empty string, so a comment that merely
+  mentions `graphifyy==` would be picked up as a second pin and break the `uvx` call.
 
 ```yaml
 name: Refresh code graph
 
-# Rebuilds graphify-out/graph.json and opens a pull request if it drifted, e.g. because someone
-# committed with the hook skipped.
+# Rebuilds graphify-out/graph.json and opens a pull request if it drifted from the code, e.g.
+# because someone committed with SKIP=graphify-update. Never pushes to the default branch: the
+# graph is code-derived, but a bad rebuild is still a change nobody reviewed.
+#
+# This runs on Linux, and the graph is not byte-reproducible across platforms: the same source and
+# pin give a few fewer __init__.py re-export edges here than on macOS. So a run after a commit from
+# another platform opens a pull request that only normalises those edges. That is the job working,
+# not a bug; merging it makes the committed graph this runner's flavour until the next such commit.
 
 on:
   workflow_dispatch:
@@ -138,47 +145,77 @@ concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: false
 
-permissions:
-  contents: write
-  pull-requests: write
-
 jobs:
   refresh:
     name: Rebuild graph
     runs-on: ubuntu-latest
-    env:
-      BRANCH: chore/refresh-graphify
-      GH_TOKEN: ${{ github.token }}
+    permissions:
+      contents: read
+
     steps:
+      # Only needed where github.token cannot open a pull request. The app needs
+      # "Contents: Read and write" and "Pull requests: Read and write".
+      - name: Mint a GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.<APP_ID_SECRET> }}
+          private-key: ${{ secrets.<APP_PRIVATE_KEY_SECRET> }}
+
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
       - uses: astral-sh/setup-uv@v6
 
+      # The version is pinned once, in the commit-check config, so this job clusters the graph
+      # exactly the way the commit hook does.
       - name: Rebuild graph
-        # The version is pinned once, in the commit-check config.
         run: |
+          # Require at least one digit and take the first hit, so a mention of the package in a
+          # comment cannot be picked up as a second "pin".
           pin=$(grep -oE 'graphifyy==[0-9]+(\.[0-9]+)*' .pre-commit-config.yaml | head -1)
-          if [ -z "$pin" ]; then echo "no graphifyy pin found in .pre-commit-config.yaml" >&2; exit 1; fi
+          if [ -z "$pin" ]; then
+            echo "::error::no graphifyy== pin found in .pre-commit-config.yaml"
+            exit 1
+          fi
+          echo "Rebuilding with $pin"
           PYTHONHASHSEED=0 uvx --from "$pin" graphify update . --force
 
-      - name: Open a pull request if the graph changed
+      # A rebuild on one platform is byte-for-byte reproducible — .graphifyignore pins what is
+      # indexed, PYTHONHASHSEED=0 pins community numbering, and update keeps the stored
+      # built_at_commit rather than rewriting it — so a plain diff is a true drift check.
+      - name: Check for drift
+        id: drift
         run: |
-          git diff --quiet -- graphify-out/graph.json && exit 0
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git switch -C "$BRANCH"
-          git add graphify-out/graph.json
-          git commit -m "chore: refresh the graphify code graph"
-          git push --force origin "$BRANCH"
-          if [ -z "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[].number')" ]; then
-            gh pr create --head "$BRANCH" --base "${{ github.event.repository.default_branch }}" \
-              --title "chore: refresh the graphify code graph" \
-              --body "Weekly rebuild of \`graphify-out/graph.json\`.
-
-          The graph had drifted from the code, or was last built on a different operating system.
-          graphify classifies a few re-export edges differently per platform, so a rebuild here
-          normalises the graph to this runner's platform. Nothing to review: the file is generated."
+          if git diff --quiet -- graphify-out/graph.json; then
+            echo "drifted=false" >> "$GITHUB_OUTPUT"
+            echo "The committed graph matches a fresh rebuild."
+          else
+            echo "drifted=true" >> "$GITHUB_OUTPUT"
+            echo "The committed graph has drifted from the code."
           fi
+
+      - name: Open pull request
+        if: steps.drift.outputs.drifted == 'true'
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          add-paths: graphify-out/graph.json
+          commit-message: "chore(graph): refresh the committed code graph"
+          title: "chore(graph): refresh the committed code graph"
+          body: |
+            Rebuild of `graphify-out/graph.json`. Either the committed graph drifted from the code,
+            or it was last built on a different operating system — graphify classifies a few
+            re-export edges differently per platform, so a rebuild here normalises them.
+
+            Generated output, one line, collapsed by GitHub. Nothing to review beyond a green build.
+          branch: chore/refresh-graphify
+          delete-branch: true
 ```
+
+`peter-evans/create-pull-request` is doing real work here: it opens a pull request or updates the
+existing one, with no hand-rolled "is there already one open" check to get wrong.
 
 ## agent rules
 

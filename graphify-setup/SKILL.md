@@ -206,7 +206,8 @@ Exclude `graphify-out/graph.json` from each of them, or raise the size limit. Bl
 Then look for a job that runs **every** hook over **every** file — a `lint` session, a `Format` CI
 job, anything calling the hook runner with `--all-files`. It will rebuild the graph and fail for
 anyone whose platform differs from the one that built it. Add `graphify-update` to whatever that job
-already uses to skip hooks (`SKIP=graphify-update`, or the session's own skip list).
+already uses to skip hooks (`SKIP=graphify-update`, or the session's own skip list) — merging it
+into any `SKIP` already set rather than replacing it, so a caller's own skips survive.
 
 **Check**: run the repository's full check suite with the graph staged; nothing modifies or rejects
 it. Then check the CI job that does the same thing over all files, because that one passes locally
