@@ -247,3 +247,56 @@ nodes are the stable part, so this would work, but it is custom logic in the wor
 genuine edge-only drift; (b) pinning the drift job to the maintainers' platform, which moves the
 churn onto everyone else; (c) going back to an untracked graph, which gives up the thing the feature
 is for. Worth revisiting (a) if a later graphify release does not settle the ordering.
+
+## R16. After the migration merged
+
+The migrated repository's pull request merged, which made the last unverified claim testable and
+corrected an earlier one.
+
+**The drift workflow works, and R15's account of the platform difference was wrong.** Dispatched on
+the default branch, the job finished green and opened a pull request through a GitHub App token, so
+the app-token path and `peter-evans/create-pull-request` are both confirmed; the skill's block is now
+that shape rather than the hand-rolled `gh pr list` version. The pull request's diff was then read
+directly, both blobs fetched and compared here rather than taken on report:
+
+| | before (macOS-built) | after (Linux rebuild) |
+|---|---|---|
+| bytes | 5,107,628 | 5,106,814 |
+| nodes | 5195, identical ids | 5195, identical ids |
+| community ids and names | identical | identical |
+| edges | 9674 | 9671 |
+
+The three edges are `imports_from`, two in one module and one in another, **removed and not
+replaced**: none added, none reclassified, no `__init__.py` involved. So R15's description — a
+re-export classification flip — described the *worktree* fault, not the cross-platform one. The
+correct statement is narrower and more alarming: across operating systems clustering is perfectly
+stable and edge extraction is not. The skill now separates the two faults, and the wrong wording is
+out of it.
+
+**Four more things the merge settled:**
+
+- A squash merge does not touch the committed blob: the object on the branch tip and on the default
+  branch are the same. Worth a sentence in the skill, because "will a squash mangle a 5 MB generated
+  file" is the obvious reader question.
+- A fresh shallow clone of the merged default branch answers `graphify query` and `graphify explain`
+  with no build step — the feature working end to end, in the state a new contributor or agent meets.
+- `graphify explain` on that graph prints a hub-derived community name rather than `Community 213`,
+  which is the concrete argument for building with `update` instead of `cluster-only --no-label`.
+  That example is now in step 8.
+- **The runbook's order was its biggest remaining defect.** It built the graph in step 1, wired
+  everything around it, and committed it in step 7 — but what it committed was built before the
+  scope and the hook existed, so a careful reader following it in order could not get a correct
+  result. The runbook is now reordered: step 1 builds a graph explicitly labelled a survey, whose
+  only job is to tell step 2 what to put in `.graphifyignore`; the graph that gets committed is
+  built in step 8, after the scope, the exclusions and the hook are in place, with the hook's own
+  command.
+
+**Two reframings, both from living with it:**
+
+- The merge driver is no longer counted as an artefact "in a place". It is the one thing that cannot
+  be committed, and listing it beside five files that can is what sends readers looking for it in
+  the repository. The skill now says five committed artefacts plus one per-clone exception.
+- The verification section says outright that its checks are not optional, and that every blocking
+  defect found while wiring the first repository surfaced there or in CI rather than by reading. It
+  gained a sixth check — a byte-identical rebuild in a fresh clone — which on its own would have
+  caught three of the nine findings.
