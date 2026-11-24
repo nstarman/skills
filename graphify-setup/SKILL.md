@@ -70,6 +70,33 @@ make. And community numbering depends on hash ordering, so every build also need
 Pin the release that is current when you wire the repository (0.9.119 at the time of writing).
 Don't carry an old pin into a new repository: the graph records the version that built it.
 
+## What the graph is reproducible across, and what it is not
+
+Pin, `PYTHONHASHSEED=0` and `--force` buy you a graph that is byte-identical **on one platform, from
+a plain clone**. They do not buy more than that:
+
+| same | result |
+|---|---|
+| same OS, plain clone, same pin | byte-identical, warm cache or cold |
+| different OS | a handful of edges differ — 3 of 9,674 on a 5,000-node repository |
+| git worktree instead of a clone | far worse: hundreds of community names, and some edges |
+
+The differing edges are `__init__.py` re-export classifications, flipping between
+`re_exports`/`export` and `imports_from`/`import`. Both come from the same unsorted iteration
+upstream and are worth reporting there; until that is fixed, three things follow, and the runbook
+depends on all three:
+
+- **Never gate CI on a rebuild.** A job that rebuilds and compares fails permanently for everyone
+  not on the platform that built the committed graph.
+- **A repository-wide "run every hook over every file" job must skip this hook** (step 5). That is
+  the shape of gate that will bite: it passes on your machine and fails in CI.
+- **The weekly job will occasionally normalise the graph to its own platform** (step 9). It is a
+  real pull request that changes three edges and nothing else. Expected, not a bug — but say so in
+  the pull request, or a reviewer will read it as one.
+
+The commit hook is therefore the only place the rebuild is enforced, and a graph a few edges off is
+accepted rather than fought.
+
 ---
 
 ## Runbook
@@ -176,8 +203,14 @@ no trailing space byte-identical.
 Exclude `graphify-out/graph.json` from each of them, or raise the size limit. Block:
 *commit-check exclusions*.
 
+Then look for a job that runs **every** hook over **every** file — a `lint` session, a `Format` CI
+job, anything calling the hook runner with `--all-files`. It will rebuild the graph and fail for
+anyone whose platform differs from the one that built it. Add `graphify-update` to whatever that job
+already uses to skip hooks (`SKIP=graphify-update`, or the session's own skip list).
+
 **Check**: run the repository's full check suite with the graph staged; nothing modifies or rejects
-it.
+it. Then check the CI job that does the same thing over all files, because that one passes locally
+and fails on another platform.
 
 ### 6. Rebuild the graph on every commit
 
@@ -258,7 +291,9 @@ whatever that repository already does for bot pull requests (a GitHub App token,
 has a convention, follow it rather than the block.
 
 **Check**: run it by hand with the graph deliberately stale; it opens a pull request. Run it again;
-it updates the same one.
+it updates the same one. Then ask the other question — what it does on a *clean* repository whose
+graph was built on another platform. The answer is a pull request that normalises a few edges, which
+is why the block's pull-request body says so.
 
 ### 10. Tell the agents
 
@@ -304,7 +339,10 @@ File checks prove nothing about a wiring. Do these four, in the repository you j
    driver is not registered in this clone (step 6).
 3. **A fresh clone answers a question**:
    `uvx --from graphifyy==<version> graphify query "how does X work"` with no build step first.
-4. **The drift workflow.** It cannot be dispatched before it is merged: GitHub only exposes
+4. **The repository-wide check job.** Run whatever CI job runs every hook over every file, or run
+   it locally the way CI does. It must not rebuild the graph. This is the check that passes on your
+   machine and fails in CI, so it is worth doing before the pull request rather than after.
+5. **The drift workflow.** It cannot be dispatched before it is merged: GitHub only exposes
    `workflow_dispatch` for workflows already on the default branch, so `gh workflow run` cannot
    reach it from the branch. Run its steps by hand instead — a rebuild in a fresh clone must leave
    `graph.json` unchanged, and one made after a commit with the hook skipped must change it — and

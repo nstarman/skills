@@ -209,3 +209,39 @@ skill:
 What held up unchanged: the `.gitignore` pair, `-diff` / `linguist-generated=true`, the exclusions
 for the large-file, newline and formatter hooks, the extras-free pin, and the merge driver — which
 proved load-bearing, since the same merge in a clone without it conflicted.
+
+## R15. The graph is not byte-reproducible across operating systems
+
+Found by the migration's CI, after R14 was written, and the most consequential finding of the lot:
+it undercuts an assumption the profile rests on.
+
+Same source, same pin, same `PYTHONHASHSEED=0`, no extras, `--force` both sides:
+
+| platform | nodes | edges | communities |
+|---|---|---|---|
+| macOS | 5195 | **9674** | 353 |
+| ubuntu-latest | 5195 | **9671** | 353 |
+
+Nodes and communities agree exactly. The three differing edges are `__init__.py` re-export
+classifications flipping between `re_exports`/`export` and `imports_from`/`import` — the same
+unsorted-iteration instability as R14's worktree finding, and the two are probably one upstream bug.
+
+**Decision**: accept it and state it, rather than change the profile. A graph three edges off is
+still a graph every clone and every agent can query, which is the point (SC-002, SC-003). What the
+skill now says:
+
+- Reproducibility holds on one platform from a plain clone, and the limits are tabulated rather than
+  implied.
+- **Never gate CI on a rebuild.** A repository-wide "every hook over every file" job — the shape
+  that broke in the migration — must skip the rebuild hook, because it passes locally and fails on
+  another platform. This is now a step-5 instruction and its own verification in step 12, since the
+  original step-5 check could not have caught it.
+- The weekly job will occasionally normalise the graph to its own platform, and its pull-request
+  body now says so, so a reviewer does not read three edges as a bug.
+- The commit hook is the only place the rebuild is enforced.
+
+**Alternatives considered**: (a) a tolerant drift check comparing node sets rather than bytes —
+nodes are the stable part, so this would work, but it is custom logic in the workflow and would miss
+genuine edge-only drift; (b) pinning the drift job to the maintainers' platform, which moves the
+churn onto everyone else; (c) going back to an untracked graph, which gives up the thing the feature
+is for. Worth revisiting (a) if the upstream ordering bug is not fixed.

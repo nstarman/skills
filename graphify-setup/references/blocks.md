@@ -93,6 +93,10 @@ fight the hook on every commit.
         always_run: true
 ```
 
+Exclude this hook from any job that runs every hook over every file — `SKIP=graphify-update`, or
+that job's own skip list. Such a job rebuilds the graph and fails for anyone whose platform differs
+from the one that built the committed copy.
+
 `always_run: true` is what makes the hook fire on a commit that only deletes files — without it the
 runner finds no existing files to check, skips the hook, and the deleted code stays in the graph.
 It also means any `exclude:` here would be ignored, so there is none.
@@ -168,7 +172,11 @@ jobs:
           if [ -z "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[].number')" ]; then
             gh pr create --head "$BRANCH" --base "${{ github.event.repository.default_branch }}" \
               --title "chore: refresh the graphify code graph" \
-              --body "Weekly rebuild of \`graphify-out/graph.json\`. The graph had drifted from the code."
+              --body "Weekly rebuild of \`graphify-out/graph.json\`.
+
+          The graph had drifted from the code, or was last built on a different operating system.
+          graphify classifies a few re-export edges differently per platform, so a rebuild here
+          normalises the graph to this runner's platform. Nothing to review: the file is generated."
           fi
 ```
 
