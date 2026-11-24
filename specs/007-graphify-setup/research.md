@@ -163,3 +163,49 @@ other people to run these commands:
 - `update` with no code change reports "no code-graph topology changes detected" and leaves the outputs
   alone, so an unrelated commit does not rewrite the graph.
 - Deleting a file shrank the graph without `--force` (see R4).
+
+## R14. What the first real migration changed
+
+The runbook was then followed end to end against a repository on the untracked profile
+(GalacticDynamics/unxt#1057, a 5195-node graph, `graphifyy` 0.9.119). Eight corrections came back,
+four of which would have broken any repository following the first draft. All of them are now in the
+skill:
+
+1. **Step 1 built a graph the hook would immediately rewrite.** `extract --code-only` plus
+   `cluster-only --no-label` and `graphify update .` disagree — about 90 nodes, because `extract`
+   deduplicates and `update` does not, and a fifth of the nodes in a different community. Step 1 now
+   ends with `update . --force`, the same command the hook runs, and `cluster-only` is gone.
+   `--no-label` was also described wrongly here: it leaves communities named literally `Community 0`,
+   `Community 1` (reproduced on the probe repository), rather than giving deterministic hub-derived
+   names.
+2. **`update` has no `--code-only`, and the scope lives in an untracked cache.** A fresh clone — CI,
+   the drift job — therefore indexed about 950 extra Markdown nodes, some down a path that wants an
+   API key, so the committed graph was not reproducible. `.graphifyignore` is now its own step and
+   the sixth artefact, with a byte-for-byte cold/warm check.
+3. **The hook never ran on a deletion-only commit.** The runner passes only files that exist, so the
+   hook reported "no files to check" and the deleted code stayed in the graph — step 12's own first
+   test, failing silently. The hook now carries `always_run: true`, which makes `exclude:` inert.
+4. **An incremental rebuild drifts from a full one** (5 stale nodes, 877 reclustered), so the weekly
+   job would have opened a pull request every week. The hook now runs `update . --force`, about 13
+   seconds against 2.
+5. **The workflow's pin `grep` matched the empty string**, so a comment mentioning the package
+   became a second pin and broke the `uvx` call — on wording this skill encourages. Reproduced
+   exactly; now `grep -oE 'graphifyy==[0-9]+(\.[0-9]+)*' | head -1`, failing loudly when empty.
+6. **The workflow assumed a writable `GITHUB_TOKEN`.** Where Actions cannot open pull requests, the
+   job cannot work; the step now says to use the repository's own convention for bot pull requests.
+7. **A git worktree builds a different graph from a plain clone.** `.git` is a file there, which
+   shifts the scan's tie-breaking: 933 different community names and nine flipped `__init__.py`
+   edges, varying between runs, where four plain clones agreed byte for byte. Step 1 now says to
+   build the committed graph in a normal clone — which matters because agent sessions default to
+   worktrees. This looks like an upstream ordering bug worth reporting.
+8. **Smaller fixes**: `git status --porcelain` collapses an untracked directory, so step 3's check
+   needs `-uall` (reproduced); `trailing-whitespace` and `mixed-line-ending` need no exclusion while
+   `codespell` does; the drift job cannot be dispatched before it is on the default branch;
+   `built_at_commit` is written by `extract` only, so the report's staleness hint is misleading and
+   the agent rules now say to ignore it; a docs page that `{include}`s CONTRIBUTING needs nothing
+   written, but then the links in CONTRIBUTING must be absolute; and a union merge leaves the graph
+   a few nodes fat until the next rebuild.
+
+What held up unchanged: the `.gitignore` pair, `-diff` / `linguist-generated=true`, the exclusions
+for the large-file, newline and formatter hooks, the extras-free pin, and the merge driver — which
+proved load-bearing, since the same merge in a clone without it conflicted.
