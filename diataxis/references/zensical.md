@@ -41,7 +41,7 @@ files relative to `docs_dir`, and you can map a single anchor of a page that was
 ```
 
 Each old page becomes a meta-refresh page that keeps the URL fragment. Anchors you did not map
-go to the page-level target. No Markdown file may remain at the old path. The options:
+go to the page-level target. The options:
 
 1. **Host-level redirects** — Netlify `_redirects`, Cloudflare rules, nginx/Apache config,
    CloudFront functions. Best outcome: real 301s. Requires control of hosting.
@@ -63,6 +63,34 @@ go to the page-level target. No Markdown file may remain at the old path. The op
    significant inbound traffic.
 
 Whichever you choose, say so explicitly in the plan.
+
+### No source file may remain at a mapped old path
+
+Zensical builds every `.md` under `docs_dir`, whether or not the nav lists it, so a file left at
+an old path becomes a page at the URL the redirect wants. Zensical catches that collision and
+refuses to build:
+
+```
+RuntimeError: redirect output 'getting-started/index.html' collides with a page
+```
+
+It exits 1 **with or without `--strict`**, which is better than Sphinx, where the equivalent is
+a warning that only fails the build under `-W`. You cannot ship a shadowed redirect here by
+accident. What you can do is lose an afternoon to it, because the file is usually one nobody
+tracks: a leftover on a machine that built the docs before the move, or a page a generator
+writes. Deleting it fixes the build, and `exclude_docs` fixes it for everyone — a multiline
+string of patterns in `[project]`, which Zensical takes from MkDocs:
+
+```toml
+[project]
+exclude_docs = """
+getting-started.md
+guides/
+"""
+```
+
+Exclude every directory the restructure dissolved, in the same commit as the move, since the
+leftovers are untracked and deleting the tracked files does not reach them.
 
 ---
 
@@ -306,6 +334,13 @@ zensical build --strict     # exits 1 on validation failure
 
 Always link to `.md` files, not built HTML paths — Zensical rewrites them according to
 `use_directory_urls`. Linking to `.html` bypasses validation and breaks when that setting changes.
+
+What it does not catch is a page nobody links to. A stale file left under a dissolved
+directory, at a path no redirect maps, is built and published as a live page, and
+`zensical build --strict` with both validation keys set to `error` reports "No issues found".
+Sphinx fails such a page under `-W` ("document isn't included in any toctree"); Zensical has no
+equivalent, so after a restructure you need either the `exclude_docs` patterns above or a
+comparison of the built page list against the nav. Nothing in the build will raise it.
 
 Some `[project.validation]` keys (`unresolved_references`, `unresolved_footnotes`,
 `unused_definitions`, `unused_footnotes`, `shadowed_definitions`, `shadowed_footnotes`) are

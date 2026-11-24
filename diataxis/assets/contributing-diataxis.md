@@ -57,6 +57,17 @@ useful thing this scheme does for you.
   `TODO(verify): …` rather than something plausible. An invented fact is indistinguishable from
   a real one to the next reader.
 - **Expected output is real output.** Run it and paste what it printed.
+- **One word per meaning, and one symbol per meaning.** Use the glossary's term for a concept
+  everywhere, including in docstrings, even where another word reads better in the sentence; a
+  synonym is a word the next reader will search for and not find. The same holds for
+  mathematical symbols, which the notation page owns.
+- **A number needs a script.** Any figure you state — a timing, a speedup, an accuracy, a
+  threshold — comes from code we run, and the page says what produced it. "Roughly 10× faster"
+  with nothing behind it is the claim most likely to outlive its truth.
+- **Design records are not cited from user pages.** No decision numbers and no links to plans
+  or specs from a how-to, a tutorial, a reference entry or a docstring. The reason for a design
+  belongs in its issue or pull request, and in a comment beside the code. If a user page seems
+  to need the reason, the thing it needs is an explanation page.
 - **Moving a page means adding a redirect.** `[<your mechanism>]` — CI will fail otherwise.
 
 ### Docs PR checklist
@@ -67,6 +78,7 @@ useful thing this scheme does for you.
 - [ ] Nothing here is duplicated from another page — I linked instead.
 - [ ] Every fact is traceable to the source, or marked `TODO(verify)`.
 - [ ] Any code block was run, and its output is what it actually printed.
+- [ ] Any number I added names the script or benchmark that produced it.
 - [ ] If I moved or renamed a page, there is a redirect.
 - [ ] If it is a tutorial: no credentials, no branches, no placeholders, and I completed it myself
       from a clean state.
@@ -82,3 +94,7 @@ Raise an issue if you notice these — they are how doc sets slide back:
 - A tutorial acquiring a troubleshooting section — it means the tutorial does not reliably work.
 - Anyone answering the same question in issues twice. That is a missing page, and the answer they
   typed is its first draft.
+- A second word for something the glossary already names, on a page that is not the one page
+  allowed to use that field's own vocabulary.
+- A warning or error message in the code that appears nowhere in the docs. That is what someone
+  will paste into a search engine at the worst moment.

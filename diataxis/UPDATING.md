@@ -30,8 +30,11 @@ in the run's log (Zensical releases about weekly); bump `versions.json` (step 4)
      removed. Find the new spelling in the tool's changelog, then fix the reference *and* the
      fixture config (`fixture/sphinx/conf.py`, `fixture/zensical/*.toml`), which copy it.
    - A documented behaviour no longer holds (the step names the reference section): page titles,
-     redirects, `rediraffecheckdiff`, the Zensical CLI. Update that section, and `SKILL.md` if it
-     repeats the claim, then the check.
+     redirects, `rediraffecheckdiff`, what each stack does with a leftover file at a dissolved
+     path, the Zensical CLI. Update that section, and `SKILL.md` if it repeats the claim, then the
+     check. Two of those steps pass *because* a stack still behaves badly — Zensical publishing an
+     orphan page under `--strict`, and its exact collision message — so a failure there may mean
+     the stack improved and the reference now overstates the problem.
    - A `scripts/` step fails: the skill's own scripts, not upstream; fix the script.
 3. **New features worth documenting** (Zensical especially): read the changelogs since the
    version in `versions.json`; the Zensical "Feature gaps" table goes stale fastest. Add a check
