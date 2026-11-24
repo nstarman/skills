@@ -1,0 +1,4 @@
+{
+  "name": "graphify-setup",
+  "description": "Wires graphify into a repository with the code graph committed, rebuilt on every commit and merged without conflicts, and documented where both contributors and coding agents will find it."
+}
