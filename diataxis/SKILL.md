@@ -10,7 +10,8 @@ description: >-
   navigate" — even when the user never says Diátaxis. Also when a page mixes teaching with
   reference material, when generated API reference and narrative docs must coexist, or when moving
   docs between Sphinx/MyST, MkDocs and Zensical. Covers audit, migration map, the rewrites, cross-
-  linking, landing pages, and redirects so links survive.
+  linking, landing pages, and redirects so links survive. Also for setting up a package's docs,
+  and where a glossary, notation or warnings page goes.
 ---
 
 # Diátaxis documentation refactoring
@@ -54,8 +55,8 @@ before it says what the thing is; reference answers questions the reader does no
 explanation discusses the design of a system they have not agreed to use. That reader lands on
 `index.md`, sees four doors that all assume adoption, and leaves.
 
-The pattern that serves them is an orientation section, `start/`, at most three pages, placed
-first in the nav: `what-it-does.md` (the mental model in the project's own terms), `is-it-right.md`
+The pattern that serves them is an orientation section, `start/`, at most three pages — a
+fourth and a fifth have to be earned, and the reference says how — placed first in the nav: `what-it-does.md` (the mental model in the project's own terms), `is-it-right.md`
 (triage tables matching the reader's data and goals to the call to use and the page to read), and
 `quickstart.md` (the smallest end-to-end result, with no teaching ambition). Audit for it with the
 first question in phase 1, and treat a missing `start/` as a gap in the same way a missing tutorial
@@ -105,6 +106,13 @@ Verification claims belong in your summary, naming the exact command you ran —
 a file that ships: not a comment in `conf.py` or `zensical.toml`, not a line of page prose. A
 config comment saying "verified against version X" is false the moment anything changes, and
 nobody will ever go back and delete it. The summary is dated and disposable; the repo is not.
+
+**A number on a page is a measurement, so it needs a source.** Every timing, speedup, accuracy
+or chosen threshold comes from a snippet something executes, or from a script whose page names
+the script, its options and the date it ran. The provenance line ships, because it is a fact
+about the number; the claim that *you* ran something belongs in your summary. A figure with
+nothing behind it is an invented fact in the place a reader is least able to check it, and
+"about 10× faster" is the sentence most likely to outlive its truth.
 
 **Every file you create either has real content or is declared missing.** No silent stubs. A page
 you did not write must appear on its section landing page under "Not yet written" *and* in the
@@ -184,7 +192,10 @@ site-level questions:
 - **Is there any real tutorial?** Usually there is not — there is a "Getting Started" page that
   is an installation how-to. This is the most common gap in a doc set, and it is a writing job,
   not a moving job.
-- Where does reference live, and is it generated, hand-written, or both?
+- Where does reference live, and is it generated, hand-written, or both? **Does anything key
+  the messages the software prints?** Every warning and error it emits is a reference fact and
+  the text a stuck reader pastes into a search engine; a doc set with no page keyed by message
+  has a gap no link checker will find, and generated API docs do not close it.
 - What is **not practitioner documentation at all**? Changelog, release notes, contributor guide,
   ADRs, governance, support, licence. Legitimate, and outside the four modes — give them their
   own top-level home (`about/`) rather than mangling them into a quadrant.
@@ -248,6 +259,8 @@ contaminated pages into tidier folders.
 | A table of every option mid-walkthrough | Reference fused to a tutorial or how-to | DRAIN + LINK |
 | A "Why use X?" or "Is this for me?" section inside a tutorial, explanation or README | Orientation material with no mode to live in | EXTRACT to `start/` |
 | An "Advanced" or "Guides" section | Unsorted overflow bucket, not a mode | Re-audit its contents individually |
+| An explanation page that gives the mental model, then the derivation, then more mental model | Two reading jobs fused; the page readers bounce off | SPLIT into the two explanation sections (`references/architecture.md`) |
+| A second word for a concept the glossary already names | One fact under two names; neither copy is canonical any more | LINK, and confine a community's own vocabulary to that community's page |
 
 ## Examples, architecture, toolchain
 
@@ -258,6 +271,9 @@ contaminated pages into tidier folders.
   cross-linking, a second dimension (products/roles/platforms), or keeping the structure from
   decaying** → `references/architecture.md`.
   Templates: `assets/landing-page-template.md`, `assets/contributing-diataxis.md`.
+- **A library or a scientific package** — a technical subject, mathematics, messages the code
+  emits, a package family, or several communities with their own words for the same thing →
+  the *Documenting a library or a scientific package* section of `references/architecture.md`.
 - **Sphinx / MyST** → `references/sphinx-myst.md`. **Zensical** → `references/zensical.md`.
   Other stacks: the modes and moves are unchanged; find their equivalents for nav, section index
   pages, cross-file links, and redirects.
@@ -322,7 +338,8 @@ examples has removed test coverage, whatever the page count says.
 
 - Map rows = source file count, and both numbers are stated.
 - Every practitioner page sits in one of the four mode sections, apart from the orientation
-  pages in `start/` — at most three of them, four if an install page is earned.
+  pages in `start/` — at most three of them, four if an install page is earned, five if a
+  `principles.md` is.
 - Every created file has real content or appears in the gap list.
 - Every moved URL has a redirect, or the no-redirect mitigation is written down.
 - `check_links.py` passes, and the scanner reports no duplicated table rows across the new tree
@@ -330,6 +347,10 @@ examples has removed test coverage, whatever the page count says.
 - `check_repo_refs.py` is clean: nothing outside `docs/` still points at a page you moved.
 - The project's own test/doctest/build gate runs green, or you have said precisely what stopped
   you from running it. Example counts did not silently drop.
+- Nothing is still being built from a dissolved directory. A leftover source file at an old path
+  shadows its own redirect — a warning in Sphinx, a hard build failure in Zensical — and one at
+  an unmapped path is published silently. Exclude the dissolved tree in the same commit as the
+  move; the toolchain files name the setting.
 - Every redirect target actually resolves in the new tree. A stub that 404s is worse than no
   stub, and an anchor map that rewrites paths it should have left alone manufactures 404s on
   links that used to work.

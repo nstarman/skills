@@ -229,14 +229,21 @@ reference well; long prose does not.
 
 1. **Assuming generated docs are enough.** Autodoc output is reference, but reference is more
    than autodoc output: CLI, configuration, file formats, error codes, environment variables,
-   limits and compatibility matrices are usually hand-written. See `architecture.md` for how
-   generated and hand-written reference coexist.
+   limits and compatibility matrices are usually hand-written, and a technical library normally
+   also needs a glossary, a notation page and a table of the code's named constants. See
+   `architecture.md` for how generated and hand-written reference coexist, and for the shape of
+   each of those pages.
 2. **Docstrings that teach.** A docstring full of narrative becomes a bad tutorial embedded in
    the API reference. Keep them descriptive; link out.
 3. **Inconsistent entries.** Three fields on one function and eight on the next reads as
    incompleteness even when it is not.
 4. **No examples at all.** Austere does not mean bare. A short illustrative snippet per entry
    is reference, not instruction.
+5. **No home for the exact text the software prints.** Every warning and error message the
+   project emits is a reference fact, and the message is what a stuck reader searches for. If
+   grepping the docs for a message the code raises finds nothing, the page is missing — it is
+   not covered by the API reference, which documents the function, not what it says when it
+   refuses. `architecture.md` has the entry shape.
 
 ---
 
@@ -290,6 +297,14 @@ Titles should read with an implicit "About" in front: *About user authentication
 *User authentication*. Explicit *Why…* titles are excellent when the page really answers one.
 The section itself need not be called "Explanation" — *Discussion*, *Background*,
 *Concepts*, *Topics* all work.
+
+### When one explanation section is not enough
+
+For software whose subject matter is itself technical, "why it is built this way" and "what the
+code actually computes" are two reading jobs, and one page that does both is the page readers
+bounce off. The fix is two sibling sections inside the explanation mode — ideas in one, read in
+order and carrying no code; mechanism and mathematics in the other, consulted. Neither is a
+fifth mode. `architecture.md` has the rules for both.
 
 ### Failure modes
 

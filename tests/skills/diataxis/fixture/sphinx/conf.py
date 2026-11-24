@@ -1,7 +1,9 @@
 # The "Starter conf.py" of diataxis/references/sphinx-myst.md, as written there, except:
 #  - intersphinx is left out (it needs the network, and a failed fetch is a warning under -W);
 #  - REDIRECTS=reredirects swaps rediraffe for sphinx-reredirects, configured as in the
-#    reference's "sphinx-reredirects" section, so both documented mechanisms are built.
+#    reference's "sphinx-reredirects" section, so both documented mechanisms are built;
+#  - EXCLUDE_DISSOLVED=1 adds the exclude_patterns entry of the reference's "Exclude the
+#    dissolved tree", so the test can check that it fixes a shadowed redirect.
 import os
 
 extensions = [
@@ -32,6 +34,11 @@ rediraffe_branch = "main"
 rediraffe_redirects = "redirects.txt"
 
 nitpicky = True          # unresolved cross-references become warnings
+
+if os.environ.get("EXCLUDE_DISSOLVED"):
+    # Every path under a dissolved tree is a redirect target now, so a stale source document
+    # left there must not be built and shadow its own redirect.
+    exclude_patterns += ["getting-started.*"]
 
 if os.environ.get("REDIRECTS") == "reredirects":
     extensions.remove("sphinxext.rediraffe")

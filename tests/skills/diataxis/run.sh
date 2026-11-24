@@ -133,6 +133,22 @@ if sphinx-build -q -b rediraffecheckdiff docs docs/_build/check-empty >/dev/null
 else ok "fails when a moved file has no redirect"; fi
 mv redirects.full docs/redirects.txt
 
+step "Sphinx: a stale page at a dissolved path shadows its redirect; exclude_patterns fixes it"
+# sphinx-myst.md ("Exclude the dissolved tree"): a leftover source document at an old path is
+# still built, and rediraffe then refuses to write its redirect over it. Orphaned on purpose, so
+# the only warning under -W is rediraffe's.
+printf -- '---\norphan: true\n---\n\n# Stale\n\nLeftover from before the move.\n' > docs/getting-started.md
+rm -rf docs/_build
+if sphinx-build -W --keep-going -n -q -b html docs docs/_build/stale >/dev/null 2>&1; then
+  fail "a stale page at a redirect's old path built clean: sphinx-myst.md says rediraffe reports a broken redirect"
+else ok "a stale page at an old path fails the build"; fi
+EXCLUDE_DISSOLVED=1 sphinx-build -W --keep-going -n -q -b html docs docs/_build/excluded >/dev/null 2>&1 \
+  && ok "exclude_patterns lets the redirect be written again" \
+  || fail "exclude_patterns did not fix the shadowed redirect"
+python3 "$here/redirect_check.py" docs/_build/excluded getting-started.html \
+  || fail "the redirect does not resolve after excluding the stale page"
+rm docs/getting-started.md
+
 step "Sphinx: sphinx-reredirects (docname -> .html) writes redirect pages that resolve"
 REDIRECTS=reredirects sphinx-build -W -n -q -b html docs docs/_build/reredirects && ok "sphinx-build with sphinx-reredirects" \
   || fail "sphinx-build with sphinx-reredirects failed"
@@ -173,6 +189,34 @@ step "Zensical: the redirects plugin (redirect_maps), as zensical.md documents i
 { cat zensical.toml; cat "$fx/zensical/redirects.toml"; } > redirects.toml
 zensical build --strict --clean -f redirects.toml && ok "build with redirect_maps" || fail "zensical build with redirect_maps failed"
 python3 "$here/redirect_check.py" site getting-started/index.html usage/index.html || fail "Zensical redirects do not resolve"
+
+step "Zensical: a stale page at a mapped old path collides; exclude_docs fixes it"
+# zensical.md ("No source file may remain at a mapped old path"): Zensical builds every .md under
+# docs_dir whether or not the nav lists it, so a leftover at a redirect's source path lands on the
+# URL the redirect wants. Unlike Sphinx's warning, this is a hard failure with or without --strict.
+printf '# Stale\n\nLeftover from before the move.\n' > docs/getting-started.md
+out=$(zensical build --clean -f redirects.toml 2>&1); rc=$?
+[ $rc -ne 0 ] && ok "collides without --strict too (exit $rc)" \
+  || fail "a stale page at a mapped old path built clean: zensical.md says the redirect output collides"
+echo "$out" | grep -q "collides with a page" && ok "the message is the one zensical.md quotes" \
+  || fail "the collision message changed; zensical.md quotes 'collides with a page': $(echo "$out" | tail -1)"
+python3 -c 'p="redirects.toml";t=open(p).read();open("excl.toml","w").write(t.replace("[project]\n","[project]\nexclude_docs = \"\"\"\ngetting-started.md\n\"\"\"\n",1))' \
+  || fail "could not write excl.toml"
+zensical build --strict --clean -f excl.toml >/dev/null 2>&1 && ok "exclude_docs lets the redirect be written again" \
+  || fail "exclude_docs did not fix the collision; zensical.md names it as the fix"
+python3 "$here/redirect_check.py" site getting-started/index.html \
+  || fail "the redirect does not resolve after excluding the stale page"
+rm docs/getting-started.md
+
+step "Zensical: a stale page at an unmapped path is published silently"
+# zensical.md ("Link validation"): what link validation does not catch. Sphinx fails this page
+# under -W ("isn't included in any toctree"); Zensical has no equivalent, so the only guard is
+# exclude_docs. If this step starts failing, Zensical gained the check and the reference is stale.
+printf '# Leftover\n\nIn neither the nav nor a redirect.\n' > docs/leftover.md
+zensical build --strict --clean -f redirects.toml >/dev/null 2>&1 && [ -f site/leftover/index.html ] \
+  && ok "--strict publishes it and reports nothing" \
+  || fail "zensical now flags a page in neither the nav nor a redirect; zensical.md 'Link validation' needs updating"
+rm docs/leftover.md
 
 step "Zensical: the CLI is still new, build, serve (zensical.md: no migrate command)"
 cmds=$(zensical --help | awk '/^Commands:/{f=1;next} f&&NF{print $1}' | sort | tr '\n' ' ')

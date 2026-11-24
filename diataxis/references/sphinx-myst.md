@@ -429,6 +429,30 @@ sphinx-build -b rediraffewritediff docs docs/_build   # adds renames automatical
 Rediraffe chains transitively (A→B, B→C implies A→C), which matters across successive
 restructure increments.
 
+In CI, point `rediraffe_branch` at `origin/main` rather than `main`, so the check compares
+against the fetched remote and not whatever a contributor's local `main` happens to be.
+
+**Exclude the dissolved tree.** After the move, every path under the old directory is a
+rediraffe redirect target, and rediraffe refuses to write a redirect over a page the build
+produced — it warns that the redirect is broken, which fails the build under `-W`. That cannot
+happen on CI, which
+checks out clean, but it happens on every machine that built the docs before the move and still
+has a generated artifact at an old path: a `.ipynb` that jupytext wrote next to a moved `.md`,
+for instance, since `.ipynb` is usually in `source_suffix`. The symptom is a build error naming
+a file the build did not create, and the fix belongs in the repository rather than in each
+developer's head:
+
+```python
+exclude_patterns = [
+    # The pre-restructure tree is gone and every path under it is now a redirect
+    # target. A stale generated artifact there would shadow its own redirect.
+    "guides/**",
+]
+```
+
+Do this for every directory the restructure dissolved, in the same commit as the move. Deleting
+the tracked files is not enough, because the artifacts are untracked.
+
 ### sphinx-reredirects — for wildcards and cross-domain moves
 
 Source is a **docname** (no suffix); target is a URL matching the builder's output naming.
