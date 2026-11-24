@@ -197,7 +197,7 @@ skill:
    shifts the scan's tie-breaking: 933 different community names and nine flipped `__init__.py`
    edges, varying between runs, where four plain clones agreed byte for byte. Step 1 now says to
    build the committed graph in a normal clone — which matters because agent sessions default to
-   worktrees. This looks like an upstream ordering bug worth reporting.
+   worktrees. This is an ordering quirk inside graphify, worked around rather than reported.
 8. **Smaller fixes**: `git status --porcelain` collapses an untracked directory, so step 3's check
    needs `-uall` (reproduced); `trailing-whitespace` and `mixed-line-ending` need no exclusion while
    `codespell` does; the drift job cannot be dispatched before it is on the default branch;
@@ -224,7 +224,9 @@ Same source, same pin, same `PYTHONHASHSEED=0`, no extras, `--force` both sides:
 
 Nodes and communities agree exactly. The three differing edges are `__init__.py` re-export
 classifications flipping between `re_exports`/`export` and `imports_from`/`import` — the same
-unsorted-iteration instability as R14's worktree finding, and the two are probably one upstream bug.
+unsorted-iteration instability as R14's worktree finding, and the two are probably one bug inside
+graphify. Not reported upstream, by the author's decision: the skill documents the behaviour and
+works around it rather than carrying a to-do that every reader is nudged to chase.
 
 **Decision**: accept it and state it, rather than change the profile. A graph three edges off is
 still a graph every clone and every agent can query, which is the point (SC-002, SC-003). What the
@@ -244,4 +246,4 @@ skill now says:
 nodes are the stable part, so this would work, but it is custom logic in the workflow and would miss
 genuine edge-only drift; (b) pinning the drift job to the maintainers' platform, which moves the
 churn onto everyone else; (c) going back to an untracked graph, which gives up the thing the feature
-is for. Worth revisiting (a) if the upstream ordering bug is not fixed.
+is for. Worth revisiting (a) if a later graphify release does not settle the ordering.

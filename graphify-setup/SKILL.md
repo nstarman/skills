@@ -83,8 +83,8 @@ a plain clone**. They do not buy more than that:
 
 The differing edges are `__init__.py` re-export classifications, flipping between
 `re_exports`/`export` and `imports_from`/`import`. Both come from the same unsorted iteration
-upstream and are worth reporting there; until that is fixed, three things follow, and the runbook
-depends on all three:
+inside graphify, so treat them as how the tool behaves and work around them. Three things follow,
+and the runbook depends on all three:
 
 - **Never gate CI on a rebuild.** A job that rebuilds and compares fails permanently for everyone
   not on the platform that built the committed graph.
