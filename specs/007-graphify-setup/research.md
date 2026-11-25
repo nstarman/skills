@@ -332,3 +332,118 @@ Linux rebuild merged, the committed graph became the Linux build and the directi
 contributor's next commit adds those three edges back. The skill now says the committed graph carries
 the flavour of whichever platform last built it, and that the difference runs both ways. The
 measurement is unchanged; the framing was misleading.
+
+## R18. The first repository wired with the published skill
+
+A second repository went through the runbook — the first using the released skill rather than the
+draft, and the first that is not the one the skill was built against. Twelve findings; these are the
+ones that changed the skill.
+
+**The reproducibility story was wrong, and this is the important one.** R14 and R16 blamed git
+worktrees. The real variable is **which files are on disk**: a fresh clone and a built checkout of
+the same commit produce different graphs, and a worktree is merely where an agent happens to have
+run a build. Isolated by adding files to a plain clone one at a time: a 24-line generated
+`_version.py`, from which graphify extracts **no nodes at all**, moved 310 of 699 nodes to a
+different community id and reclassified one edge. `.graphifyignore` cannot suppress it — the scope
+file filters symbol extraction, not the directory walk — which was checked rather than assumed.
+Reproduced here independently on a scratch clone.
+
+The consequence is a real cost, now stated in the skill rather than implied: every package using
+hatch-vcs or setuptools_scm has a generated version file the moment it is installed, so a
+contributor with a working environment rebuilds a different graph, their hook rewrites it, and the
+weekly job normalises it back. The drift pull request is **most weeks**, not occasional. The skill
+says to commit the fresh-clone flavour, because that is what CI and the drift job reproduce, and to
+tell the repository so in CONTRIBUTING so the churn does not read as a bug. The explanation moved to
+`references/reproducibility.md`, with the diagnostic for a rebuild that does not match.
+
+**Four blockers in the runbook itself:**
+
+1. Step 1's check named `GRAPH_REPORT.md`, which `extract` does not write — removing `cluster-only`
+   earlier removed the thing that wrote it, so the survey step's only check could not be performed.
+   It is now a node-count-per-file one-liner over `graph.json`, which is a sharper instrument anyway.
+2. `check-useless-excludes` (a cookiecutter default, so expect it in every repository) fails when an
+   `exclude:` matches no file — so the wiring commit fails until `graph.json` exists, while step 8's
+   clone needs `.graphifyignore` committed first. Step 9 now gives the two-phase recipe: commit the
+   wiring with that hook skipped, then fold the graph into the same commit with `--amend`.
+3. Step 5 missed **pre-commit.ci**, which is configured by a `ci:` key in the file being edited —
+   no workflow, nothing in `.github/`, invisible to the search the step described — and which is
+   often a required check *and* autofixes by pushing a commit. One `ci: skip: [graphify-update]`
+   line. The step also now says to grep for an existing `SKIP`, since a repository that runs hooks
+   over everything usually skips something already, and that line is both the gate and the fix.
+4. The hook inherited `default_stages: [pre-commit, pre-push]` and ran a second full rebuild on every
+   push, failing it with nothing to fix in place. `stages: [pre-commit]`.
+
+**Six smaller ones**: the drift job's commit message must match a `commitizen` convention
+(`🧹 chore(graph): …` under cz-conventional-gitmoji, where plain `chore(graph):` is rejected); step 10
+needed a third case for a repository that does **no** bot pull requests at all, with the
+recommendation that a fleet gets one organization-level App rather than discovering this on the
+eighth repository, plus the two-call `gh api …/rulesets` recipe; `CONTRIBUTING.md` is often at
+`.github/CONTRIBUTING.md`, which breaks the README line's link and the block's heading level; the
+scope list led with a paper repository's patterns when `*.yml` / `*.yaml` is the near-universal rule
+for a library and `*.svg` matters more than `*.png`; editing `.graphifyignore` needs
+`rm -rf graphify-out` first, because a scope change does not invalidate the AST cache; and a rebase
+mid-task needs a graph refresh, which is now step 14.
+
+To stay under the 500-line limit, the reproducibility explanation and the migration/variations
+sections moved into `references/`, leaving the runbook and its decisions in `SKILL.md`.
+
+## R19. Five more repositories at once
+
+Five sessions wired the skill into five repositories in parallel — a 591-node library, a 223-node
+one, a 4,183-node library whose tests were 60% of the survey graph, an 8,791-node monorepo, and a
+paper repository. Roughly thirty-seven findings came back. The full write-ups are in the session
+notes; these are the ones that changed the skill.
+
+**A blocker nobody could have predicted: the hook cannot install on a current Python.**
+`graphifyy==0.9.119` declares `Requires-Python >=3.11.5,<3.15`, and `language: python` builds the
+hook's environment with whatever Python the hook runner itself is on. Where that is 3.15 the install
+fails with a pip error that names no version at all, so the contributor gets no graph, no rebuild and
+no clue. It hides from anyone who follows a repository's own CONTRIBUTING (`uv run pre-commit
+install`, which uses the project venv) and surfaces for anyone with a `pipx`/`uv tool` install. The
+hook block now pins `language_version`, and the skill says to check the pin's `Requires-Python`
+against the repository's floor *before* wiring, since a repository whose minimum is above graphifyy's
+ceiling has no valid choice.
+
+**Two numbers this skill published were wrong to state as single values.** The generated-file effect
+was given as "~45% of nodes": measured again it was 44% on a 700-node repository, **zero community
+movement and one edge** on a 591-node one, and one edge on a paper repository. And the claim that
+`cz-conventional-gitmoji` rejects a plain `chore(graph):` subject held in one repository and not in
+another. Both are now stated as ranges or as "check what it accepts" — the mechanism is the rule, the
+magnitude is not.
+
+**Three verifications could pass without testing anything**, which is worse than failing:
+
+- Step 8's byte-identity check: with the graph present and nothing changed, `update --force` does not
+  rewrite the file, so identity is trivially true. Watch for the `Rebuilt:` line, or perturb the
+  graph and confirm the rebuild restores it — the snippet is in `references/reproducibility.md`.
+- Step 13's checks 2 and 3 run in a clone, and **a clone has no hooks**: the deletion-only commit
+  succeeds because nothing fired, which is exactly the failure the check exists to catch. Step 13 now
+  opens with the clone's setup — install the runner, register the merge driver, set an identity.
+- Check 4 needs a clone taken *after* step 9's amend; a step-8 clone has no graph in it and fails
+  with an alarming, meaningless error.
+
+**The scope decision got an instrument.** "Past a few megabytes, narrow further" gave the reader no
+way to price a candidate, and rebuilding to measure costs minutes plus a cache wipe each time.
+`references/scope.md` now carries a simulator that drops the matching nodes and links from the survey
+graph and reports the serialised size — five candidate scopes in a second, predicting 5.37 MB against
+5.44 MB actually built. It also records what the prose never reached: that excluding `benchmarks/`,
+`scripts/` and `docs/` on one monorepo saved 0.07 MB, which is a bad trade for real coverage.
+
+Related, and the single biggest lever: `.graphifyignore` takes gitignore syntax, so a bare `tests/`
+prunes at any depth. Nothing said so, and the extension globs are the small cut — on the monorepo
+they removed 570 of 8,791 nodes while `tests/` removed 3,910. **The test suite is now a stated
+decision** rather than something each repository settles silently: keep them unless the graph's hubs
+come out as test fixtures, and say which way in the pull request.
+
+**Smaller fixes, all from being bitten**: the reproducibility diagnostic printed thousands of
+`.venv/` lines and is now filtered; step 8's `/tmp/graph-build` is an example rather than an
+instruction, since one repository's own rules forbid `/tmp` and a repo-relative `scratch/` is the one
+place the clone must never go; step 5's "usually two" all-files gates is a floor (one repository had
+three) and a missing `ci:` block is a finding to confirm rather than an absence; step 9's amend runs
+the repository's whole hook set, type checkers included, so it takes minutes the first time; step 10
+now says to note which status checks the bot's own pull request must pass; step 12 handles three
+contributor-doc homes; and the edges key in `graph.json` is `links`, not `edges`, which any script
+against the graph needs.
+
+To stay inside the 500-line limit the escapes table moved into `references/blocks.md`, beside the
+contributor and agent blocks it is meant to be pasted into, and step 5's YAML moved there too.
