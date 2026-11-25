@@ -332,3 +332,57 @@ Linux rebuild merged, the committed graph became the Linux build and the directi
 contributor's next commit adds those three edges back. The skill now says the committed graph carries
 the flavour of whichever platform last built it, and that the difference runs both ways. The
 measurement is unchanged; the framing was misleading.
+
+## R18. The first repository wired with the published skill
+
+A second repository went through the runbook — the first using the released skill rather than the
+draft, and the first that is not the one the skill was built against. Twelve findings; these are the
+ones that changed the skill.
+
+**The reproducibility story was wrong, and this is the important one.** R14 and R16 blamed git
+worktrees. The real variable is **which files are on disk**: a fresh clone and a built checkout of
+the same commit produce different graphs, and a worktree is merely where an agent happens to have
+run a build. Isolated by adding files to a plain clone one at a time: a 24-line generated
+`_version.py`, from which graphify extracts **no nodes at all**, moved 310 of 699 nodes to a
+different community id and reclassified one edge. `.graphifyignore` cannot suppress it — the scope
+file filters symbol extraction, not the directory walk — which was checked rather than assumed.
+Reproduced here independently on a scratch clone.
+
+The consequence is a real cost, now stated in the skill rather than implied: every package using
+hatch-vcs or setuptools_scm has a generated version file the moment it is installed, so a
+contributor with a working environment rebuilds a different graph, their hook rewrites it, and the
+weekly job normalises it back. The drift pull request is **most weeks**, not occasional. The skill
+says to commit the fresh-clone flavour, because that is what CI and the drift job reproduce, and to
+tell the repository so in CONTRIBUTING so the churn does not read as a bug. The explanation moved to
+`references/reproducibility.md`, with the diagnostic for a rebuild that does not match.
+
+**Four blockers in the runbook itself:**
+
+1. Step 1's check named `GRAPH_REPORT.md`, which `extract` does not write — removing `cluster-only`
+   earlier removed the thing that wrote it, so the survey step's only check could not be performed.
+   It is now a node-count-per-file one-liner over `graph.json`, which is a sharper instrument anyway.
+2. `check-useless-excludes` (a cookiecutter default, so expect it in every repository) fails when an
+   `exclude:` matches no file — so the wiring commit fails until `graph.json` exists, while step 8's
+   clone needs `.graphifyignore` committed first. Step 9 now gives the two-phase recipe: commit the
+   wiring with that hook skipped, then fold the graph into the same commit with `--amend`.
+3. Step 5 missed **pre-commit.ci**, which is configured by a `ci:` key in the file being edited —
+   no workflow, nothing in `.github/`, invisible to the search the step described — and which is
+   often a required check *and* autofixes by pushing a commit. One `ci: skip: [graphify-update]`
+   line. The step also now says to grep for an existing `SKIP`, since a repository that runs hooks
+   over everything usually skips something already, and that line is both the gate and the fix.
+4. The hook inherited `default_stages: [pre-commit, pre-push]` and ran a second full rebuild on every
+   push, failing it with nothing to fix in place. `stages: [pre-commit]`.
+
+**Six smaller ones**: the drift job's commit message must match a `commitizen` convention
+(`🧹 chore(graph): …` under cz-conventional-gitmoji, where plain `chore(graph):` is rejected); step 10
+needed a third case for a repository that does **no** bot pull requests at all, with the
+recommendation that a fleet gets one organization-level App rather than discovering this on the
+eighth repository, plus the two-call `gh api …/rulesets` recipe; `CONTRIBUTING.md` is often at
+`.github/CONTRIBUTING.md`, which breaks the README line's link and the block's heading level; the
+scope list led with a paper repository's patterns when `*.yml` / `*.yaml` is the near-universal rule
+for a library and `*.svg` matters more than `*.png`; editing `.graphifyignore` needs
+`rm -rf graphify-out` first, because a scope change does not invalidate the AST cache; and a rebase
+mid-task needs a graph refresh, which is now step 14.
+
+To stay under the 500-line limit, the reproducibility explanation and the migration/variations
+sections moved into `references/`, leaving the runbook and its decisions in `SKILL.md`.

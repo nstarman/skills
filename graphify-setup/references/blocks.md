@@ -21,19 +21,20 @@ more than your working copy did, because the scope `extract --code-only` used li
 cache.
 
 ```gitignore
+*.yml
+*.yaml
 *.md
-*.tex
-*.bib
-*.pdf
+*.svg
 *.png
 ```
 
-Add whatever `GRAPH_REPORT.md` showed as noise rather than code — a directory of near-identical CI
-workflows, for instance, which the graph would otherwise fill with YAML keys:
+YAML first: for a Python library it is usually the biggest single noise source and it is pure
+mapping keys, not structure — on one repository 258 nodes from `.github/workflows`, 58 from
+`mkdocs.yml`, 20 from the commit-check config. The globs beat a `.github/` entry, which misses the
+root-level files. Add `*.tex`, `*.bib`, `*.pdf` only where there is prose or a paper.
 
-```gitignore
-.github/
-```
+Delete `graphify-out/` after editing this file and before rebuilding: a scope change does not
+invalidate the AST cache, so a rebuild would otherwise leave the old scope's graph in place.
 
 ## gitattributes
 
@@ -94,6 +95,17 @@ fight the hook on every commit.
         entry: env PYTHONHASHSEED=0 graphify update . --force
         pass_filenames: false
         always_run: true
+        # Only where `default_stages` includes `pre-push`: without this the hook runs a second full
+        # rebuild on every push, which can only repeat what the commit hook already enforced.
+        stages: [pre-commit]
+```
+
+If the file has a `ci:` block, pre-commit.ci runs every hook over every file on its own runners —
+often as a required check, and it autofixes by pushing a commit. Skip this hook there:
+
+```yaml
+ci:
+  skip: [graphify-update]
 ```
 
 Exclude this hook from any job that runs every hook over every file — `SKIP=graphify-update`, or
@@ -210,6 +222,9 @@ jobs:
           # attributes it to the app, which also clears an unattributed-changes rule.
           sign-commits: true
           add-paths: graphify-out/graph.json
+          # Match the repository's commit-message convention. Under cz-conventional-gitmoji, for
+          # instance, this has to be "🧹 chore(graph): …" or the convention rejects it — and the
+          # title becomes the squash subject.
           commit-message: "chore(graph): refresh the committed code graph"
           title: "chore(graph): refresh the committed code graph"
           body: |
@@ -257,6 +272,10 @@ Querying it is cheaper and more accurate than grepping. The rules:
   the hook does: `uvx --from graphifyy==<version> graphify ...`.
 - `graphify-out/graph.json` is generated. Do not read it directly, do not review it in a diff, and
   do not hand-resolve a conflict in it: rebuild it instead.
+- A rebuild that rewrites the graph in this checkout is **expected** if the package has been
+  installed or the tests have been run here: graphify's output depends on which files are on disk,
+  and a generated `_version.py` is enough to move community numbering. Stage it and commit; it is
+  not a bug and not a reason to skip the hook.
 - Skip the graph only when the task is about the graph tooling itself being stale or wrong, or when
   asked to. An uncommitted or just-rebuilt graph file is normal and is not a reason to skip it.
 ```
@@ -304,6 +323,10 @@ Day to day:
   `rm graphify-out/graph.json && graphify update . && git add graphify-out/graph.json`.
 - A changed `graph.json` in a pull request is generated output. It is one line, collapsed by
   GitHub, and is not reviewed.
+- The rebuild may rewrite the graph the first time you commit in a working environment, and the
+  weekly job may rewrite it back. That is expected: graphify's output depends on which files are on
+  disk, so a built checkout and a fresh clone disagree about community numbering even though the
+  symbols are identical.
 ````
 
 ## README line
@@ -314,6 +337,9 @@ Into the contributing or development pointer near the end of `README.md`. One li
 Contributors and AI assistants: this repository ships a queryable code graph — see
 [CONTRIBUTING.md](CONTRIBUTING.md#the-code-graph).
 ```
+
+If CONTRIBUTING lives in `.github/`, fix the path but keep the link text:
+`[CONTRIBUTING.md](.github/CONTRIBUTING.md#the-code-graph)`.
 
 ## docs page
 

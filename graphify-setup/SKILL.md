@@ -19,12 +19,12 @@ graph with local tree-sitter parsing. This skill wires one repository so the gra
 so every clone and every agent has it without a build step, and so the people and agents who should
 use it are told it exists.
 
-It does not teach graph queries. `graphify install` writes the vendor's own skill onto the reader's
-machine and keeps it current; the only usage text here is the rules block that goes into the wired
-repository, for agents arriving without that skill.
+It does not teach graph queries: `graphify install` writes the vendor's own skill onto the reader's
+machine, and the only usage text here is the rules block that goes into the wired repository, for
+agents arriving without it.
 
-Follow the steps in order. The order is not cosmetic: the scope and the rebuild hook have to exist
-*before* the graph that gets committed is built, or you commit a graph the hook immediately rewrites.
+Follow the steps in order. The order is not cosmetic — the scope and the hook must exist *before*
+the committed graph is built, or you commit one the hook immediately rewrites.
 
 ## What the finished wiring looks like
 
@@ -41,21 +41,18 @@ per-clone `git config` (step 7). Git deliberately refuses to take a merge-driver
 tracked file, so it is documented in CONTRIBUTING for every contributor to run once. Don't go
 looking for it in the repository, and don't count it when you describe what the change adds.
 
-This is the one profile. Upstream's
-[team-workflows guide](https://docs.graphify.com/guides/team-workflows) is its basis; where this
-runbook departs from that page, the step says why. The older arrangement — `graphify-out/` ignored
-and rebuilt on demand — appears here only as something to migrate away from.
+This is the one profile, based on upstream's
+[team-workflows guide](https://docs.graphify.com/guides/team-workflows); where the runbook departs
+from that page, the step says why.
 
 ## Conventions
 
-`<version>` is the pinned `graphifyy` release, `<default-branch>` the repository's default branch,
-and `<agent-guidance-file>` whatever that repository uses (`AGENTS.md`, `CLAUDE.md`, both). Replace
-them; never leave a placeholder in a file you commit, and never copy another repository's name into
-one.
-
-Paste-in material lives in [references/blocks.md](references/blocks.md), one section per block. This
-file holds the decisions and the order; that file holds the text. If they ever disagree, this file
-is wrong.
+`<version>` is the pinned `graphifyy` release, `<default-branch>` the default branch, and
+`<agent-guidance-file>` whatever the repository uses (`AGENTS.md`, `CLAUDE.md`, both). Replace them;
+never leave a placeholder in a committed file, and never copy another repository's name into one.
+Paste-in material lives in [references/blocks.md](references/blocks.md), one section per block: this
+file holds the decisions and the order, that one holds the text, and if they disagree this one is
+wrong.
 
 ## The pin
 
@@ -66,48 +63,27 @@ Every place that builds the graph uses **one** `graphifyy` release with **no opt
 - any command this runbook gives a human or an agent, as
   `uvx --from graphifyy==<version> graphify ...`.
 
-Two reasons, both learned the hard way. Without the `leiden` extra, clustering falls back to
-networkx Louvain, and upstream warns that switching between the two "reshuffles every community" —
-so one contributor with `graphifyy[leiden]` installed rewrites the whole graph on every commit they
-make. And community numbering depends on hash ordering, so every build also needs
-`PYTHONHASHSEED=0`.
-
-Pin the release that is current when you wire the repository (0.9.119 at the time of writing).
-Don't carry an old pin into a new repository: the graph records the version that built it.
+Two reasons. Without the `leiden` extra, clustering falls back to networkx Louvain, and switching
+between the two "reshuffles every community", so one contributor who installed `graphifyy[leiden]`
+rewrites the whole graph on every commit. And community numbering depends on hash ordering, so every
+build also needs `PYTHONHASHSEED=0`. Pin the release current when you wire the repository (0.9.119
+at the time of writing) rather than carrying an old pin in: the graph records what built it.
 
 ## What the graph is reproducible across, and what it is not
 
-Pin, `PYTHONHASHSEED=0`, `.graphifyignore` and `--force` buy you a graph that is byte-identical **on
-one platform, from a plain clone**. They do not buy more than that:
+**graphify's output depends on the set of files on disk, not just the tracked ones.** A graph is
+byte-identical only when rebuilt from a **fresh clone with nothing generated in it**, on the same
+platform, with the same pin. A checkout that has installed the package, run the tests or built the
+docs is not a canonical tree: on a 700-node repository a 24-line generated `_version.py`, which
+contributes no nodes at all, moved 310 of 699 nodes to a different community id. `.graphifyignore`
+cannot suppress it, a git worktree is just one case of it, and across operating systems a few edges
+differ as well.
 
-| same | result |
-|---|---|
-| same OS, plain clone, same pin | byte-identical, warm cache or cold, across independent clones |
-| different OS | a few edges differ, nothing else: 3 of 9,674 on a 5,000-node repository |
-| git worktree instead of a clone | far worse: hundreds of community names, and some edges reclassified |
+Read [references/reproducibility.md](references/reproducibility.md) before step 8: the measurements,
+the diagnostic for when a rebuild does not match, and what this costs a repository whose package
+generates a version file — in which the weekly drift pull request is most weeks, not occasional.
 
-The two are different faults, and it is worth knowing which is which:
-
-- **Across operating systems, clustering is perfectly stable and edge extraction is not.** Measured
-  on a 5,000-node repository: identical node ids, identical community ids, identical community
-  names, and exactly three `imports_from` edges present in the macOS build and absent from the
-  Linux one — nothing added, nothing reclassified. The right way to hold this is that **the
-  committed graph carries the flavour of whichever platform last built it**: neither is canonical,
-  and the difference runs both ways. Once a Linux rebuild lands, a contributor on macOS adds those
-  three edges back on their next commit.
-- **In a worktree, the instability is broader**, because `.git` is a file rather than a directory
-  and gets scanned as one more entry: hundreds of community names move and some edges change
-  relation. It also varied between runs.
-
-Treat both as how the tool behaves today. Three things follow, and the runbook depends on all three:
-
-- **Never gate CI on a rebuild.** A job that rebuilds and compares fails permanently for everyone
-  not on the platform that built the committed graph.
-- **A repository-wide "run every hook over every file" job must skip this hook** (step 5). That is
-  the shape of gate that will bite: it passes on your machine and fails in CI.
-- **The weekly job will occasionally normalise the graph to its own platform** (step 10). It is a
-  real pull request that changes three edges and nothing else. Expected, not a bug — but say so in
-  the pull request, or a reviewer will read it as one.
+Three things follow, and the runbook depends on all three:
 
 The commit hook is therefore the only place the rebuild is enforced, and a graph a few edges off is
 accepted rather than fought.
@@ -128,10 +104,22 @@ PYTHONHASHSEED=0 graphify extract . --code-only
 indexes in this repository, which is what step 2 needs. The graph that gets committed is built in
 step 8, after the scope and the hook exist.
 
-**Check**: read `graphify-out/GRAPH_REPORT.md`. Two questions. Is anything indexed that should not
-be — names, paths, anything the graph should not carry? And what is in there that is not code? On
-one repository a quarter of the graph was YAML keys from forty near-identical CI workflows. Both
-answers go into step 2.
+**Check**: `extract` does not write `GRAPH_REPORT.md` — only `cluster-only` and `update` do — so
+read the graph itself. Count nodes per file:
+
+```bash
+python3 -c "
+import json, collections
+g = json.load(open('graphify-out/graph.json'))
+c = collections.Counter(n.get('source_file', '(external)') for n in g['nodes'])
+for path, n in c.most_common(40): print(f'{n:6d}  {path}')
+print(len(g['nodes']), 'nodes total')"
+```
+
+Two questions. Is anything indexed that should not be — names, paths, anything the graph should not
+carry? And what is in there that is not code? On one repository a third of the survey graph was
+YAML mapping keys, on another a quarter was CI workflows. Both answers go into step 2. The key is
+`source_file`, not `file_path`.
 
 ### 2. Pin the scope in `.graphifyignore`
 
@@ -146,14 +134,24 @@ Write the scope into `.graphifyignore`, which is committed and which both `extra
 honour (block: *graphifyignore*):
 
 ```gitignore
+*.yml
+*.yaml
 *.md
-*.tex
-*.bib
-*.pdf
+*.svg
 *.png
 ```
 
-Add whatever step 1 showed as noise rather than code; `.github/` is a common entry.
+`*.yml` / `*.yaml` first, because for a Python library YAML is usually the biggest single source of
+noise and it is pure mapping keys, not structure: on one repository that was 258 nodes from
+`.github/workflows`, 58 from `mkdocs.yml` and 20 from the commit-check config. The glob beats a
+`.github/` entry, which misses the root-level files. `*.svg` matters more than `*.png` — a favicon
+is likelier than an image — and `--code-only` skips SVGs at step 1 while `update` indexes them
+later, so their absence from the survey means nothing. Add `*.tex`, `*.bib`, `*.pdf` only in a
+repository that has prose or a paper in it.
+
+**After editing `.graphifyignore`, delete `graphify-out/` before rebuilding.** A scope change does
+not invalidate the AST cache, so `update --force` will report "No code-graph topology changes
+detected" and leave the old scope's graph in place — measuring nothing.
 
 **Check**: this is verified in step 8, once there is a committed graph to compare against.
 
@@ -202,11 +200,33 @@ no trailing space byte-identical.
 Exclude `graphify-out/graph.json` from each hook that would touch it, or raise the size limit.
 Block: *commit-check exclusions*.
 
-Then look for a job that runs **every** hook over **every** file — a `lint` session, a `Format` CI
-job, anything calling the hook runner with `--all-files`. It will rebuild the graph and fail for
-anyone whose platform differs from the one that built it. Add `graphify-update` to whatever that job
-already uses to skip hooks (`SKIP=graphify-update`, or the session's own skip list) — merging it
-into any `SKIP` already set rather than replacing it, so a caller's own skips survive.
+Two more hooks to look for, both common in a cookiecutter repository:
+
+- **`check-useless-excludes`** (pre-commit's own `meta` repo) fails when an `exclude:` matches no
+  file — so the exclusions you just added fail until `graph.json` is committed. Step 9 handles it;
+  nothing to do here but expect it.
+- **a repository-local grep hook** (`disallow-caps` and friends). It will read the graph and report
+  a source identifier's spelling from inside a generated file, which is a confusing place to be told
+  about it. Exclude it if it has hits.
+
+Then find every gate that runs **all** hooks over **all** files. There are usually two, and only one
+of them looks like a CI job:
+
+- **pre-commit.ci**, configured by a `ci:` key in the very file you are editing — no workflow file,
+  nothing in `.github/`, invisible to a search for `--all-files`. It is often a *required* check and
+  it **autofixes by pushing a commit**, so without a skip it either fails every pull request or
+  pushes a reshuffled graph into every branch. One line, in that same `ci:` block:
+
+  ```yaml
+  ci:
+    skip: [graphify-update]
+  ```
+
+- **a `lint` session or `Format` job** calling the hook runner with `--all-files`. Add
+  `graphify-update` to whatever it already skips, merging into any caller `SKIP` rather than
+  replacing it. Grep for `SKIP` first: a repository that runs hooks over everything almost always
+  skips something already (`no-commit-to-branch`, typically), and that line is both the gate and the
+  shape of the fix.
 
 **Check**: run the repository's full check suite with the graph staged; nothing modifies or rejects
 it. Then check the CI job that does the same thing over all files, because that one passes locally
@@ -217,6 +237,11 @@ and fails on another platform.
 Add the hook to the repository's committed commit-check configuration (block: *rebuild hook*). It
 is a `local` hook pinned to `<version>`, with `pass_filenames: false`, `always_run: true`, and
 `graphify update . --force` as its command.
+
+Check `default_stages` in that file first. Where it includes `pre-push`, this hook inherits it and
+runs a second full rebuild on every push — one that can only report what the commit hook already
+enforced, and that fails the push with nothing to fix in place. Pin it with `stages: [pre-commit]`,
+which is probably what the repository already does for `no-commit-to-branch`.
 
 `always_run: true` and `--force` are both load-bearing:
 
@@ -275,8 +300,20 @@ Now that the scope and the hook exist, build the real graph **with the command t
 PYTHONHASHSEED=0 graphify update . --force
 ```
 
-**In a normal clone, not a git worktree** — see the reproducibility table above. Agent sessions
-often run in worktrees, so this is easy to get wrong.
+**From a fresh clone with nothing generated in it** — see the reproducibility section above. Your
+own checkout almost certainly does not qualify: installing the package writes `_version.py`, and
+that alone moves nearly half the nodes to different community ids. So:
+
+```bash
+git clone --no-hardlinks <repo> /tmp/graph-build
+cd /tmp/graph-build && git checkout <branch>
+PYTHONHASHSEED=0 graphify update . --force
+cp graphify-out/graph.json <your working tree>/graphify-out/graph.json
+```
+
+`--no-hardlinks` because cloning a local path shares the object store by default. **Commit the
+fresh-clone flavour**, not your checkout's: a plain checkout is what CI and the drift job reproduce,
+and committing the built-tree flavour makes the drift job fire on literally every run.
 
 Use `update`, not `extract` plus `cluster-only`: the two disagree, by about 90 nodes on a
 5,000-node repository (because `extract` deduplicates and `update` does not) and with a fifth of
@@ -292,10 +329,23 @@ built in a worktree.
 
 ### 9. Commit the wiring and the graph
 
+The wiring and the graph have to land in **one** commit, and there is a chicken-and-egg problem
+getting there: the clone of step 8 has to see `.graphifyignore` before it can build the right graph,
+but a wiring-only commit fails `check-useless-excludes`, whose patterns match nothing until
+`graph.json` exists. Two phases, one commit:
+
 ```bash
-git add .gitignore .gitattributes .graphifyignore <commit-check-config> graphify-out/graph.json
-git commit -m "chore: commit the graphify code graph"
+# 1. the wiring, so the clone can see .graphifyignore
+SKIP=graphify-update,check-useless-excludes git commit -m "chore: commit the graphify code graph" \
+  .gitignore .gitattributes .graphifyignore <commit-check-config>
+# 2. build in the clone (step 8), copy graph.json in, fold it into that same commit
+git add graphify-out/graph.json && git commit --amend --no-edit
 ```
+
+The amend runs the full hook set with the graph in the index, so the exclusions now match and the
+rebuild hook gets its first real test — does the hook agree with the clone-built graph? Use
+`SKIP=graphify-update` on the amend only if your checkout is built, and so cannot reproduce it.
+`--no-verify` is not the answer: it skips the rebuild hook too, which is the one you want to run.
 
 **Check**: a fresh clone of the branch has `graphify-out/graph.json` and nothing else under
 `graphify-out/`. A squash merge later does not touch the blob — the object on the branch tip and on
@@ -313,17 +363,33 @@ neither in a protected repository. Both are invisible until its first real run �
 cannot happen until after your pull request merges. Settle them now, by reading the rules rather
 than waiting to be surprised.**
 
-1. **A token that may open a pull request.** `github.token` cannot in many repositories, either
-   because it is read-only or because Actions is not permitted to open pull requests. Where that is
-   so, mint a token the way this repository already does for bot pull requests — a GitHub App token
-   works, and is the path the block shows.
-2. **Commits that satisfy the default branch's rules.** Under a `required_signatures` ruleset the
+1. **A token that may open a pull request.** Read it, don't guess:
+   `gh api repos/<owner>/<repo>/actions/permissions/workflow` and
+   `gh api repos/<owner>/<repo>/actions/secrets --jq '.secrets[].name'`. Three cases, and the third
+   is the common one in a library repository: `github.token` can do it (drop the app-token step);
+   the repository already has an App or PAT for bot pull requests (use it); or it does **no** bot
+   pull requests at all and there is nothing to copy. In that last case decide deliberately rather
+   than inventing something — wiring a whole fleet of repositories, create **one** organization-level
+   App or secret before the first one and have every workflow read it. Committing the app-token step
+   against secrets that do not exist yet is defensible (the weekly run fails loudly at that step,
+   which is the signal it is unconfigured), but choose it, and say so in a comment.
+2. **Commits that satisfy the default branch's rules.** Read the ruleset, which takes two calls —
+   the listing does not include the rules: `gh api repos/<owner>/<repo>/rulesets` then
+   `gh api repos/<owner>/<repo>/rulesets/<id>`. Under a `required_signatures` ruleset the
    action pushes with plain git, so its commit is unsigned and the pull request it opens can only
    ever be merged with an administrator override — with every required check green and an approval
    recorded. `sign-commits: true` is the fix: it commits through the GitHub API, so GitHub signs it,
    and it attributes the commit to the app, which also clears a
-   `require_extra_approval_for_unattributed_changes` rule. Check the branch's ruleset for anything
-   else a bot commit would trip.
+   `require_extra_approval_for_unattributed_changes` rule. Confirm the input exists at the SHA you
+   pin, not just in the major version:
+   `gh api "repos/peter-evans/create-pull-request/contents/action.yml?ref=<sha>" --jq .content | base64 -d | grep -n sign-commits`
+   (quote the `?ref=`, or zsh eats it). Check the ruleset for anything else a bot commit would trip.
+
+Then **match the repository's commit-message convention** in the block's `commit-message` and
+`title`. A `commitizen` hook or a `.czrc` means the message is validated: under
+`cz-conventional-gitmoji`, `chore(graph): …` is rejected and `🧹 chore(graph): …` is required. The
+action's own commit goes through the API and escapes local hooks, but the pull-request title becomes
+the squash subject, so get it right.
 
 **Check**: step 13, after the merge.
 
@@ -343,10 +409,18 @@ skip conditions — all four, or an agent will do only the part it remembers.
 
 Three places, in descending length (blocks: *contributor section*, *README line*, *docs page*):
 
+Find the file first — `ls CONTRIBUTING.md .github/CONTRIBUTING.md docs/` — because `.github/` is a
+common home and GitHub treats it identically. If it lives there, the README line's link needs the
+`.github/` path (keep the link *text* as `CONTRIBUTING.md`, so the README still reads naturally), and
+so does the agent-rules block's pointer. Match the file's own heading level, too: a CONTRIBUTING that
+uses `#` for every section will nest the block's `###` wrongly.
+
 - **`CONTRIBUTING.md`** gets the real explanation: what the graph is, that parsing is local
   tree-sitter work and nothing leaves the machine, that each edge is marked as read from the source
   or inferred, the one-time merge-driver setup from step 7, the rebuild-and-stage loop from step 6,
-  and every escape from the section below.
+  and every escape from the section below. Add the line that stops the churn from reading as a bug:
+  a rebuild that rewrites the graph in your checkout is expected if you have built the package —
+  stage it and commit.
 - **`README.md`** gets **one line** pointing at CONTRIBUTING. The README's readers are installing
   the package; a section selling someone else's tool is noise to them.
 - **the documentation site** gets the CONTRIBUTING text on its contributing or development page, if
@@ -384,12 +458,26 @@ four blocking defects, and every one of them surfaced here or in CI. None was vi
 
 Then open the pull request. Describe the five committed artefacts, not the commits.
 
+### 14. Keep the graph current if the branch moves
+
+If the default branch moves while you are working, the rebase leaves the committed graph stale, and
+the drift job would catch it a week later. Not optional even when the incoming commits look like
+dependency bumps: five of them moved one graph from 697 nodes to 699, because `pyproject.toml` is
+indexed.
+
+```bash
+git rebase origin/main
+# rebuild in a fresh clone of the rebased branch (step 8) and copy graph.json in
+git add graphify-out/graph.json && git commit --amend --no-edit
+git push --force-with-lease
+```
+
 ---
 
 ## Escapes, which must end up in the repository
 
-Every one of these belongs in the wired repository's CONTRIBUTING and agent rules. The skill is
-read once, by whoever wires the repository; the repository is read by everyone afterwards.
+Every one of these belongs in the wired repository's CONTRIBUTING and agent rules: this skill is
+read once, by whoever wires the repository, and the repository is read by everyone after.
 
 | Situation | Escape |
 |---|---|
@@ -403,42 +491,10 @@ Never resolve a graph conflict by picking a side: the file is generated, so the 
 rebuild it from the merged code. A union merge also leaves the graph slightly fat — a few more
 nodes than a clean rebuild gives — which the next commit's rebuild cleans up on its own.
 
-## Migrating a repository that builds the graph on demand
+## When the repository is not the assumed shape
 
-Some repositories ignore all of `graphify-out/` and rebuild it with a named task
-(`nox -s graph` or similar). Convert it, do not wire it twice:
-
-1. Replace the `graphify-out/` ignore line with the two lines from step 3, so the graph alone is
-   tracked.
-2. Work through the runbook from step 1, skipping nothing. Step 5 matters more here than in a fresh
-   repository: an established one is the kind that has a large-file check, a formatter and a
-   repository-wide lint job waiting.
-3. **Keep the explanation that repository already has.** A repository on this older arrangement
-   usually documented what the graph is better than a fresh one does; move that prose into the
-   CONTRIBUTING section rather than replacing it with the block's wording.
-4. Retire the on-demand build task. The hook now builds the graph, the report and the HTML on every
-   commit, so a second build path is one more thing to keep pinned — and the two will drift. The
-   naming pass is not a reason to keep it: it has no place in a committed graph. Keep the task only
-   if it does something else the hook does not, such as a wiki build, and say so in the pull
-   request.
-5. Drop any instruction to run the build task from the agent rules and the docs.
-
-**Check**: search the repository for the old task name. No hits outside the changelog.
-
-## When the repository is shaped differently
-
-- **A different commit-check tool.** The hook block is for `prek` / `pre-commit` configuration. For
-  anything else, keep the four properties: committed rather than per clone, pinned to `<version>`,
-  running even when no file matches, and failing rather than staging for you. Then point the drift
-  workflow's `grep` at whatever file now holds the pin — it reads the version out of the
-  commit-check config by name.
-- **No shared commit checks at all.** Use upstream's `.git/hooks/pre-commit` script and say in
-  CONTRIBUTING that every clone must install it. Weaker, and the weekly drift job is then the only
-  thing keeping the graph honest.
-- **Agent guidance under another name.** Step 11 covers it: one copy, others point at it.
-- **No documentation site.** Skip the docs page. CONTRIBUTING and the README line are enough.
-- **Several packages in one repository.** One graph at the repository root covers all of them;
-  `graphify extract .` from the root is right. Do not wire each package.
-- **A repository where the graph would be enormous.** Check `graph.json`'s size after step 1. Past
-  a few megabytes, narrow `.graphifyignore` further before building the one you commit, rather than
-  committing a graph nobody wants to pull.
+[references/other-shapes.md](references/other-shapes.md) covers two cases: **migrating** a
+repository that ignores `graphify-out/` and rebuilds it with a named task, and the **variations** —
+a different commit-check tool, no shared commit checks at all, agent guidance under another name, no
+documentation site, several packages in one repository, a graph that would be enormous. Check it
+before step 5 if this repository is not a `prek` / `pre-commit` one.
