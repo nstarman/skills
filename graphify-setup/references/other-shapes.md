@@ -32,9 +32,26 @@ Some repositories ignore all of `graphify-out/` and rebuild it with a named task
   running even when no file matches, and failing rather than staging for you. Then point the drift
   workflow's `grep` at whatever file now holds the pin — it reads the version out of the
   commit-check config by name.
-- **No shared commit checks at all.** Use upstream's `.git/hooks/pre-commit` script and say in
-  CONTRIBUTING that every clone must install it. Weaker, and the weekly drift job is then the only
-  thing keeping the graph honest.
+- **No shared commit checks at all.** Do **not** use `.git/hooks/pre-commit`: it is untracked, so
+  the hook body is unreviewed and unversioned, and — the part that breaks the rest of the runbook —
+  **the pin has nowhere to live**, while step 10's workflow greps the commit-check config for
+  `graphifyy==`. Commit the hook as `.githooks/pre-commit` instead and enable it per clone with
+  `git config core.hooksPath .githooks`, which goes beside the merge-driver `git config` lines
+  CONTRIBUTING already asks every clone to run. The hook body is then tracked, the pin lives in it,
+  and the workflow greps that file.
+
+  Four substitutions follow in the blocks: `SKIP=graphify-update` becomes `git commit --no-verify`
+  (there are no other hooks to skip); `additional_dependencies` becomes a `uvx --from
+  graphifyy==<version>` call in the script; "runs with your other commit checks" becomes "runs if
+  you enabled the hook"; and the agent rules' "the pin in the commit-check config" becomes the hook
+  path. Two things come free: a raw git hook has no file filter, so `always_run` is moot and a
+  deletion-only commit rebuilds; and there is no `SKIP` machinery to explain.
+
+  Introducing a minimal `.pre-commit-config.yaml` just for this hook is the obvious alternative and
+  usually the wrong one: `pre-commit install` is per clone too, so a committed config buys nothing
+  over a tracked hook script while adding a tool to the dev loop. Which also qualifies step 6's
+  "committed, not installed per clone" — that is only true where the repository's setup already runs
+  `pre-commit install`.
 - **Agent guidance under another name.** Step 11 covers it: one copy, others point at it.
 - **No documentation site.** Skip the docs page. CONTRIBUTING and the README line are enough.
 - **Several packages in one repository.** One graph at the repository root covers all of them;

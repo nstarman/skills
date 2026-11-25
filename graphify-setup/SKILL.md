@@ -19,9 +19,8 @@ graph with local tree-sitter parsing. This skill wires one repository so the gra
 so every clone and every agent has it without a build step, and so the people and agents who should
 use it are told it exists.
 
-It does not teach graph queries: `graphify install` writes the vendor's own skill onto the reader's
-machine, and the only usage text here is the rules block that goes into the wired repository, for
-agents arriving without it.
+It does not teach graph queries: `graphify install` writes the vendor's own skill, and the only usage
+text here is the rules block that goes into the wired repository, for agents arriving without it.
 
 Follow the steps in order. The order is not cosmetic — the scope and the hook must exist *before*
 the committed graph is built, or you commit one the hook immediately rewrites.
@@ -74,16 +73,19 @@ records what built it.
 **graphify's output depends on the set of files on disk, not just the tracked ones.** A graph is
 byte-identical only when rebuilt from a **fresh clone with nothing generated in it**, on the same
 platform, with the same pin. A checkout that has installed the package, run the tests or built the
-docs is not a canonical tree. How much it costs varies with the repository and is not predictable:
+docs is not canonical. The cause is narrow, and worth settling early: the hazard is a generated file
+**inside the indexed source tree**, so `hatch-vcs` or `setuptools_scm` means you have it and a static
+version in `pyproject.toml` means you do not; a `.venv/` does not perturb the walk. Without a
+generated version file a working checkout and a fresh clone agree, and the weekly drift pull request
+is rare rather than near-weekly. With one, the cost varies and is not predictable:
 on a 700-node one a 24-line generated `_version.py` — which contributes no nodes at all — moved 310
 of 699 nodes to a different community id, while on a 591-node one the same file moved no communities
 and changed exactly one edge. Treat the mechanism as the rule and the magnitude as unknown: one
 changed edge is still drift. `.graphifyignore` cannot suppress it, a worktree is just one case of
 it, and across operating systems a few edges differ too.
 
-Read [references/reproducibility.md](references/reproducibility.md) before step 8: the measurements,
-the diagnostic for when a rebuild does not match, and what this costs a repository whose package
-generates a version file — in which the weekly drift pull request is most weeks, not occasional.
+[references/reproducibility.md](references/reproducibility.md), before step 8: the measurements, the
+diagnostic for a rebuild that does not match, and what it costs a repository that does generate one.
 
 Three things follow, and the runbook depends on all three:
 
@@ -313,7 +315,9 @@ named literally `Community 0`, so `graphify explain "AbstractQuantity"` reports
 
 **Check, and do not skip this one**: clone fresh into another directory, check out this branch, and
 run the same command. The two `graph.json` files must be byte-identical — which catches a scope still
-coming from the untracked cache, an incremental rebuild, and a graph built in a dirty tree.
+coming from the untracked cache, an incremental rebuild, and a graph built in a dirty tree. Compare
+**clone against clone**: a worktree build differs from a clone build in the single field
+`built_at_commit`, which `cmp` reports as a difference and which looks like a fault but is not.
 
 Make sure the check is not vacuous: with the graph already present and nothing changed, `update`
 does not rewrite the file at all, so byte-identity is trivially true and proves nothing. Watch for

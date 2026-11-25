@@ -17,8 +17,15 @@ single most important property of the tool for this profile, and the least obvio
 
 Three faults, worth keeping apart:
 
-- **A generated, gitignored file changes the graph even when no symbol comes from it.** Measured on
-  a 700-node repository, adding a 24-line `_version.py` — which graphify extracts nothing from —
+- **The hazard is a generated file *inside the indexed source tree*** — not a built checkout in
+  general. A `.venv/`, a results file and a JAX cache added to one repository changed the graph not
+  at all; a generated `src/<pkg>/_version.py` is what moves it. So the question to answer per
+  repository is narrow: **does this package generate a version file?** `hatch-vcs` or
+  `setuptools_scm` means yes; a static `version = "..."` in `pyproject.toml` means no, and then a
+  working checkout and a fresh clone agree and the weekly drift pull request is rare rather than
+  near-weekly. That difference is big enough to change whether the profile is worth wiring.
+  Measured on a 700-node repository, adding a 24-line `_version.py` — which that repository
+  extracted no nodes from, though another extracted one —
   moved 310 of 699 nodes (44%) to a different community id and reclassified one edge. But the
   magnitude does not generalise: on a 591-node repository the same file moved **no** communities and
   changed exactly one edge, and on a paper repository, one edge and nothing else. Read the mechanism
@@ -27,10 +34,12 @@ Three faults, worth keeping apart:
   cannot suppress this**: the scope file filters symbol extraction, not the directory walk, so an
   ignored-but-present file still perturbs ordering. This is the first thing anyone reaches for and
   it does not work.
-- **A git worktree is just one case of the above.** `.git` is a file there rather than a directory,
-  so the scan sees one more entry — and on its own that changes nothing. Worktrees got the blame
-  earlier because a worktree is where an agent happens to have run a build. Once two trees hold the
-  same files, a worktree and a clone agree exactly.
+- **A git worktree is not a cause at all.** `.git` is a file there rather than a directory, so the
+  scan sees one more entry, and that changes nothing: the cleanest measurement found a worktree
+  build and a clone build differing in exactly one field, `built_at_commit` — zero nodes, edges or
+  communities. Worktrees got the blame earlier because a worktree is where an agent happens to have
+  run a build. One consequence for step 8: `cmp` between a worktree build and a clone build fails on
+  that single field and looks like a scope or cache fault, so compare **clone against clone**.
 - **Across operating systems, clustering is stable and edge extraction is not.** Identical node ids,
   community ids and community names, and three `imports_from` edges present on macOS and absent on
   Linux — nothing added, nothing reclassified. The committed graph carries the flavour of whichever
