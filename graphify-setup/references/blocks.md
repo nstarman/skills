@@ -121,6 +121,9 @@ only home: the workflow below reads the version back out of this file. `env` is 
   it is read-only or because Actions is not permitted to. Where it can, drop the app-token step and
   pass `token: ${{ github.token }}`. Where it cannot, mint a token the way this repository already
   does for bot pull requests — the app-token step below, or a PAT.
+- **Keep `sign-commits: true` if the default branch requires signed commits**, which is what makes
+  the pull request mergeable without an administrator override. It is harmless otherwise. Confirm the
+  input exists at the SHA you pin to, not just in the major version.
 - **The `grep` must not be loosened**: `[0-9.]*` matches the empty string, so a comment that merely
   mentions `graphifyy==` would be picked up as a second pin and break the `uvx` call.
 
@@ -201,13 +204,18 @@ jobs:
         uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ steps.app-token.outputs.token }}
+          # Under a required-signatures ruleset the action would otherwise push with plain git, the
+          # commit would be unsigned, and the pull request could only be merged with an
+          # administrator override. This commits through the GitHub API so GitHub signs it, and
+          # attributes it to the app, which also clears an unattributed-changes rule.
+          sign-commits: true
           add-paths: graphify-out/graph.json
           commit-message: "chore(graph): refresh the committed code graph"
           title: "chore(graph): refresh the committed code graph"
           body: |
             Rebuild of `graphify-out/graph.json`. Either the committed graph drifted from the code,
-            or it was last built on a different operating system — graphify classifies a few
-            re-export edges differently per platform, so a rebuild here normalises them.
+            or it was last built on a different operating system — graphify extracts a few edges
+            differently per platform, so a rebuild here moves the graph to this runner's flavour.
 
             Generated output, one line, collapsed by GitHub. Nothing to review beyond a green build.
           branch: chore/refresh-graphify
