@@ -300,3 +300,35 @@ out of it.
   defect found while wiring the first repository surfaced there or in CI rather than by reading. It
   gained a sixth check — a byte-identical rebuild in a fresh clone — which on its own would have
   caught three of the nine findings.
+
+## R17. Merging the drift pull request exposed a tenth finding
+
+Found after the skill shipped, by merging the drift workflow's own pull request in the migrated
+repository — a step nothing earlier had reached.
+
+**The weekly job's pull request is unmergeable under a `required_signatures` ruleset.**
+`peter-evans/create-pull-request` pushes with plain git, as would the hand-rolled `git commit` the
+block carried before, so the bot's commit is unsigned. With all required checks green and a
+non-author approval recorded, the merge was still refused: "the base branch policy prohibits the
+merge". The same ruleset's `require_extra_approval_for_unattributed_changes` is tripped independently
+by a bot commit.
+
+**Fix**: `sign-commits: true` on the action's step. It commits through the GitHub API, so GitHub
+signs the commit, and it attributes the commit to the app, which clears the unattributed-changes
+rule too. Verified here that the input exists at `v8` and is documented as "Sign commits as
+`github-actions[bot]` when using `GITHUB_TOKEN`, or your own bot when using GitHub App tokens",
+rather than taken on report.
+
+**What this changes in the skill**: step 10 now states that the job has **two** dependencies on the
+repository's shape rather than one — a token that may open a pull request, and commits that satisfy
+whatever the default branch requires — and says plainly that the block satisfies neither in a
+protected repository, that both are invisible until the job's first real run, and that the first real
+run cannot happen until the wiring pull request has merged. So they are to be settled by reading the
+branch's rules, not by waiting to be surprised.
+
+**And a framing correction carried with it.** R15 and R16 described the cross-platform difference as
+edges "macOS emits and Linux does not", which reads as though one platform were canonical. Once the
+Linux rebuild merged, the committed graph became the Linux build and the direction reversed: a macOS
+contributor's next commit adds those three edges back. The skill now says the committed graph carries
+the flavour of whichever platform last built it, and that the difference runs both ways. The
+measurement is unchanged; the framing was misleading.

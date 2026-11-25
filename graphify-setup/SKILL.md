@@ -83,15 +83,18 @@ one platform, from a plain clone**. They do not buy more than that:
 | same | result |
 |---|---|
 | same OS, plain clone, same pin | byte-identical, warm cache or cold, across independent clones |
-| different OS | a few edges missing, nothing else: 3 of 9,674 on a 5,000-node repository |
+| different OS | a few edges differ, nothing else: 3 of 9,674 on a 5,000-node repository |
 | git worktree instead of a clone | far worse: hundreds of community names, and some edges reclassified |
 
 The two are different faults, and it is worth knowing which is which:
 
 - **Across operating systems, clustering is perfectly stable and edge extraction is not.** Measured
   on a 5,000-node repository: identical node ids, identical community ids, identical community
-  names, and exactly three `imports_from` edges that macOS emits and Linux does not — a pure
-  omission, with nothing added and nothing reclassified.
+  names, and exactly three `imports_from` edges present in the macOS build and absent from the
+  Linux one — nothing added, nothing reclassified. The right way to hold this is that **the
+  committed graph carries the flavour of whichever platform last built it**: neither is canonical,
+  and the difference runs both ways. Once a Linux rebuild lands, a contributor on macOS adds those
+  three edges back on their next commit.
 - **In a worktree, the instability is broader**, because `.git` is a file rather than a directory
   and gets scanned as one more entry: hundreds of community names move and some edges change
   relation. It also varied between runs.
@@ -305,10 +308,22 @@ with the pin read out of the commit-check config and, if the graph moved, opens 
 pull request against `<default-branch>`. It must never push to the default branch: the graph is
 code-derived, but a bad rebuild is still a change nobody reviewed.
 
-**Settle the token first.** `github.token` cannot open a pull request in many repositories, either
-because it is read-only or because Actions is not permitted to. Where that is so, mint a token the
-way this repository already does for bot pull requests — a GitHub App token works, and is the path
-the block shows.
+**This job has two dependencies on the repository's shape, and the block as written satisfies
+neither in a protected repository. Both are invisible until its first real run — which, per step 13,
+cannot happen until after your pull request merges. Settle them now, by reading the rules rather
+than waiting to be surprised.**
+
+1. **A token that may open a pull request.** `github.token` cannot in many repositories, either
+   because it is read-only or because Actions is not permitted to open pull requests. Where that is
+   so, mint a token the way this repository already does for bot pull requests — a GitHub App token
+   works, and is the path the block shows.
+2. **Commits that satisfy the default branch's rules.** Under a `required_signatures` ruleset the
+   action pushes with plain git, so its commit is unsigned and the pull request it opens can only
+   ever be merged with an administrator override — with every required check green and an approval
+   recorded. `sign-commits: true` is the fix: it commits through the GitHub API, so GitHub signs it,
+   and it attributes the commit to the app, which also clears a
+   `require_extra_approval_for_unattributed_changes` rule. Check the branch's ruleset for anything
+   else a bot commit would trip.
 
 **Check**: step 13, after the merge.
 
