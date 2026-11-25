@@ -33,6 +33,11 @@ mapping keys, not structure — on one repository 258 nodes from `.github/workfl
 `mkdocs.yml`, 20 from the commit-check config. The globs beat a `.github/` entry, which misses the
 root-level files. Add `*.tex`, `*.bib`, `*.pdf` only where there is prose or a paper.
 
+A bare `dir/` entry prunes that directory at **any** depth, gitignore-style — on a monorepo that one
+line, not the extension list, decides the file's size. `#` comments and blank lines are allowed, so
+the file can explain its own choices. `graphify-out/` needs no entry: its own files do not perturb
+the walk. [scope.md](scope.md) has the rest, including how to price a candidate scope.
+
 Delete `graphify-out/` after editing this file and before rebuilding: a scope change does not
 invalidate the AST cache, so a rebuild would otherwise leave the old scope's graph in place.
 
@@ -75,6 +80,14 @@ the repository configures it, and if it already skips JSON there is nothing to e
 `trailing-whitespace` and `mixed-line-ending` need no exclusion: a single line with no trailing
 space comes back byte-identical.
 
+If the file has a `ci:` block, pre-commit.ci runs every hook over every file on its own runners —
+often as a required check, and it autofixes by pushing a commit. Skip this hook there:
+
+```yaml
+ci:
+  skip: [graphify-update]
+```
+
 `check-added-large-files` can take `args: ["--maxkb=8192"]` instead, if the repository would rather
 keep the check on the graph than exclude it. The formatter exclusions are not optional: a formatter
 that reformats the graph, or appends the newline the tool does not write, makes the file churn or
@@ -91,6 +104,11 @@ fight the hook on every commit.
       - id: graphify-update
         name: graphify update
         language: python
+        # graphifyy requires >=3.11.5,<3.15, and `language: python` otherwise builds the hook's
+        # environment with whatever Python the hook runner itself is on. On a runner using 3.15 the
+        # install fails with a pip error naming no version at all, and the contributor gets no graph
+        # and no clue. Pin to this repository's own Python (.python-version / requires-python).
+        language_version: python3.12
         additional_dependencies: ["graphifyy==<version>"]
         entry: env PYTHONHASHSEED=0 graphify update . --force
         pass_filenames: false
@@ -111,6 +129,10 @@ ci:
 Exclude this hook from any job that runs every hook over every file — `SKIP=graphify-update`, or
 that job's own skip list. Such a job rebuilds the graph and fails for anyone whose platform differs
 from the one that built the committed copy.
+
+Check the pin's `Requires-Python` against the repository's floor before wiring: a repository whose
+minimum Python is above graphifyy's ceiling has no valid `language_version`, and that is worth
+knowing in advance rather than at a contributor's first commit.
 
 `always_run: true` is what makes the hook fire on a commit that only deletes files — without it the
 runner finds no existing files to check, skips the hook, and the deleted code stays in the graph.
@@ -222,9 +244,9 @@ jobs:
           # attributes it to the app, which also clears an unattributed-changes rule.
           sign-commits: true
           add-paths: graphify-out/graph.json
-          # Match the repository's commit-message convention. Under cz-conventional-gitmoji, for
-          # instance, this has to be "🧹 chore(graph): …" or the convention rejects it — and the
-          # title becomes the squash subject.
+          # Match the repository's commit-message convention, checking what it actually accepts:
+          # one repository on cz-conventional-gitmoji rejected a plain "chore(graph):" subject and
+          # another accepted it. The title becomes the squash subject.
           commit-message: "chore(graph): refresh the committed code graph"
           title: "chore(graph): refresh the committed code graph"
           body: |
@@ -239,6 +261,11 @@ jobs:
 
 `peter-evans/create-pull-request` is doing real work here: it opens a pull request or updates the
 existing one, with no hand-rolled "is there already one open" check to get wrong.
+
+Reading the job's log: `No code-graph topology changes detected; outputs left untouched` means **no
+drift** — the rebuild ran and left `graph.json` byte-identical, which is what makes `git diff
+--quiet` a true check. On a repository with nothing to do the log may show neither that line nor a
+`Rebuilt:` line, so read the drift step's own output rather than hunting for a phrase.
 
 ## agent rules
 
@@ -352,3 +379,21 @@ docs.
 Otherwise: the same text as the *contributor section* block above, adjusted for the site's markup,
 with the heading at the page's own level. If the site has no such page, skip it rather than making
 one for this.
+
+## escapes
+
+These belong in the wired repository, in the *contributor section* and the *agent rules* above.
+This skill is read once, by whoever wires the repository; the repository is read by everyone after.
+
+| Situation | Escape |
+|---|---|
+| Commit without rebuilding | `SKIP=graphify-update git commit ...` — the hook runner's own mechanism |
+| A rebuild refuses because the graph would shrink (rare; it generally just shrinks) | `GRAPHIFY_FORCE=1 git commit ...` |
+| The graph conflicts on merge anyway | Rebuild rather than hand-edit: `rm graphify-out/graph.json && graphify update . --force && git add graphify-out/graph.json` |
+| An automated commit runs where graphify is not installed | Install it in that job, or set `SKIP=graphify-update` for those commits |
+| The graph has fallen behind the code | `PYTHONHASHSEED=0 uvx --from graphifyy==<version> graphify update . --force`, then commit it |
+
+Never resolve a graph conflict by picking a side: the file is generated, so the answer is always to
+rebuild it from the merged code. A union merge also leaves the graph slightly fat — a few more
+nodes than a clean rebuild gives — which the next commit's rebuild cleans up on its own.
+

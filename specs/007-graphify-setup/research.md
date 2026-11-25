@@ -386,3 +386,64 @@ mid-task needs a graph refresh, which is now step 14.
 
 To stay under the 500-line limit, the reproducibility explanation and the migration/variations
 sections moved into `references/`, leaving the runbook and its decisions in `SKILL.md`.
+
+## R19. Five more repositories at once
+
+Five sessions wired the skill into five repositories in parallel — a 591-node library, a 223-node
+one, a 4,183-node library whose tests were 60% of the survey graph, an 8,791-node monorepo, and a
+paper repository. Roughly thirty-seven findings came back. The full write-ups are in the session
+notes; these are the ones that changed the skill.
+
+**A blocker nobody could have predicted: the hook cannot install on a current Python.**
+`graphifyy==0.9.119` declares `Requires-Python >=3.11.5,<3.15`, and `language: python` builds the
+hook's environment with whatever Python the hook runner itself is on. Where that is 3.15 the install
+fails with a pip error that names no version at all, so the contributor gets no graph, no rebuild and
+no clue. It hides from anyone who follows a repository's own CONTRIBUTING (`uv run pre-commit
+install`, which uses the project venv) and surfaces for anyone with a `pipx`/`uv tool` install. The
+hook block now pins `language_version`, and the skill says to check the pin's `Requires-Python`
+against the repository's floor *before* wiring, since a repository whose minimum is above graphifyy's
+ceiling has no valid choice.
+
+**Two numbers this skill published were wrong to state as single values.** The generated-file effect
+was given as "~45% of nodes": measured again it was 44% on a 700-node repository, **zero community
+movement and one edge** on a 591-node one, and one edge on a paper repository. And the claim that
+`cz-conventional-gitmoji` rejects a plain `chore(graph):` subject held in one repository and not in
+another. Both are now stated as ranges or as "check what it accepts" — the mechanism is the rule, the
+magnitude is not.
+
+**Three verifications could pass without testing anything**, which is worse than failing:
+
+- Step 8's byte-identity check: with the graph present and nothing changed, `update --force` does not
+  rewrite the file, so identity is trivially true. Watch for the `Rebuilt:` line, or perturb the
+  graph and confirm the rebuild restores it — the snippet is in `references/reproducibility.md`.
+- Step 13's checks 2 and 3 run in a clone, and **a clone has no hooks**: the deletion-only commit
+  succeeds because nothing fired, which is exactly the failure the check exists to catch. Step 13 now
+  opens with the clone's setup — install the runner, register the merge driver, set an identity.
+- Check 4 needs a clone taken *after* step 9's amend; a step-8 clone has no graph in it and fails
+  with an alarming, meaningless error.
+
+**The scope decision got an instrument.** "Past a few megabytes, narrow further" gave the reader no
+way to price a candidate, and rebuilding to measure costs minutes plus a cache wipe each time.
+`references/scope.md` now carries a simulator that drops the matching nodes and links from the survey
+graph and reports the serialised size — five candidate scopes in a second, predicting 5.37 MB against
+5.44 MB actually built. It also records what the prose never reached: that excluding `benchmarks/`,
+`scripts/` and `docs/` on one monorepo saved 0.07 MB, which is a bad trade for real coverage.
+
+Related, and the single biggest lever: `.graphifyignore` takes gitignore syntax, so a bare `tests/`
+prunes at any depth. Nothing said so, and the extension globs are the small cut — on the monorepo
+they removed 570 of 8,791 nodes while `tests/` removed 3,910. **The test suite is now a stated
+decision** rather than something each repository settles silently: keep them unless the graph's hubs
+come out as test fixtures, and say which way in the pull request.
+
+**Smaller fixes, all from being bitten**: the reproducibility diagnostic printed thousands of
+`.venv/` lines and is now filtered; step 8's `/tmp/graph-build` is an example rather than an
+instruction, since one repository's own rules forbid `/tmp` and a repo-relative `scratch/` is the one
+place the clone must never go; step 5's "usually two" all-files gates is a floor (one repository had
+three) and a missing `ci:` block is a finding to confirm rather than an absence; step 9's amend runs
+the repository's whole hook set, type checkers included, so it takes minutes the first time; step 10
+now says to note which status checks the bot's own pull request must pass; step 12 handles three
+contributor-doc homes; and the edges key in `graph.json` is `links`, not `edges`, which any script
+against the graph needs.
+
+To stay inside the 500-line limit the escapes table moved into `references/blocks.md`, beside the
+contributor and agent blocks it is meant to be pasted into, and step 5's YAML moved there too.

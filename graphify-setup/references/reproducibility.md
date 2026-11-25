@@ -18,8 +18,12 @@ single most important property of the tool for this profile, and the least obvio
 Three faults, worth keeping apart:
 
 - **A generated, gitignored file changes the graph even when no symbol comes from it.** Measured on
-  a 700-node repository: adding a 24-line `_version.py` — which graphify extracts nothing from —
-  moved 310 of 699 nodes to a different community id and reclassified one edge. **`.graphifyignore`
+  a 700-node repository, adding a 24-line `_version.py` — which graphify extracts nothing from —
+  moved 310 of 699 nodes (44%) to a different community id and reclassified one edge. But the
+  magnitude does not generalise: on a 591-node repository the same file moved **no** communities and
+  changed exactly one edge, and on a paper repository, one edge and nothing else. Read the mechanism
+  as the rule and the number as unknown — a one-edge diff is not a sign your repository is exempt,
+  and 44% is not what to expect. **`.graphifyignore`
   cannot suppress this**: the scope file filters symbol extraction, not the directory walk, so an
   ignored-but-present file still perturbs ordering. This is the first thing anyone reaches for and
   it does not work.
@@ -35,10 +39,14 @@ Three faults, worth keeping apart:
 The diagnostic, when a rebuild does not match and you need to know why:
 
 ```bash
-git status --porcelain --ignored -uall | grep '^!!' | grep -E '\.pyi?$'
+git status --porcelain --ignored -uall | grep '^!!' \
+  | grep -Ev '^!! \.(venv|nox)/|^!! graphify-out/' | grep -E '\.pyi?$'
 ```
 
-Anything under `src/` there is a reason your rebuild will not match CI's.
+Those exclusions are not optional: without them a `uv` project prints thousands of lines from
+`.venv/` and the handful of files that matter are nowhere near the top. What is left — typically
+`src/**/_version.py`, one per distribution on a monorepo, plus generated `.pyi` stubs — is the reason
+your rebuild will not match CI's.
 
 **What this costs, said plainly.** Every package that generates a version file — anything on
 hatch-vcs or setuptools_scm, which is most of them — has this the moment someone installs it. So a
@@ -59,3 +67,22 @@ The runbook depends on all three:
 - **The weekly job will occasionally normalise the graph to its own platform** (step 10). It is a
   real pull request that changes three edges and nothing else. Expected, not a bug — but say so in
   the pull request, or a reviewer will read it as one.
+
+## Making the byte-identity check mean something
+
+With `graph.json` already present and nothing changed, `update --force` does not rewrite the file at
+all — no `Rebuilt: N nodes, M edges` line, just "Code graph updated". Byte-identity is then trivially
+true, so step 8's check can be ticked without having tested anything. Either watch for that
+`Rebuilt:` line, or perturb the graph first and confirm the rebuild restores it:
+
+```bash
+python3 -c "
+import json; p='graphify-out/graph.json'
+g=json.load(open(p)); g['nodes']=g['nodes'][:-50]
+json.dump(g, open(p,'w'), separators=(',',':'))"
+PYTHONHASHSEED=0 graphify update . --force      # must print 'Rebuilt:'
+git diff --quiet -- graphify-out/graph.json && echo PASS
+```
+
+That is what proved one 3,865-node graph reproducible: the same nodes, edges and bytes restored from
+a perturbation, with a cold AST cache.
